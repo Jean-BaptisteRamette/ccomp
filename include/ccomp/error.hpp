@@ -2,12 +2,14 @@
 #define CCOMP_ERROR_HPP
 
 #include <stdexcept>
+#include <string_view>
+
 
 namespace ccomp
 {
-    struct error : std::runtime_error
+    class lexical_error
     {
-
+        // for example, wrong number, invalid token etc..
     };
 }
 

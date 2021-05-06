@@ -1,4 +1,6 @@
-/* example source file to be compiled by ccomp */
-
-// entry point
-main:
+define my_variable1 1234
+define my_variable2 0x100
+define my_variable3 035
+define my_var       1234567890
+define my_variable4 0b1111'1111
+define my_variable5 0b'1'1'1'1'1'1'1'1
