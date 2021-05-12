@@ -1,26 +1,45 @@
 #include <ccomp/command_line.hpp>
-#include <iostream>
 
 
-namespace ccomp
+namespace ccomp::cmd_line
 {
-    std::optional<command_line_info> read_argv(int argc, char **argv)
-    {
-        if (argc < 2)
-        {
-            std::cerr << "Input file not provided\n";
-            return std::nullopt;
-        }
+	parser::parser(int argc, char** argv) : args(argv, argc) {}
 
-        command_line_info info;
-        info.input_file_name = argv[1];
+	bool parser::has_flag(std::string_view flag_name, bool need_value)
+	{
+		const auto it = std::find(args.begin(), args.end(), flag_name);
 
-        if (argc >= 3)
-            info.output_file_name = argv[2];
-        else
-            info.output_file_name = "a.out";
+		if (it == args.end())
+			return false;
 
-        return std::make_optional(info);
-    }
+		if (need_value && it + 1 == args.end())
+			return false;
+
+		return true;
+	}
+
+	std::string_view parser::get_flag(std::string_view flag_name)
+	{
+		auto it = std::find(args.begin(), args.end(), flag_name);
+
+		if (it != args.end() && it + 1 != args.end())
+			return *(it + 1);
+
+		return {};
+	}
+
+	std::string_view parser::get_flag_or(std::string_view flag_name, std::string_view default_value)
+	{
+		if (!has_flag(flag_name))
+			return default_value;
+
+		const auto value = get_flag(flag_name);
+
+		if (!value.empty())
+			return value;
+
+		return default_value;
+	}
+
 }
 

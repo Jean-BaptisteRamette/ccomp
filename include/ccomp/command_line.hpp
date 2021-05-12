@@ -1,22 +1,26 @@
 #ifndef CCOMP_COMMAND_LINE_HPP
 #define CCOMP_COMMAND_LINE_HPP
 
+
 #include <string_view>
-#include <optional>
+#include <span>
 
-namespace ccomp
+
+
+namespace ccomp::cmd_line
 {
-    struct command_line_info final
-    {
-        std::string_view input_file_name;
-        std::string_view output_file_name;
-    };
+	class parser
+	{
+	public:
+		parser(int argc, char** argv);
 
-    /*!
-     * @brief Read command line arguments
-     * @return empty if error else command_line_info object
-     */
-    std::optional<command_line_info> read_argv(int argc, char** argv);
+		bool has_flag(std::string_view flag_name, bool need_value = true);
+		std::string_view get_flag(std::string_view flag_name);
+		std::string_view get_flag_or(std::string_view flag_name, std::string_view default_value);
+
+	private:
+		std::span<char*> args;
+	};
 }
 
 #endif //CCOMP_COMMAND_LINE_HPP

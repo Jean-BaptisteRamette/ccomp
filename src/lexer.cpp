@@ -19,6 +19,9 @@ namespace
             const Key& key,
             const typename Map::mapped_type& default_value)
     {
+        /*!
+         * @brief return the value mapped to the key if found, else default value
+         */
         const auto pos { map.find(key) };
 
         if (pos == std::end(map))
@@ -27,9 +30,11 @@ namespace
         return pos->second;
     }
 
-    /* check if the input digit is a valid digit for this base */
     bool is_valid_digit(char digit, int base)
     {
+        /*!
+         * @brief checks if the input digit is a valid digit for the given base
+         */
         if (base == BASE_BIN && (digit == '0' || digit == '1'))
             return true;
 
@@ -98,21 +103,19 @@ namespace ccomp
             {"neq", token_type::instruction },
             {"swp", token_type::instruction }
         }
-{
+    {}
 
-}
+    CCOMP_NODISCARD std::vector<token> lexer::generate_tokens()
+    {
+        std::vector<token> sequence;
 
-std::vector<token> lexer::generate_tokens()
-{
-    std::vector<token> sequence;
-
-        for (auto t { next_token() }; t; t = next_token())
+        for (auto t { next_token() }; t.type != token_type::eof; t = next_token())
             sequence.push_back(t);
 
         return sequence;
     }
 
-    token lexer::next_token()
+    CCOMP_NODISCARD token lexer::next_token()
     {
         skip_next_ws();
 
@@ -120,7 +123,7 @@ std::vector<token> lexer::generate_tokens()
 
         if (std::isalpha(c))
         {
-            std::string lexeme {next_str_lexeme() };
+            std::string lexeme { next_str_lexeme() };
             return { lexeme_to_token_type(lexeme), std::move(lexeme) };
         } else if (std::isdigit(c))
         {
@@ -128,20 +131,29 @@ std::vector<token> lexer::generate_tokens()
             return { token_type::number, lexeme };
         }
 
+        next_chr();
+
         return { lexeme_to_token_type(c) };
     }
 
-    std::string lexer::next_str_lexeme()
+    CCOMP_NODISCARD std::string lexer::next_str_lexeme()
     {
         std::string lexeme;
 
         for (char c = next_chr(); c == '_' || std::isalnum(c); c = next_chr())
-           lexeme += c;
+        {
+            lexeme += c;
+
+            /* next identifier's character doesn't match identifier format */
+            const char next_id_char { peek_chr() };
+            if (next_id_char != '_' && !std::isalnum(next_id_char))
+                break;
+        }
 
         return lexeme;
     }
 
-    std::size_t lexer::next_numeric_lexeme()
+    CCOMP_NODISCARD std::size_t lexer::next_numeric_lexeme()
     {
         int base { BASE_DEC };
 
@@ -150,23 +162,25 @@ std::vector<token> lexer::generate_tokens()
             /* skip 0 */
             next_chr();
 
+            /* check given base */
             switch (peek_chr())
             {
                 case 'b': base = BASE_BIN; next_chr(); break;
                 case 'o': base = BASE_OCT; next_chr(); break;
                 case 'x': base = BASE_HEX; next_chr(); break;
+                default: m_stream.unget(); break;
             }
         }
 
         std::size_t num {};
         bool prev_is_quote {};
 
-        for (char c = next_chr(); ; c = next_chr())
+        for (char c { next_chr() }; ; c = next_chr())
         {
             if (c == '\'')
             {
                 if (prev_is_quote)
-                    throw std::runtime_error("next_numeric_lexeme(): two quotes in binary number");
+                    throw lexer_error(m_state, "Multiple following quotes are forbidden");
 
                 prev_is_quote = true;
                 continue;
@@ -176,10 +190,11 @@ std::vector<token> lexer::generate_tokens()
 
             if (!is_valid_digit(c, base))
             {
-                if (m_stream.eof() || std::isspace(c))
-                    break;
+                if (std::isalnum(c))
+                    throw ccomp::numeric_base_error(m_state, c, base);
 
-                throw std::runtime_error("Invalid digit for given base");
+                m_stream.unget();
+                break;
             }
 
             /* add to num */
@@ -196,14 +211,14 @@ std::vector<token> lexer::generate_tokens()
             next_chr();
     }
 
-    char lexer::peek_chr()
+    CCOMP_NODISCARD char lexer::peek_chr()
     {
-        return m_stream.peek();
+        return static_cast<char>(m_stream.peek());
     }
 
     char lexer::next_chr()
     {
-        const auto c { m_stream.get() };
+        const char c { static_cast<char>(m_stream.get()) };
 
         if (c == '\n')
         {
@@ -215,24 +230,25 @@ std::vector<token> lexer::generate_tokens()
         return c;
     }
 
-    token_type lexer::lexeme_to_token_type(std::string_view lexeme) const
+    CCOMP_NODISCARD token_type lexer::lexeme_to_token_type(std::string_view lexeme) const
     {
         return map_value_or(m_keywords, lexeme, token_type::identifier);
     }
 
-    token_type lexer::lexeme_to_token_type(char c) const noexcept
+    CCOMP_NODISCARD token_type lexer::lexeme_to_token_type(char c) const noexcept
     {
         switch (c)
         {
             case '.': return token_type::dot;
             case ',': return token_type::comma;
+            case ':': return token_type::colon;
             case '[': return token_type::angle_brackets_left;
             case ']': return token_type::angle_brackets_right;
-            default: return token_type::eof;
+            default: return  token_type::eof;
         }
     }
 
-    [[nodiscard]] bool lexer::is_keyword(std::string_view word) const
+    CCOMP_NODISCARD bool lexer::is_keyword(std::string_view word) const
     {
         return m_keywords.contains(word);
     }

@@ -4,15 +4,27 @@
 #include <ccomp/error.hpp>
 
 
+
+#define CMDLINE_FLAG_INPUT  "-input"
+#define CMDLINE_FLAG_OUTPUT "-output"
+
+
+
 int main(int argc, char** argv)
 {
-    const std::optional result { ccomp::read_argv(argc, argv) };
+    ccomp::cmd_line::parser cmdline_reader(argc, argv);
 
-    if (!result)
+    if (!cmdline_reader.has_flag(CMDLINE_FLAG_INPUT))
+    {
+        std::cerr << "No input file";
         return EXIT_FAILURE;
+    }
 
-    const auto& info { result.value() };
 
+    const auto input_file = cmdline_reader.get_flag(CMDLINE_FLAG_INPUT);
+    const auto output_file = cmdline_reader.get_flag_or(CMDLINE_FLAG_OUTPUT, "out.c8c");
+
+    /*
     try
     {
         auto lexer = ccomp::lexer::from_file(info.input_file_name);
@@ -32,6 +44,7 @@ int main(int argc, char** argv)
         std::cout << compile_error.what() << std::endl;
         return EXIT_FAILURE;
     }
+    */
 
 
     return EXIT_SUCCESS;
