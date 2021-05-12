@@ -3,8 +3,10 @@
 
 #ifdef UNIT_TESTS_ON
 #define CCOMP_PRIVATE public
+#define CCOMP_NODISCARD
 #else
 #define CCOMP_PRIVATE private
+#define CCOMP_NODISCARD [[nodiscard]]
 #endif
 
 
@@ -37,11 +39,6 @@ namespace ccomp
     {
         token_type type;
         std::variant<std::string, std::size_t> lexeme_value;
-
-        explicit operator bool() const noexcept
-        {
-            return type != token_type::eof;
-        }
     };
 
     struct lexer_state
@@ -82,23 +79,24 @@ namespace ccomp
          * @brief performs a lexical analyze of the file and creates a sequence of tokens
          * @return token sequence
          */
-        std::vector<token> generate_tokens();
+        CCOMP_NODISCARD std::vector<token> generate_tokens();
 
     CCOMP_PRIVATE:
         /*!
          * @brief returns the peek_chr token that can be found in the stream
          */
-        token next_token();
+        CCOMP_NODISCARD token next_token();
 
         /*!
          * @brief returns the peek_chr lexeme that can be found in the stream
          */
-        std::string next_str_lexeme();
+        CCOMP_NODISCARD std::string next_str_lexeme();
 
         /*!
          * @brief returns the peek_chr numeric value in the stream
+         * may throw numeric_base_error
          */
-        std::size_t next_numeric_lexeme();
+        CCOMP_NODISCARD std::size_t next_numeric_lexeme();
 
         /*!
          * @brief skips all whitespaces
@@ -106,22 +104,22 @@ namespace ccomp
         void skip_next_ws();
 
         /*!
-         * @brief returns the next_chr character without advancing the stream cursor
+         * @brief returns the next character without advancing the stream cursor
          */
-        char peek_chr();
+        CCOMP_NODISCARD char peek_chr();
 
         /*!
-         * @brief returns the next_chr character in the stream and advances the cursor
+         * @brief returns the next character in the stream and advances the stream cursor
          */
-         char next_chr();
+        char next_chr();
 
         /*!
          * @brief matches a lexeme's string representation to a token_type
          */
-         token_type lexeme_to_token_type(std::string_view lexeme) const;
-         token_type lexeme_to_token_type(char c) const noexcept;
+        CCOMP_NODISCARD token_type lexeme_to_token_type(std::string_view lexeme) const;
+        CCOMP_NODISCARD token_type lexeme_to_token_type(char c) const noexcept;
 
-         bool is_keyword(std::string_view word) const;
+        CCOMP_NODISCARD bool is_keyword(std::string_view word) const;
 
     CCOMP_PRIVATE:
         std::stringstream m_stream;
