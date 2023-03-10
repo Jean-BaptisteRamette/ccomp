@@ -1,16 +1,10 @@
 # chip8-asm
 
 ### Comments:
-With ccomp, you can use single line comments as well as multiline comments:
+Comments are used this way:
 
-```c
-// defines a single line comment
-
-/*
-   defines a
-   multiline
-   comment
- */
+```asm
+;; this will be ignored !!
 ```
 
 ### Numeric bases:
@@ -28,24 +22,24 @@ you can use ascii to represent integral types as well
 Lets you define code sections
 ```asm
 label1:
-    // some code
+    ;; some code
     
 label2:
-    // some code
+    ;; some code
 ```
 
 ### Entry Point:
 The entry point of your program must be a main label.
 ```asm
 main:
-    /* entry point code */
+    ;; entry point code
 ```
 
 
 ### Constants definitions:
 You can declare constants using the "define" keyword:
 ```c
-define number 178  // assign value 178 to constant 178
+define number 178  ;; assign value 178 to constant 'number'
 ```
 
 Constant declarations can be limited to a scope:
@@ -56,7 +50,7 @@ label1:
     add rc, number
 
 label2:
-    sub r1, number  // ERROR: number not defined here
+    sub r1, number  ;; ERROR: number not defined here
 ``` 
 
 ### Registers:
@@ -76,25 +70,25 @@ The chip-8 has 4 special purpose registers.
 #### Control Flow:
 
 ```asm
-call 2000      // call subroutine at location
-ret            // returns from a subroutine
-jmp [4000]     // jumps to address r0 + 4000
-jmp 4000       // jumps to address 4000
-jmp .my_label  // jumps to my_label
+call 2000      ;; call subroutine at location
+ret            ;; returns from a subroutine
+jmp [4000]     ;; jumps to address r0 + 4000
+jmp 4000       ;; jumps to address 4000
+jmp .my_label  ;; jumps to my_label
 ```
 
 #### Comparisons:
 
 ```asm
-eq r0, r2   // skips next instruction if r0 == r2
-eq r0, 35   // skips next instruction if r0 == 35
-neq r0, r2  // skips next instruction if r0 != r2
-neq r0, 35  // skips next instruction if r0 != 35
+eq r0, r2   ;; skips next instruction if r0 == r2
+eq r0, 35   ;; skips next instruction if r0 == 35
+neq r0, r2  ;; skips next instruction if r0 != r2
+neq r0, 35  ;; skips next instruction if r0 != 35
 ```
 
 Examples:
 ```asm
-eq rf, 255  // if rf == 255, skips jump to case_not_equal
+eq rf, 255  ;; if rf == 255, skips jump to case_not_equal
 jmp .case_not_equal
 jmp .case_equal
 ```
@@ -103,42 +97,42 @@ jmp .case_equal
 #### Maths:
 Common operations:
 ```asm
-add r0, r2   // adds r2 to register r0, carry flag is set
-add rd, 15   // adds 15 to register rd, carry flag is not changed
-sub rb, r2   // r2 is subtracted from rb, carry flag is set
-suba r1, r2  // sets r1 to r2 minus r1, carry flag is set
+add r0, r2   ;; adds r2 to register r0, carry flag is set
+add rd, 15   ;; adds 15 to register rd, carry flag is not changed
+sub rb, r2   ;; r2 is subtracted from rb, carry flag is set
+suba r1, r2  ;; sets r1 to r2 minus r1, carry flag is set
 ```
 
 Bitwise operations:
 ```asm
-or r1, r2   // sets r1 to r1 OR r2
-and r1, r2  // sets r1 to r1 AND r2
-xor r1, r2  // sets r1 to r1 xor r2
-shr r1      // stores MSB of r1 to rf then shifts r1 to the right by 1
-shl r1      // stores LSB of r1 to rf then shifts r1 to the left by 1
+or r1, r2   ;; sets r1 to r1 OR r2
+and r1, r2  ;; sets r1 to r1 AND r2
+xor r1, r2  ;; sets r1 to r1 xor r2
+shr r1      ;; stores MSB of r1 to rf then shifts r1 to the right by 1
+shl r1      ;; stores LSB of r1 to rf then shifts r1 to the left by 1
 ```
 
 GPR Manipulation:
 
 ```asm
-rdump rb     // stores each register value from r1 to rb (included) contiguously in memory starting from address I.
-rload rb     // sores values from memory starting at address I to register r1 to rb (included).
+rdump rb     ;; stores each register value from r1 to rb (included) contiguously in memory starting from address I.
+rload rb     ;; sores values from memory starting at address I to register r1 to rb (included).
 
-mov re, 0xFF // sets re to value 0xFF
-mov ra, rd   // stores rd into ra
-swp ra, rd   // swaps registers values
+mov re, 0xFF ;; sets re to value 0xFF
+mov ra, rd   ;; stores rd into ra
+swp ra, rd   ;; swaps registers values
 ```
 
 SPR Manipulation:
 ```asm
-mov ar, 3456  // sets address register to address 3456
-mov ar, r1   // sets address register to the location of the sprite for the character in r1
-add ar, r1   // adds r1 to address register, carry flag is not changed
+mov ar, 3456  ;; sets address register to address 3456
+mov ar, r1   ;; sets address register to the location of the sprite for the character in r1
+add ar, r1   ;; adds r1 to address register, carry flag is not changed
 
-mov dt, r0  // sets the delay timer to r0
-mov st, r0  // sets the delay timer to r0
+mov dt, r0  ;; sets the delay timer to r0
+mov st, r0  ;; sets the delay timer to r0
 
-mov rb, dt  // sets rb to dt
+mov rb, dt  ;; sets rb to dt
 ```
 You cannot directly set the PC register, you must use the jmp instructions
 
@@ -146,25 +140,25 @@ Stack Manipulation:
 
 Screen Manipulation:
 ```asm
-draw rb, ra, N  // draws a sprite at coordinates (rb, ra) with height N + 1 pixels
-cls             // clear screen
+draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with height N + 1 pixels
+cls             ;; clear screen
 ```
 
 Keypad Manipulation:
 ```asm
-kpw rd   // key press is awaited and stored in rd
-eq rb    // skips the next instruction of the key stored in rb is pressed
-neq rc   // skips the next instruction of the key stored in rc is not pressed
+kpw rd   ;; key press is awaited and stored in rd
+eq rb    ;; skips the next instruction of the key stored in rb is pressed
+neq rc   ;; skips the next instruction of the key stored in rc is not pressed
 ```
 
 Random Numbers:
 ```asm
-rand r1, 34  // sets r1 to a random value between 0 et 34
+rand r1, 34  ;; sets r1 to a random value between 0 et 34
 ```
 
 BCD:
 ```asm
-bcd re  // stores BCD representation of re register with the MSB at address I
+bcd re  ;; stores BCD representation of re register with the MSB at address I
 ```
 
 #### Inline opcodes:
@@ -172,7 +166,7 @@ bcd re  // stores BCD representation of re register with the MSB at address I
 
         define OPCODE 0x00E0
         label:
-            raw(OPCODE)  // clear the screen
+            raw(OPCODE)  ;; clear the screen
 
 
 ### Instruction Table

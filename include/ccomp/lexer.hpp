@@ -10,11 +10,10 @@
 #endif
 
 
-#include <ccomp/command_line.hpp>
-#include <unordered_map>
+#include <memory>
 #include <sstream>
-#include <variant>
-#include <vector>
+
+#include <ccomp/error.hpp>
 
 
 namespace ccomp
@@ -22,113 +21,85 @@ namespace ccomp
     enum class token_type
     {
         eof,
-        main_symbol,
-        define,
-        label,
-        identifier,
-        dot,
-        comma,
-        colon,
+
+        // [0-9-a-f-A-F]
         number,
-        angle_brackets_left,
-        angle_brackets_right,
-        instruction
+
+        // 'A' (quotes included)
+        byte_ascii,
+
+        // define, raw (instructions not included
+        keyword,
+
+        // label names
+        identifier,
+
+        // constant defined with the define keyword
+        macro_identifier,
+
+        // call, ret, jmp, cls...
+        instruction,
+
+        // pc, sp, ar, dt, st
+        special_registers,
+
+        // r0 - r9
+        general_registers,
     };
 
-    struct token final
+
+    struct token
     {
         token_type type;
-        std::variant<std::string, std::size_t> lexeme_value;
     };
+
 
     struct lexer_state
     {
-        std::size_t line { 1 };
-        std::size_t column { 1 };
+        size_t col {};
+        size_t row {};
     };
+
 
     class lexer final
     {
     public:
-        /*!
-         * @brief Creates a lexer from a file path
-         * @param source_path file path of the compiled file
-         */
-        static lexer from_file(std::string_view source_path);
+		CCOMP_NODISCARD
+        static std::unique_ptr<lexer> from_file(std::string_view path, error_code& ec);
 
-        /*!
-         * @brief Creates a lexer from a buffer, useful for unit tests
-         * @param source_buffer content to be lexed
-         */
-        static lexer from_buff(std::string_view source_buffer);
+#ifdef UNIT_TESTS_ON
+    	CCOMP_NODISCARD
+        static std::unique_ptr<lexer> from_buff(std::string_view buff);
+#endif
 
-        /*!
-         * @brief Creates a lexer from a stream
-         * @param stream contains the source content
-         */
-        explicit lexer(std::stringstream stream);
-
+        explicit lexer(std::stringstream&& istream);
         ~lexer() = default;
 
-        lexer(const lexer&) = delete;
-        lexer(lexer&&) = delete;
+        lexer(const lexer&)            = delete;
+        lexer(lexer&&)                 = delete;
         lexer& operator=(const lexer&) = delete;
-        lexer& operator=(lexer&&) = delete;
+        lexer& operator=(lexer&&)      = delete;
 
-        /*!
-         * @brief performs a lexical analyze of the file and creates a sequence of tokens
-         * @return token sequence
-         */
-        CCOMP_NODISCARD std::vector<token> generate_tokens();
+        CCOMP_NODISCARD
+        token next_token();
 
     CCOMP_PRIVATE:
-        /*!
-         * @brief returns the peek_chr token that can be found in the stream
-         */
-        CCOMP_NODISCARD token next_token();
 
-        /*!
-         * @brief returns the peek_chr lexeme that can be found in the stream
-         */
-        CCOMP_NODISCARD std::string next_str_lexeme();
-
-        /*!
-         * @brief returns the peek_chr numeric value in the stream
-         * may throw numeric_base_error
-         */
-        CCOMP_NODISCARD std::size_t next_numeric_lexeme();
-
-        /*!
-         * @brief skips all whitespaces
-         */
-        void skip_next_ws();
-
-        /*!
-         * @brief returns the next character without advancing the stream cursor
-         */
-        CCOMP_NODISCARD char peek_chr();
-
-        /*!
-         * @brief returns the next character in the stream and advances the stream cursor
-         */
+		CCOMP_NODISCARD
+        char peek_chr();  
         char next_chr();
 
-        /*!
-         * @brief matches a lexeme's string representation to a token_type
-         */
-        CCOMP_NODISCARD token_type lexeme_to_token_type(std::string_view lexeme) const;
-        CCOMP_NODISCARD token_type lexeme_to_token_type(char c) const noexcept;
+        void skip_comment();
+        void skip_wspaces();
 
-        CCOMP_NODISCARD bool is_keyword(std::string_view word) const;
 
     CCOMP_PRIVATE:
-        std::stringstream m_stream;
-        lexer_state m_state;
-
-        /* used to check if a word is reserved, and to easily map them with a token type */
-        std::unordered_map<std::string_view, token_type> m_keywords;
+        std::stringstream istream;
+        lexer_state state;
     };
-}
+
+
+};
 
 
 #endif //CCOMP_LEXER_HPP
