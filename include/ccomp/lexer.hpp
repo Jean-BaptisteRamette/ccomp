@@ -21,7 +21,7 @@ namespace ccomp
 {
     enum class token_type
     {
-		undefined,
+        undefined,
 
         eof,
 
@@ -51,7 +51,7 @@ namespace ccomp
     struct token
     {
         token_type type;
-		std::string_view lexeme;
+        std::string_view lexeme;
     };
 
 
@@ -65,11 +65,11 @@ namespace ccomp
     class lexer final
     {
     public:
-		CCOMP_NODISCARD
+        CCOMP_NODISCARD
         static std::unique_ptr<lexer> from_file(std::string_view path, error_code& ec);
 
 #ifdef UNIT_TESTS_ON
-    	CCOMP_NODISCARD
+        CCOMP_NODISCARD
         static std::unique_ptr<lexer> from_buff(std::string_view buff);
 #endif
 
@@ -86,22 +86,22 @@ namespace ccomp
 
     CCOMP_PRIVATE:
 
-		CCOMP_NODISCARD
+        CCOMP_NODISCARD
         char peek_chr();  
         char next_chr();
 
         void skip_comment();
         void skip_wspaces();
 
-		CCOMP_NODISCARD
-		std::string_view read_numeric_lexeme();
+        CCOMP_NODISCARD
+        std::string_view read_numeric_lexeme();
 
-		CCOMP_NODISCARD
-		std::string_view read_alpha_lexeme();
+        CCOMP_NODISCARD
+        std::string_view read_alpha_lexeme();
 
     CCOMP_PRIVATE:
 
-		stream istream;
+        stream istream;
         lexer_state state;
     };
 

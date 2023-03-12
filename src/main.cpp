@@ -1,4 +1,5 @@
-#include <iostream>
+#include <vector>
+
 #include <ccomp/command_line.hpp>
 #include <ccomp/lexer.hpp>
 #include <ccomp/error.hpp>
@@ -37,7 +38,10 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    const auto token = lexer->next_token();
+    std::vector<ccomp::token> tokens;
+
+    for (auto token = lexer->next_token(); token.type != ccomp::token_type::eof; token = lexer->next_token())
+        tokens.push_back(std::move(token));
 
     return EXIT_SUCCESS;
 }
