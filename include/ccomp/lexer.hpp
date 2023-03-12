@@ -10,9 +10,10 @@
 #endif
 
 
-#include <memory>
 #include <sstream>
+#include <memory>
 
+#include <ccomp/stream.hpp>
 #include <ccomp/error.hpp>
 
 
@@ -20,6 +21,8 @@ namespace ccomp
 {
     enum class token_type
     {
+		undefined,
+
         eof,
 
         // [0-9-a-f-A-F]
@@ -31,26 +34,24 @@ namespace ccomp
         // define, raw (instructions not included
         keyword,
 
-        // label names
+        // label names and constant defined with the "define" keywords
         identifier,
-
-        // constant defined with the define keyword
-        macro_identifier,
 
         // call, ret, jmp, cls...
         instruction,
 
         // pc, sp, ar, dt, st
-        special_registers,
+        special_register,
 
         // r0 - r9
-        general_registers,
+        gp_register,
     };
 
 
     struct token
     {
         token_type type;
+		std::string_view lexeme;
     };
 
 
@@ -72,7 +73,7 @@ namespace ccomp
         static std::unique_ptr<lexer> from_buff(std::string_view buff);
 #endif
 
-        explicit lexer(std::stringstream&& istream);
+        explicit lexer(ccomp::stream&& istream);
         ~lexer() = default;
 
         lexer(const lexer&)            = delete;
@@ -92,9 +93,15 @@ namespace ccomp
         void skip_comment();
         void skip_wspaces();
 
+		CCOMP_NODISCARD
+		std::string_view read_numeric_lexeme();
+
+		CCOMP_NODISCARD
+		std::string_view read_alpha_lexeme();
 
     CCOMP_PRIVATE:
-        std::stringstream istream;
+
+		stream istream;
         lexer_state state;
     };
 
