@@ -140,7 +140,7 @@ namespace ccomp
             return { map_token_type(lexeme), lexeme };
         }
 
-    return { token_type::undefined };
+        return { token_type::undefined };
     }
 
     char lexer::peek_chr()
@@ -152,22 +152,22 @@ namespace ccomp
     {
         const char chr = istream.get();
 
-    if (chr != '\n')
-        ++state.col;
-    else
-    {
-        ++state.row;
-        state.col = 0;
-    }
+        if (chr != '\n')
+            ++state.col;
+        else
+        {
+            ++state.row;
+            state.col = 0;
+        }
 
-    return chr;
+        return chr;
     }
 
     void lexer::skip_comment()
     {
         // Assumes comment was already detected
-    while (!istream.eof() && next_chr() != '\n')
-        next_chr();
+        while (!istream.eof() && next_chr() != '\n')
+            next_chr();
 
         skip_wspaces();
     }
