@@ -7,19 +7,21 @@
 
 
 
-namespace ccomp::cmd_line
+namespace ccomp
 {
-    class parser
+    class command_line
     {
     public:
-        parser(int argc, char** argv);
+        static void register_args(int argc, char **argv);
 
-        bool has_flag(std::string_view flag_name, bool need_value = true);
-        std::string_view get_flag(std::string_view flag_name);
-        std::string_view get_flag_or(std::string_view flag_name, std::string_view default_value);
+        static bool has_flag(std::string_view flag_name, bool need_value = true);
+
+        static std::string_view get_flag(std::string_view flag_name);
+
+        static std::string_view get_flag_or(std::string_view flag_name, std::string_view default_value);
 
     private:
-        std::span<char*> args;
+        static std::span<char *> args;
     };
 }
 

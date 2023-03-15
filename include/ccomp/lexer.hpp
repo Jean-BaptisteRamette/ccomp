@@ -10,7 +10,7 @@
 #endif
 
 
-#include <sstream>
+#include <exception>
 #include <memory>
 
 #include <ccomp/stream.hpp>
@@ -26,7 +26,7 @@ namespace ccomp
         eof,
 
         // [0-9-a-f-A-F]
-        number,
+        numerical,
 
         // 'A' (quotes included)
         byte_ascii,
@@ -61,7 +61,6 @@ namespace ccomp
         size_t row {};
     };
 
-
     class lexer final
     {
     public:
@@ -87,7 +86,7 @@ namespace ccomp
     CCOMP_PRIVATE:
 
         CCOMP_NODISCARD
-        char peek_chr();  
+        char peek_chr() const;
         char next_chr();
 
         void skip_comment();
@@ -100,12 +99,43 @@ namespace ccomp
         std::string_view read_alpha_lexeme();
 
     CCOMP_PRIVATE:
-
         stream istream;
         lexer_state state;
     };
 
 
+    namespace lexer_exception
+    {
+        struct lexer_error : std::runtime_error
+        {
+            lexer_error(lexer_state state_, std::string_view message)
+                : std::runtime_error(message.data()), state(std::move(state_)) {}
+
+            lexer_state state;
+        };
+
+        struct numeric_base_error : lexer_error
+        {
+            numeric_base_error(lexer_state state_, char digit_, int base_)
+                : lexer_error(std::move(state_), "Invalid digit for numeric base"),
+                  digit(digit_),
+                  base(base_)
+            {}
+
+            char digit;
+            int base;
+        };
+
+        struct invalid_token_error : lexer_error
+        {
+            invalid_token_error(lexer_state state_, std::string_view lexeme_)
+                : lexer_error(std::move(state_), "Invalid token"),
+                  lexeme(lexeme_)
+            {}
+
+            std::string_view lexeme;
+        };
+    };
 };
 
 

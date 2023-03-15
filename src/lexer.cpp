@@ -132,7 +132,7 @@ namespace ccomp
             return { token_type::eof };
 
         if (std::isdigit(c))
-            return { token_type::number, read_numeric_lexeme() };
+            return { token_type::numerical, read_numeric_lexeme() };
 
         if (std::isalpha(c))
         {
@@ -143,7 +143,7 @@ namespace ccomp
         return { token_type::undefined };
     }
 
-    char lexer::peek_chr()
+    char lexer::peek_chr() const
     {
         return istream.peek();
     }
@@ -180,18 +180,81 @@ namespace ccomp
 
     std::string_view lexer::read_numeric_lexeme()
     {
-        return "0";
+        const int base = [this]()
+        {
+            if (peek_chr() != '0')
+                return 10;
+
+            next_chr();
+
+            switch (peek_chr())
+            {
+                case 'x': return 16;
+                case 'o': return 8;
+                case 'b': return 2;
+                default:  return std::isdigit(peek_chr()) ? 10 : - 1;
+            }
+        }();
+
+        if (base == -1)
+            throw lexer_exception::numeric_base_error(state, peek_chr(), 10);
+
+        auto base_has_digit = [](int base, char digit) -> bool
+        {
+            if (base == 10 &&  digit >= '0' && digit <= '9')  return true;
+            if (base ==  8 &&  digit >= '0' && digit <= '7')  return true;
+            if (base ==  2 && (digit == '0' || digit == '1')) return true;
+
+            digit = static_cast<char>(std::tolower(digit));
+
+            if (base == 16 && ((digit >= '0' && digit<= '9') || (digit>= 'a' && digit <= 'f')))
+                return true;
+
+            return false;
+        };
+
+        const size_t begin = istream.tellg();
+
+        // skip base character
+        if (base != 10)
+            next_chr();
+
+        for (char c = next_chr(); ; c = next_chr())
+        {
+            if (c == '\'')
+            {
+                if (std::isalnum(peek_chr()))
+                    continue;
+
+                istream.unget();
+                break;
+            }
+
+            if(!std::isalnum(c))
+            {
+                if (!istream.eof())
+                    istream.unget();
+
+                break;
+            }
+
+            if (!base_has_digit(base, c))
+                throw lexer_exception::numeric_base_error(state, c, base);
+        }
+
+        return istream.substr(begin, istream.tellg() - begin);
     }
 
     std::string_view lexer::read_alpha_lexeme()
     {
-        const auto beg = istream.iterator();
-        size_t size = 0;
+        const size_t begin = istream.tellg();
 
-        for (char c = next_chr(); c == '_' || std::isalnum(c); c = next_chr())
-            ++size;
+        for (char c = next_chr(); c == '_' || std::isalnum(c); c = next_chr());
 
-        return { beg, size };
+        if (!istream.eof())
+            istream.unget();
+
+        return istream.substr(begin, istream.tellg() - begin);
     }
 }
 

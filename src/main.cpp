@@ -14,16 +14,16 @@
 
 int main(int argc, char** argv)
 {
-    ccomp::cmd_line::parser cmdline_reader(argc, argv);
+    ccomp::command_line::register_args(argc, argv);
 
-    if (!cmdline_reader.has_flag(CMDLINE_FLAG_INPUT))
+    if (!ccomp::command_line::has_flag(CMDLINE_FLAG_INPUT))
     {
         ccomp::log::error("No input file");
         return EXIT_FAILURE;
     }
 
-    const auto input_file = cmdline_reader.get_flag(CMDLINE_FLAG_INPUT);
-    const auto output_file = cmdline_reader.get_flag_or(CMDLINE_FLAG_OUTPUT, "out.c8c");
+    const auto input_file = ccomp::command_line::get_flag(CMDLINE_FLAG_INPUT);
+    const auto output_file = ccomp::command_line::get_flag_or(CMDLINE_FLAG_OUTPUT, "out.c8c");
 
     auto ec = ccomp::error_code::ok;
     auto lexer = ccomp::lexer::from_file(input_file, ec);

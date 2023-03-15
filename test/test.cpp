@@ -99,9 +99,9 @@ BOOST_AUTO_TEST_CASE(lexer_comment_skip)
     }
 }
 
-BOOST_AUTO_TEST_CASE(lexer_token_type)
+BOOST_AUTO_TEST_CASE(lexer_token_alpha)
 {
-    BOOST_TEST_MESSAGE("[lexer_tests]: token type");
+    BOOST_TEST_MESSAGE("[lexer_tests]: alpha tokens");
 
     {
         auto lex = lexer::from_buff("add sub whatever\nr0");
@@ -110,5 +110,40 @@ BOOST_AUTO_TEST_CASE(lexer_token_type)
         BOOST_REQUIRE(lex->next_token().type == token_type::instruction);
         BOOST_REQUIRE(lex->next_token().type == token_type::identifier);
         BOOST_REQUIRE(lex->next_token().type == token_type::gp_register);
+        BOOST_REQUIRE(lex->next_token().type == token_type::eof);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(lexer_token_numeric)
+{
+    BOOST_TEST_MESSAGE("[lexer_tests]: numeric tokens");
+
+    {
+        auto lex = lexer::from_buff("   1000 00328032 0xDEAD'BEEF 0o777 0b1010'1010");
+
+        BOOST_REQUIRE(lex->next_token().lexeme == "1000");
+        BOOST_REQUIRE(lex->next_token().lexeme == "0328032");
+        BOOST_REQUIRE(lex->next_token().lexeme == "xDEAD'BEEF");
+        BOOST_REQUIRE(lex->next_token().lexeme == "o777");
+        BOOST_REQUIRE(lex->next_token().lexeme == "b1010'1010");
+    }
+
+    {
+        auto lex = lexer::from_buff("1234567890'");
+        BOOST_REQUIRE(lex->next_token().lexeme == "1234567890");
+        BOOST_REQUIRE(lex->next_token().type == token_type::undefined);
+    }
+
+    {
+        auto lex = lexer::from_buff("0b11'00'11''00");
+
+        BOOST_REQUIRE(lex->next_token().lexeme == "b11'00'11");
+        BOOST_REQUIRE(lex->next_token().type == token_type::undefined);
+    }
+
+    {
+        auto lex = lexer::from_buff("134A56");
+
+        BOOST_REQUIRE_THROW(lex->next_token(), lexer_exception::numeric_base_error);
     }
 }

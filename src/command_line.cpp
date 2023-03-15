@@ -1,11 +1,16 @@
 #include <ccomp/command_line.hpp>
 
 
-namespace ccomp::cmd_line
+namespace ccomp
 {
-    parser::parser(int argc, char** argv) : args(argv, argc) {}
+    std::span<char*> command_line::args;
 
-    bool parser::has_flag(std::string_view flag_name, bool need_value)
+    void command_line::register_args(int argc, char** argv)
+    {
+        args = { argv, static_cast<size_t>(argc) };
+    }
+
+    bool command_line::has_flag(std::string_view flag_name, bool need_value)
     {
         const auto it = std::find(args.begin(), args.end(), flag_name);
 
@@ -18,7 +23,7 @@ namespace ccomp::cmd_line
         return true;
     }
 
-    std::string_view parser::get_flag(std::string_view flag_name)
+    std::string_view command_line::get_flag(std::string_view flag_name)
     {
         auto it = std::find(args.begin(), args.end(), flag_name);
 
@@ -28,7 +33,7 @@ namespace ccomp::cmd_line
         return {};
     }
 
-    std::string_view parser::get_flag_or(std::string_view flag_name, std::string_view default_value)
+    std::string_view command_line::get_flag_or(std::string_view flag_name, std::string_view default_value)
     {
         if (!has_flag(flag_name))
             return default_value;
