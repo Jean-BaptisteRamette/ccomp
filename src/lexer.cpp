@@ -140,6 +140,13 @@ namespace ccomp
             return { map_token_type(lexeme), lexeme };
         }
 
+        if (std::string_view { "[]():,." }.contains(c))
+        {
+            token tok = { token_type::special_character, istream.substr(istream.tellg(), 1) };
+            next_chr();
+            return tok;
+        }
+
         return { token_type::undefined };
     }
 
@@ -232,7 +239,7 @@ namespace ccomp
 
             if(!std::isalnum(c))
             {
-                if (!istream.eof())
+                if (c != '\0')
                     istream.unget();
 
                 break;

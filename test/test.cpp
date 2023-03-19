@@ -135,6 +135,13 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
     }
 
     {
+        auto lex = lexer::from_buff("1234567890)");
+
+        BOOST_REQUIRE(lex->next_token().lexeme == "1234567890");
+        BOOST_REQUIRE(lex->next_token().type == token_type::special_character);
+    }
+
+    {
         auto lex = lexer::from_buff("0b11'00'11''00");
 
         BOOST_REQUIRE(lex->next_token().lexeme == "b11'00'11");

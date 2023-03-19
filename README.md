@@ -39,18 +39,18 @@ main:
 ### Constants definitions:
 You can declare constants using the "define" keyword:
 ```c
-define number 178  ;; assign value 178 to constant 'number'
+define numerical 178  ;; assign value 178 to constant 'numerical'
 ```
 
 Constant declarations can be limited to a scope:
 
 ```asm
 label1:
-    define number 178
-    add rc, number
+    define numerical 178
+    add rc, numerical
 
 label2:
-    sub r1, number  ;; ERROR: number not defined here
+    sub r1, numerical  ;; ERROR: numerical not defined here
 ``` 
 
 ### Registers:

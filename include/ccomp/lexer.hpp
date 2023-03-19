@@ -45,6 +45,9 @@ namespace ccomp
 
         // r0 - r9
         gp_register,
+
+        // []():,.
+        special_character
     };
 
 
