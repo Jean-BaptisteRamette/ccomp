@@ -1,6 +1,7 @@
 #include <vector>
 
 #include <ccomp/command_line.hpp>
+#include <ccomp/parser.hpp>
 #include <ccomp/lexer.hpp>
 #include <ccomp/error.hpp>
 #include <ccomp/log.hpp>
@@ -40,8 +41,28 @@ int main(int argc, char** argv)
 
     std::vector<ccomp::token> tokens;
 
-    for (auto token = lexer->next_token(); token.type != ccomp::token_type::eof; token = lexer->next_token())
-        tokens.push_back(std::move(token));
+    for (ccomp::token token = lexer->next_token(); token.type != ccomp::token_type::eof; token = lexer->next_token())
+    {
+        if (token.type == ccomp::token_type::undefined)
+        {
+            ccomp::log::error("Undefined token {} on line {} column {}.",
+                              token.lexeme,
+                              lexer->state.row,
+                              lexer->state.col);
+
+            break;
+        }
+
+        tokens.push_back(token);
+    }
+
+    if (tokens.empty())
+    {
+        ccomp::log::warn("No input to read.\n");
+        return 0;
+    }
+
+    ccomp::parser parser(std::move(tokens));
 
     return EXIT_SUCCESS;
 }

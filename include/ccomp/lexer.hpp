@@ -10,6 +10,7 @@
 #endif
 
 
+#include <string_view>
 #include <exception>
 #include <memory>
 
@@ -29,12 +30,13 @@ namespace ccomp
         numerical,
 
         // 'A' (quotes included)
+        // TODO
         byte_ascii,
 
         // define, raw (instructions not included
         keyword,
 
-        // label names and constant defined with the "define" keywords
+        // constants defined with the "define" keywords and label names
         identifier,
 
         // call, ret, jmp, cls...
@@ -103,6 +105,8 @@ namespace ccomp
 
     CCOMP_PRIVATE:
         stream istream;
+
+    public:
         lexer_state state;
     };
 

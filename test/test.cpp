@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE ccomp_unittests
 #include <boost/test/included/unit_test.hpp>
 #include <ccomp/lexer.hpp>
+#include <ccomp/parser.hpp>
 
 
 using namespace ccomp;
@@ -153,4 +154,36 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
 
         BOOST_REQUIRE_THROW(lex->next_token(), lexer_exception::numeric_base_error);
     }
+}
+
+
+BOOST_AUTO_TEST_CASE(parser_node_tests)
+{
+    {
+        const char* code =
+                "define numbera 0x77\n"
+                "define numberb 0b11'10\n";
+
+        auto parser = parser::from_buff(code);
+
+        const ast::tree tree = parser->make_tree();
+        ast::node_visitor visitor;
+
+        for (const auto& node : tree.branches)
+            node->accept(visitor);
+    }
+
+    // {
+    //     auto parser = parser::from_buff("add rc, 0x10");
+    //     const ast::inst_node instruction = parser->expr_instruction();
+
+    //     BOOST_REQUIRE(instruction.mnemonic == "add");
+    //     BOOST_REQUIRE(instruction.operands == 2);
+    //     BOOST_REQUIRE(instruction.lhs.token.lexeme == "rc");
+    //     BOOST_REQUIRE(instruction.lhs.token.lexeme == "x10");
+    // }
+
+    // {
+    //     auto parser = parser::from_buff("draw r1, r2, 6")
+    // }
 }
