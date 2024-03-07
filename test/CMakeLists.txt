@@ -1,7 +1,7 @@
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 
-find_package(Boost 1.81.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.82.0 REQUIRED COMPONENTS unit_test_framework)
 
 set(CCOMP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/)
 set(CCOMP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/)

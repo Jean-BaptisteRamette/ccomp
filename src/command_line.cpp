@@ -33,7 +33,7 @@ namespace ccomp
         return {};
     }
 
-    std::string_view command_line::get_flag_or(std::string_view flag_name, std::string_view default_value)
+    std::string command_line::get_flag_or(std::string_view flag_name, std::string default_value)
     {
         if (!has_flag(flag_name))
             return default_value;
@@ -41,7 +41,7 @@ namespace ccomp
         const auto value = get_flag(flag_name);
 
         if (!value.empty())
-            return value;
+            return std::string(value);
 
         return default_value;
     }
