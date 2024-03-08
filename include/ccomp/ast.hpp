@@ -4,9 +4,9 @@
 
 #include <string_view>
 #include <memory>
-#include <list>
+#include <vector>
 
-#include <ccomp/node.hpp>
+#include <ccomp/statement_node.hpp>
 
 
 namespace ccomp::ast
@@ -29,15 +29,15 @@ namespace ccomp::ast
     //
     //
     //
-    class tree
+    class intermediate_representation
     {
     public:
-        tree() = default;
+        intermediate_representation() = default;
 
-        void add_branch(std::unique_ptr<ast::node> node);
+        void add_statement(ast::statement node);
 
     CCOMP_PRIVATE:
-        std::list<std::unique_ptr<node>> branches {};
+        std::vector<ast::statement> branches {};
     };
 }
 

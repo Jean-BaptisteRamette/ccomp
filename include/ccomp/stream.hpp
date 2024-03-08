@@ -20,7 +20,7 @@ namespace ccomp
         void seek(size_t offset);
         size_t tellg() const;
         void   unget();
-        std::string_view substr(size_t beg, size_t size) const;
+        std::string substr(size_t beg, size_t size) const;
 
     private:
         std::string buffer;

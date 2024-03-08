@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     const auto input_file = ccomp::command_line::get_flag(CMDLINE_FLAG_INPUT);
     const auto output_file = ccomp::command_line::get_flag_or(CMDLINE_FLAG_OUTPUT, "out.c8c");
 
-    auto ec = ccomp::error_code::ok;
+    ccomp::error_code ec;
     auto lexer = ccomp::lexer::from_file(input_file, ec);
 
     if (!lexer)
@@ -39,30 +39,26 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::vector<ccomp::token> tokens;
+	try
+	{
+		auto tokens = lexer->enumerate_tokens();
 
-    for (ccomp::token token = lexer->next_token(); token.type != ccomp::token_type::eof; token = lexer->next_token())
-    {
-        if (token.type == ccomp::token_type::undefined)
-        {
-            ccomp::log::error("Undefined token {} on line {} column {}.",
-                              token.lexeme,
-                              lexer->state.row,
-                              lexer->state.col);
+		if (tokens.empty())
+		{
+			ccomp::log::warn("No input to be read.\n");
+			return EXIT_SUCCESS;
+		}
 
-            break;
-        }
+		ccomp::parser parser(std::move(tokens));
 
-        tokens.push_back(token);
-    }
+		const auto ir = parser.make_ir();
 
-    if (tokens.empty())
-    {
-        ccomp::log::warn("No input to read.\n");
-        return 0;
-    }
+	} catch (std::runtime_error& error)
+	{
+		ccomp::log::error(error.what());
+		return EXIT_FAILURE;
+	}
 
-    ccomp::parser parser(std::move(tokens));
 
     return EXIT_SUCCESS;
 }

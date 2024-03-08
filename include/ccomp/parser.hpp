@@ -25,22 +25,23 @@ namespace ccomp
 
         ~parser() = default;
 
-        CCOMP_NODISCARD
-        ast::tree make_tree();
+        CCOMP_NODISCARD ast::intermediate_representation make_ir();
 
     CCOMP_PRIVATE:
+		token expect(token_type expected_type);
+		token advance();
         CCOMP_NODISCARD size_t remaining_tokens() const;
 
-        CCOMP_NODISCARD std::unique_ptr<ast::node>      expr_block();
-        CCOMP_NODISCARD std::unique_ptr<ast::raw_node>  expr_raw();
-        CCOMP_NODISCARD std::unique_ptr<ast::defn_node> expr_define();
-        CCOMP_NODISCARD std::unique_ptr<ast::inst_node> expr_instruction();
-        CCOMP_NODISCARD std::unique_ptr<ast::subr_node> expr_subroutine();
-        CCOMP_NODISCARD std::unique_ptr<ast::oper_node> expr_operand(char operands_remain);
+        CCOMP_NODISCARD ast::statement parse_next_block();
+        CCOMP_NODISCARD ast::statement parse_raw();
+        CCOMP_NODISCARD ast::statement parse_define();
+        CCOMP_NODISCARD ast::statement parse_instruction();
+        CCOMP_NODISCARD ast::statement parse_subroutine();
+        CCOMP_NODISCARD ast::statement parse_operand();
 
     CCOMP_PRIVATE:
         const std::vector<token> tokens;
-        std::vector<token>::const_iterator token;
+        std::vector<token>::const_iterator token_it;
     };
 
 
@@ -48,45 +49,50 @@ namespace ccomp
     {
         struct parser_error : std::runtime_error
         {
-            explicit parser_error(std::string_view parsing_context_, std::string_view message)
-                : parsing_context(parsing_context_), std::runtime_error(message.data()) {}
-
-            // TODO: more precise parsing context
-            std::string_view parsing_context;
+            explicit parser_error(std::string_view message)
+				: std::runtime_error(message.data()) {}
         };
 
         struct expected_more_error : parser_error
         {
-            explicit expected_more_error(std::string_view parsing_context, std::string_view last_lexeme_)
-                : parser_error(parsing_context, std::format("Expected more tokens to parse after last token {} while parsing {}", last_lexeme, parsing_context)),
-                  last_lexeme(last_lexeme_)
+            explicit expected_more_error(const token& last_token_)
+                : parser_error(std::format("Expected more tokens after last token \"{}\" while parsing at line {} column {}",
+										   last_token_.lexeme,
+										   last_token_.source_location.line,
+										   last_token_.source_location.col)),
+				  last_token(last_token_)
                   {}
 
-            std::string_view last_lexeme;
+            const token last_token;
         };
 
-        struct expected_else_error: parser_error
-        {
-            explicit expected_else_error(std::string_view parsing_context, std::string_view last_lexeme_, std::string_view unexpected_, std::string_view expected_)
-                : parser_error(parsing_context, std::format(R"(Expected token among "{}" after last token {} while parsing {} but got "{}")", expected_, last_lexeme_, parsing_context, unexpected_)),
-                  last_lexeme(last_lexeme_),
-                  unexpected(unexpected_),
-                  expected(expected_)
-                  {}
+		struct expected_other_error : parser_error
+		{
+			explicit expected_other_error(const token& unexpected_, token_type expected_type_)
+					: parser_error(std::format("Parser got token \"{}\" but expected a token of type {} while parsing at line {} column {}.",
+											   unexpected_.lexeme,
+											   ccomp::to_string(expected_type_),
+											   unexpected_.source_location.line,
+											   unexpected_.source_location.col)),
+					  unexpected(unexpected_),
+					  expected_type(expected_type_)
+			{}
 
-            std::string_view last_lexeme;
-            std::string_view unexpected;
-            std::string_view expected;
-        };
+			const token unexpected;
+			const token_type expected_type;
+		};
 
         struct unexpected_error : parser_error
         {
-            explicit unexpected_error(std::string_view parsing_context, std::string_view unexpected_)
-                : parser_error(parsing_context, std::format(R"(Unexpected token {} while parsing {})", unexpected_, parsing_context)),
+            explicit unexpected_error(const token& unexpected_)
+                : parser_error(std::format("Unexpected token {} while parsing at line {} column {}.",
+										   unexpected_.lexeme,
+										   unexpected_.source_location.line,
+										   unexpected_.source_location.col)),
                   unexpected(unexpected_)
                   {}
 
-                  std::string_view unexpected;
+            const token unexpected;
         };
     }
 }

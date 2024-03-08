@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(lexer_comment_skip)
     {
         auto lex = lexer::from_buff("; not a proper comment");
 
-        BOOST_REQUIRE(lex->next_token().type == token_type::undefined);
+        BOOST_REQUIRE_THROW(lex->next_token(), std::runtime_error);
     }
 }
 
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
     {
         auto lex = lexer::from_buff("1234567890'");
         BOOST_REQUIRE(lex->next_token().lexeme == "1234567890");
-        BOOST_REQUIRE(lex->next_token().type == token_type::undefined);
+        BOOST_REQUIRE_THROW(lex->next_token(), ccomp::lexer_exception::undefined_token_error);
     }
 
     {
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
         auto lex = lexer::from_buff("0b11'00'11''00");
 
         BOOST_REQUIRE(lex->next_token().lexeme == "b11'00'11");
-        BOOST_REQUIRE(lex->next_token().type == token_type::undefined);
+        BOOST_REQUIRE_THROW(lex->next_token(), ccomp::lexer_exception::undefined_token_error);
     }
 
     {
@@ -160,30 +160,14 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
 BOOST_AUTO_TEST_CASE(parser_node_tests)
 {
     {
-        const char* code =
+        constexpr auto code =
                 "define numbera 0x77\n"
                 "define numberb 0b11'10\n";
 
         auto parser = parser::from_buff(code);
 
-        const ast::tree tree = parser->make_tree();
-        ast::node_visitor visitor;
+		const auto ir = parser->make_ir();
 
-        for (const auto& node : tree.branches)
-            node->accept(visitor);
+		BOOST_REQUIRE(ir.branches.size() == 2);
     }
-
-    // {
-    //     auto parser = parser::from_buff("add rc, 0x10");
-    //     const ast::inst_node instruction = parser->expr_instruction();
-
-    //     BOOST_REQUIRE(instruction.mnemonic == "add");
-    //     BOOST_REQUIRE(instruction.operands == 2);
-    //     BOOST_REQUIRE(instruction.lhs.token.lexeme == "rc");
-    //     BOOST_REQUIRE(instruction.lhs.token.lexeme == "x10");
-    // }
-
-    // {
-    //     auto parser = parser::from_buff("draw r1, r2, 6")
-    // }
 }

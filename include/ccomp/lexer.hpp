@@ -13,6 +13,7 @@
 #include <string_view>
 #include <exception>
 #include <memory>
+#include <format>
 
 #include <ccomp/stream.hpp>
 #include <ccomp/error.hpp>
@@ -52,18 +53,48 @@ namespace ccomp
         special_character
     };
 
+	CCOMP_NODISCARD
+	constexpr std::string_view to_string(token_type type)
+	{
+		switch (type)
+		{
+			case token_type::undefined:
+				return "undefined";
+			case token_type::eof:
+				return "eof";
+			case token_type::numerical:
+				return "numerical";
+			case token_type::byte_ascii:
+				return "ascii";
+			case token_type::keyword:
+				return "keyword";
+			case token_type::identifier:
+				return "identifier";
+			case token_type::instruction:
+				return "instruction";
+			case token_type::special_register:
+				return "special register";
+			case token_type::gp_register:
+				return "general purpose register";
+			case token_type::special_character:
+				return "special character";
 
-    struct token
+			default:
+				return "unknown";
+		}
+	}
+
+	struct source_location
+	{
+		size_t col {};
+		size_t line {};
+	};
+
+	struct token
     {
         token_type type;
-        std::string_view lexeme;
-    };
-
-
-    struct lexer_state
-    {
-        size_t col {};
-        size_t row {};
+        std::string lexeme;
+		source_location source_location;
     };
 
     class lexer final
@@ -85,10 +116,10 @@ namespace ccomp
         lexer& operator=(const lexer&) = delete;
         lexer& operator=(lexer&&)      = delete;
 
-        CCOMP_NODISCARD
-        token next_token();
+		CCOMP_NODISCARD std::vector<token> enumerate_tokens();
 
     CCOMP_PRIVATE:
+		CCOMP_NODISCARD token next_token();
 
         CCOMP_NODISCARD
         char peek_chr() const;
@@ -97,50 +128,48 @@ namespace ccomp
         void skip_comment();
         void skip_wspaces();
 
-        CCOMP_NODISCARD
-        std::string_view read_numeric_lexeme();
+		CCOMP_NODISCARD
+		token make_token(token_type type, std::string lexeme = {});
 
-        CCOMP_NODISCARD
-        std::string_view read_alpha_lexeme();
+        CCOMP_NODISCARD std::string read_numeric_lexeme();
+        CCOMP_NODISCARD std::string read_alpha_lexeme();
+		CCOMP_NODISCARD std::string read_special_char();
 
     CCOMP_PRIVATE:
-        stream istream;
-
-    public:
-        lexer_state state;
+        ccomp::stream istream;
+        source_location cursor;
     };
 
 
     namespace lexer_exception
     {
-        struct lexer_error : std::runtime_error
+        struct numeric_base_error : std::runtime_error
         {
-            lexer_error(lexer_state state_, std::string_view message)
-                : std::runtime_error(message.data()), state(std::move(state_)) {}
-
-            lexer_state state;
-        };
-
-        struct numeric_base_error : lexer_error
-        {
-            numeric_base_error(lexer_state state_, char digit_, int base_)
-                : lexer_error(std::move(state_), "Invalid digit for numeric base"),
+            numeric_base_error(source_location source_loc, char digit_, int base_)
+                : std::runtime_error(std::format("Invalid digit {} for numeric base {} at line {} column {}.",
+									 digit_,
+									 base_,
+									 source_loc.line,
+									 source_loc.col)),
                   digit(digit_),
                   base(base_)
             {}
 
-            char digit;
-            int base;
+            const char digit;
+            const int base;
         };
 
-        struct invalid_token_error : lexer_error
+        struct undefined_token_error : std::runtime_error
         {
-            invalid_token_error(lexer_state state_, std::string_view lexeme_)
-                : lexer_error(std::move(state_), "Invalid token"),
-                  lexeme(lexeme_)
+            explicit undefined_token_error(const token& token_)
+                : std::runtime_error(std::format("Unknown token {} at line {} column {}.",
+									 token_.lexeme,
+									 token_.source_location.line,
+									 token_.source_location.col)),
+                  token(token_)
             {}
 
-            std::string_view lexeme;
+            const token token;
         };
     };
 };

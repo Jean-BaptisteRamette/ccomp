@@ -21,145 +21,91 @@ namespace ccomp
 #endif
 
 
-    parser::parser(std::vector<ccomp::token> &&tokens_list)
-        : tokens(std::move(tokens_list)), token(std::begin(tokens))
+    parser::parser(std::vector<token> &&tokens_list)
+        : tokens(std::move(tokens_list)),
+		  token_it(std::begin(tokens))
     {}
+
+	token parser::expect(token_type expected_type)
+	{
+		const token t = advance();
+
+		if (t.type != expected_type)
+			throw parser_exception::expected_other_error(t, expected_type);
+
+		return t;
+	}
+
+	token parser::advance()
+	{
+		const token t = *token_it;
+		++token_it;
+
+		return t;
+	}
 
     size_t parser::remaining_tokens() const
     {
-        return std::distance(token, std::end(tokens));
+        return std::distance(token_it, std::end(tokens));
     }
 
-    ast::tree parser::make_tree()
+    ast::intermediate_representation parser::make_ir()
     {
+        ast::intermediate_representation ir;
 
-        ast::tree tree;
+        for (auto block = parse_next_block(); block != nullptr; block = parse_next_block())
+			ir.add_statement(std::move(block));
 
-        for (auto block = expr_block(); block != nullptr; block = expr_block())
-            tree.add_branch(std::move(block));
-
-        return tree;
+        return ir;
     }
 
-    std::unique_ptr<ast::node> parser::expr_block()
-    {
-        if (!remaining_tokens())
-            return nullptr;
+	ast::statement parser::parse_next_block()
+	{
+		if (token_it == std::end(tokens))
+			return {};
 
-        switch (token->type)
-        {
-            case token_type::keyword:
-                if (token->lexeme == "define") return expr_define();
+		if (token_it->type == token_type::keyword || token_it->type == token_type::special_character)
+		{
+			if (token_it->lexeme == "raw")
+				return parse_raw();
+			else if (token_it->lexeme == "define")
+				return parse_define();
+			else if (token_it->lexeme == ".")
+				return parse_subroutine();
+		}
 
-            // case token_type::special_character:
-            //     if (token->lexeme == ".") return expr_subroutine();
+		throw parser_exception::unexpected_error(*token_it);
+	}
 
-            default:
-                break;
-        }
+	ast::statement parser::parse_raw()
+	{
+		return {};
+	}
 
-        throw parser_exception::unexpected_error(
-                "block",
-                token->lexeme
-        );
-    }
+	ast::statement parser::parse_define()
+	{
+		expect(token_type::keyword);
 
-    std::unique_ptr<ast::subr_node> parser::expr_subroutine()
-    {
-       //
-       //  ++token;
-       //
-       //  if (!remaining_tokens())
-       //      throw parser_exception::expected_more_error("subroutine", tokens.back().lexeme);
-       //
-       //  std::string_view name = token->lexeme;
-       //
-       //  ++token;
-       //  if (token->lexeme != ":")
-       //      throw parser_exception::expected_else_error("subroutine", name, token->lexeme, ":");
-       //
-       //  ++token;
-       //
-       //
-       //  return std::make_unique<ast::subr_node>();
-       return nullptr;
-    }
+		const token identifier = expect(token_type::identifier);
+		const token value = expect(token_type::numerical);
 
-    std::unique_ptr<ast::defn_node> parser::expr_define()
-    {
-        ++token;
+		auto statement = std::make_unique<ast::defn_node>(identifier, value);
 
-        if (remaining_tokens() < 2)
-            throw parser_exception::expected_more_error("define", tokens.back().lexeme);
+		return statement;
+	}
 
-        std::string_view identifier = token->lexeme;
+	ast::statement parser::parse_instruction()
+	{
+		return {};
+	}
 
-        ++token;
+	ast::statement parser::parse_subroutine()
+	{
+		return {};
+	}
 
-        std::string_view value = token->lexeme;
-
-        ++token;
-
-        return std::make_unique<ast::defn_node>(identifier, value);
-    }
-
-    std::unique_ptr<ast::raw_node> parser::expr_raw()
-    {
-        return nullptr;
-    }
-
-    std::unique_ptr<ast::inst_node> parser::expr_instruction()
-    {
-        /*
-        ast::inst_node node = {
-            .mnemonic = token->lexeme,
-            .operands = inst::operands_count(token->lexeme)
-        };
-
-        if (node.operands <= 0)
-            return node;
-
-        ++token;
-
-        // add rc, 0x10
-        auto operands_left = node.operands;  // 2
-
-        if (node.operands > 0) node.lhs = expr_operand(--operands_left);
-        if (node.operands > 1) node.rhs = expr_operand(--operands_left);
-        if (node.operands > 2) node.opt = expr_operand(--operands_left);
-
-        return node;
-         */
-
-        return nullptr;
-    }
-
-    std::unique_ptr<ast::oper_node> parser::expr_operand(char operands_remain)
-    {
-         // auto is_reg_token = [&]() -> bool
-         // {
-         //     return token->type == token_type::gp_register || token->type == token_type::special_register;
-         // };
-
-         // if (remaining_tokens() < 1)
-         //     throw parser_exception::expected_more_error("operands", tokens.back().lexeme);
-
-
-        return nullptr;
-    }
+	ast::statement parser::parse_operand()
+	{
+		return {};
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

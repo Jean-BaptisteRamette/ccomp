@@ -39,7 +39,6 @@ namespace ccomp
         return cursor;
     }
 
-
     void stream::seek(size_t offset)
     {
         if (offset >= buffer.size())
@@ -48,7 +47,7 @@ namespace ccomp
         cursor = offset;
     }
 
-    std::string_view stream::substr(size_t beg, size_t size) const
+    std::string stream::substr(size_t beg, size_t size) const
     {
         return { &buffer[beg], size };
     }

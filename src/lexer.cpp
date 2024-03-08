@@ -98,6 +98,8 @@ namespace ccomp
 
         ccomp::stream istream(infile);
 
+		ec = error_code::ok;
+
         return std::make_unique<lexer>(std::move(istream));
     }
 
@@ -112,6 +114,21 @@ namespace ccomp
 
     lexer::lexer(ccomp::stream&& istream) : istream(std::move(istream)) {}
 
+	token lexer::make_token(token_type type, std::string lexeme)
+	{
+		return { .type = type, .lexeme = std::move(lexeme), .source_location = cursor };
+	}
+
+	std::vector<token> lexer::enumerate_tokens()
+	{
+		std::vector<token> tokens;
+
+		for (auto token = next_token(); token.type != token_type::eof; token = next_token())
+			tokens.push_back(token);
+
+		return tokens;
+	}
+
     token lexer::next_token()
     {
         skip_wspaces();
@@ -122,32 +139,32 @@ namespace ccomp
         {
             next_chr();
             if (next_chr() != ';')
-                return { token_type::undefined };
+				throw std::runtime_error("Expected a second \";\" for comment.");
 
             skip_comment();
             c = peek_chr();
         }
 
         if (istream.eof())
-            return { token_type::eof };
+            return make_token(token_type::eof);
 
         if (std::isdigit(c))
-            return { token_type::numerical, read_numeric_lexeme() };
+            return make_token(token_type::numerical, read_numeric_lexeme());
 
         if (std::isalpha(c))
         {
             const auto lexeme = read_alpha_lexeme();
-            return { map_token_type(lexeme), lexeme };
+            return make_token(map_token_type(lexeme), lexeme);
         }
 
         if (std::string_view { "[]():,." }.contains(c))
         {
-            token tok = { token_type::special_character, istream.substr(istream.tellg(), 1) };
+            const auto tok = make_token(token_type::special_character, read_special_char());
             next_chr();
             return tok;
         }
 
-        return { token_type::undefined };
+        throw lexer_exception::undefined_token_error(make_token(token_type::undefined));
     }
 
     char lexer::peek_chr() const
@@ -160,11 +177,11 @@ namespace ccomp
         const char chr = istream.get();
 
         if (chr != '\n')
-            ++state.col;
+            ++cursor.col;
         else
         {
-            ++state.row;
-            state.col = 0;
+            ++cursor.line;
+			cursor.col = 0;
         }
 
         return chr;
@@ -185,7 +202,7 @@ namespace ccomp
             next_chr();
     }
 
-    std::string_view lexer::read_numeric_lexeme()
+    std::string lexer::read_numeric_lexeme()
     {
         const int base = [this]()
         {
@@ -204,7 +221,7 @@ namespace ccomp
         }();
 
         if (base == -1)
-            throw lexer_exception::numeric_base_error(state, peek_chr(), 10);
+            throw lexer_exception::numeric_base_error(cursor, peek_chr(), 10);
 
         auto base_has_digit = [](int base, char digit) -> bool
         {
@@ -246,13 +263,13 @@ namespace ccomp
             }
 
             if (!base_has_digit(base, c))
-                throw lexer_exception::numeric_base_error(state, c, base);
+                throw lexer_exception::numeric_base_error(cursor, c, base);
         }
 
         return istream.substr(begin, istream.tellg() - begin);
     }
 
-    std::string_view lexer::read_alpha_lexeme()
+    std::string lexer::read_alpha_lexeme()
     {
         const size_t begin = istream.tellg();
 
@@ -263,6 +280,11 @@ namespace ccomp
 
         return istream.substr(begin, istream.tellg() - begin);
     }
+
+	std::string lexer::read_special_char()
+	{
+		return istream.substr(istream.tellg(), 1);
+	}
 }
 
 
