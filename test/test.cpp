@@ -170,4 +170,16 @@ BOOST_AUTO_TEST_CASE(parser_node_tests)
 
 		BOOST_REQUIRE(ir.branches.size() == 2);
     }
+
+	{
+		constexpr auto code =
+				"raw(255)\n"
+				"raw(0b1111'0000)\n";
+
+		auto parser = parser::from_buff(code);
+
+		const auto ir = parser->make_ir();
+
+		BOOST_REQUIRE(ir.branches.size() == 2);
+	}
 }

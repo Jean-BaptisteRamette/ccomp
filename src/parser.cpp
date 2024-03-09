@@ -26,6 +26,7 @@ namespace ccomp
 		  token_it(std::begin(tokens))
     {}
 
+	// TODO: make this take a variadic amount of expected_type
 	token parser::expect(token_type expected_type)
 	{
 		const token t = advance();
@@ -79,19 +80,28 @@ namespace ccomp
 
 	ast::statement parser::parse_raw()
 	{
-		return {};
+		expect(token_type::keyword);
+		expect(token_type::special_character);
+
+		auto token = expect(token_type::numerical);
+
+		expect(token_type::special_character);
+
+		return std::make_unique<ast::raw_statement>(std::move(token));
 	}
 
 	ast::statement parser::parse_define()
 	{
+		// consume "define" token
 		expect(token_type::keyword);
 
-		const token identifier = expect(token_type::identifier);
-		const token value = expect(token_type::numerical);
+		auto identifier = expect(token_type::identifier);
+		auto value = expect(token_type::numerical);
 
-		auto statement = std::make_unique<ast::defn_node>(identifier, value);
-
-		return statement;
+		return std::make_unique<ast::define_statement>(
+									std::move(identifier),
+									std::move(value)
+								);
 	}
 
 	ast::statement parser::parse_instruction()

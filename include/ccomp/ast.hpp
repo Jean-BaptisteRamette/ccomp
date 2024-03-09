@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include <ccomp/statement_node.hpp>
+#include <ccomp/statements.hpp>
 
 
 namespace ccomp::ast
