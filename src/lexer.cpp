@@ -105,7 +105,7 @@ namespace ccomp
 
 
 #ifdef UNIT_TESTS_ON
-    std::unique_ptr<lexer> lexer::from_buff(std::string_view buff)
+    std::unique_ptr<lexer> lexer::from_buffer(std::string_view buff)
     {
         ccomp::stream istream(buff.data());
         return std::make_unique<lexer>(std::move(istream));

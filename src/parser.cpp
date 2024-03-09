@@ -7,9 +7,9 @@ namespace ccomp
 {
 
 #ifdef UNIT_TESTS_ON
-    std::unique_ptr<parser> parser::from_buff(std::string_view buff)
+    std::unique_ptr<parser> parser::from_buffer(std::string_view buff)
     {
-        auto lexer = ccomp::lexer::from_buff(buff);
+        auto lexer = ccomp::lexer::from_buffer(buff);
 
         std::vector<ccomp::token> tokens;
 
@@ -26,17 +26,6 @@ namespace ccomp
 		  token_it(std::begin(tokens))
     {}
 
-	// TODO: make this take a variadic amount of expected_type
-	token parser::expect(token_type expected_type)
-	{
-		const token t = advance();
-
-		if (t.type != expected_type)
-			throw parser_exception::expected_other_error(t, expected_type);
-
-		return t;
-	}
-
 	token parser::advance()
 	{
 		const token t = *token_it;
@@ -50,14 +39,14 @@ namespace ccomp
         return std::distance(token_it, std::end(tokens));
     }
 
-    ast::intermediate_representation parser::make_ir()
+    ast::abstract_tree parser::make_ast()
     {
-        ast::intermediate_representation ir;
+        ast::abstract_tree ast;
 
-        for (auto block = parse_next_block(); block != nullptr; block = parse_next_block())
-			ir.add_statement(std::move(block));
+		while (auto block = parse_next_block())
+			ast.add_statement(std::move(block));
 
-        return ir;
+        return ast;
     }
 
 	ast::statement parser::parse_next_block()
@@ -83,7 +72,7 @@ namespace ccomp
 		expect(token_type::keyword);
 		expect(token_type::special_character);
 
-		auto token = expect(token_type::numerical);
+		auto token = expect(token_type::numerical, token_type::identifier);
 
 		expect(token_type::special_character);
 

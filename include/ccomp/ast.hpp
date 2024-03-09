@@ -29,10 +29,10 @@ namespace ccomp::ast
     //
     //
     //
-    class intermediate_representation
+    class abstract_tree
     {
     public:
-        intermediate_representation() = default;
+        abstract_tree() = default;
 
         void add_statement(ast::statement node);
 

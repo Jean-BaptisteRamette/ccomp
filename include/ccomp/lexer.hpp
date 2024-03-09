@@ -84,6 +84,22 @@ namespace ccomp
 		}
 	}
 
+	CCOMP_NODISCARD
+	inline std::string to_string(std::initializer_list<token_type> types)
+	{
+		std::string joined;
+
+		for (const auto type : types)
+		{
+			if (!joined.empty())
+				joined += ',';
+
+			joined += ccomp::to_string(type);
+		}
+
+		return joined;
+	}
+
 	struct source_location
 	{
 		size_t col {};
@@ -105,7 +121,7 @@ namespace ccomp
 
 #ifdef UNIT_TESTS_ON
         CCOMP_NODISCARD
-        static std::unique_ptr<lexer> from_buff(std::string_view buff);
+        static std::unique_ptr<lexer> from_buffer(std::string_view buff);
 #endif
 
         explicit lexer(ccomp::stream&& istream);
