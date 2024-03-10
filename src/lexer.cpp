@@ -116,7 +116,10 @@ namespace ccomp
 
 	token lexer::make_token(token_type type, std::string lexeme)
 	{
-		return { .type = type, .lexeme = std::move(lexeme), .source_location = cursor };
+		source_location source_loc = cursor;
+		source_loc.step_back(lexeme.size());
+
+		return { .type = type, .lexeme = std::move(lexeme), .source_location = source_loc };
 	}
 
 	std::vector<token> lexer::enumerate_tokens()
@@ -176,13 +179,10 @@ namespace ccomp
     {
         const char chr = istream.get();
 
-        if (chr != '\n')
-            ++cursor.col;
+        if (chr == '\n')
+			cursor.next_line();
         else
-        {
-            ++cursor.line;
-			cursor.col = 0;
-        }
+			cursor.advance();
 
         return chr;
     }
@@ -276,7 +276,10 @@ namespace ccomp
         for (char c = next_chr(); c == '_' || std::isalnum(c); c = next_chr());
 
         if (!istream.eof())
-            istream.unget();
+		{
+			cursor.step_back();
+			istream.unget();
+		}
 
         return istream.substr(begin, istream.tellg() - begin);
     }

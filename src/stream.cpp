@@ -3,13 +3,13 @@
 
 namespace ccomp
 {
-    stream::stream(std::ifstream& src_stream) : buffer(std::istreambuf_iterator<char>(src_stream), std::istreambuf_iterator<char>()), cursor { 0 } {}
+    stream::stream(std::ifstream& src_stream) : buffer(std::istreambuf_iterator<char>(src_stream), std::istreambuf_iterator<char>()), read {0 } {}
 
-    stream::stream(std::string&& src_stream) : buffer(std::move(src_stream)), cursor { 0 } {}
+    stream::stream(std::string&& src_stream) : buffer(std::move(src_stream)), read {0 } {}
 
     bool stream::eof() const
     {
-        return cursor >= buffer.size();
+        return read >= buffer.size();
     }
 
     char stream::get()
@@ -17,13 +17,13 @@ namespace ccomp
         if (eof())
             return 0;
 
-        return buffer[cursor++];
+        return buffer[read++];
     }
 
     void stream::unget()
     {
-        if (cursor > 0)
-            --cursor;
+        if (read > 0)
+            --read;
     }
 
     char stream::peek() const
@@ -31,12 +31,12 @@ namespace ccomp
         if (eof())
             return 0;
 
-        return buffer[cursor];
+        return buffer[read];
     }
 
     size_t stream::tellg() const
     {
-        return cursor;
+        return read;
     }
 
     void stream::seek(size_t offset)
@@ -44,7 +44,7 @@ namespace ccomp
         if (offset >= buffer.size())
             throw std::runtime_error("stream.cpp: stream::seek offset >= buffer.size()\n");
 
-        cursor = offset;
+		read = offset;
     }
 
     std::string stream::substr(size_t beg, size_t size) const

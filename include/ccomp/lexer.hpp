@@ -102,8 +102,24 @@ namespace ccomp
 
 	struct source_location
 	{
-		size_t col {};
-		size_t line {};
+		size_t col  { 1 };
+		size_t line { 1 };
+
+		void next_line()
+		{
+			++line;
+			col = 1;
+		}
+
+		void advance()
+		{
+			++col;
+		}
+
+		void step_back(size_t steps = 1)
+		{
+			col -= steps;
+		}
 	};
 
 	struct token

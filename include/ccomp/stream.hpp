@@ -25,7 +25,7 @@ namespace ccomp
     private:
         std::string buffer;
 
-        size_t cursor {};
+        size_t read {};
     };
 }
 
