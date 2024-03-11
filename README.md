@@ -19,19 +19,19 @@ you can use ascii to represent integral types as well
 ```
 
 ### Labels:
-Lets you define code sections
+Let you define code sections
 ```asm
-label1:
+.label1:
     ;; some code
     
-label2:
+.label2:
     ;; some code
 ```
 
-### Entry Point:
+### Entry point:
 The entry point of your program must be a main label.
 ```asm
-main:
+.main:
     ;; entry point code
 ```
 
@@ -45,11 +45,11 @@ define numerical 178  ;; assign value 178 to constant 'numerical'
 Constant declarations can be limited to a scope:
 
 ```asm
-label1:
+.label1:
     define numerical 178
     add rc, numerical
 
-label2:
+.label2:
     sub r1, numerical  ;; ERROR: numerical not defined here
 ``` 
 
@@ -113,7 +113,6 @@ shl r1      ;; stores LSB of r1 to rf then shifts r1 to the left by 1
 ```
 
 GPR Manipulation:
-
 ```asm
 rdump rb     ;; stores each register value from r1 to rb (included) contiguously in memory starting from address I.
 rload rb     ;; sores values from memory starting at address I to register r1 to rb (included).
@@ -162,11 +161,15 @@ bcd re  ;; stores BCD representation of re register with the MSB at address I
 ```
 
 #### Inline opcodes:
-    ccomp allows the programmer to put inline raw opcodes in the source file using the raw keyword:
+ccomp allows the programmer to put inline raw opcodes in the source file using the raw keyword:
 
-        define OPCODE 0x00E0
-        label:
-            raw(OPCODE)  ;; clear the screen
+```asm
+define OPCODE 0x00E0
+
+.label:
+    raw(OPCODE)  ;; clear the screen
+```
+
 
 
 ### Instruction Table
