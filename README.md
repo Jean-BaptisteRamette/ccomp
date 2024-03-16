@@ -1,109 +1,81 @@
 # chip8-asm
+### _Custom assembly language for the chip-8 virtual machine_
 
-### Comments:
-Comments are used this way:
+This project is a work-in-progress and is not usable yet !
 
-```asm
-;; this will be ignored !!
-```
+## Summary
+I. Features
+II. What does it look like ?
+III. Language specifications
+IV. Instruction reference
 
-### Numeric bases:
-Decimal, binary, hexadecimal and octal bases are supported by ccomp:
+## I - Features
 
-```c++
-255 = 0b11111111 = 0b1111'1111 = 0xFF = 0o377
-```
-you can use ascii to represent integral types as well
-```c++
-65 = 'A'
-```
+- Nice and intuitive syntax for easy writing
+- Full ISA is supported
+- Constant declarations
+- Multiple numerical bases supported
+- Syntactic sugar and custom instructions
+- Inline opcodes support
 
-### Labels:
-Let you define code sections
-```asm
-.label1:
-    ;; some code
-    
-.label2:
-    ;; some code
-```
 
-### Entry point:
-The entry point of your program must be a main label.
+## II - Example program
+
 ```asm
 .main:
-    ;; entry point code
+    ;; TODO
 ```
 
+## III - Language Specifications
 
-### Constants definitions:
-You can declare constants using the "define" keyword:
-```c
-define numerical 178  ;; assign value 178 to constant 'numerical'
-```
+1. Comments
+2. Numeric literals
+3. Registers
+4. Arithmetical and logical operations
+5. Control flow
+6. Procedures
+7. Constants
+8. General purpose register manipulation
+9. Special purpose register manipulation
+10. Inline opcodes
+11. Others
 
-Constant declarations can be limited to a scope:
+### 1. Comments
+Use the `;;` characters to write comments
 
 ```asm
-.label1:
-    define numerical 178
-    add rc, numerical
-
-.label2:
-    sub r1, numerical  ;; ERROR: numerical not defined here
-``` 
-
-### Registers:
-#### General Purpose:
-The chip-8 defines 16 8-bit general purpose registers. Each register is named from r0 to rf.
-
-#### Special Purpose:
-The chip-8 has 4 special purpose registers.
-
-        pc: program counter, 16 bits, hold current instruction address
-        sp: stack pointer, points to the top of the stack
-        ar: address register, 16 bits, holds memory address
-        dt: delay timer, 8-bit used for CPU time management
-        st: sound timer, 8-bit used for APU time management
-
-### Instruction Set:
-#### Control Flow:
-
-```asm
-call 2000      ;; call subroutine at location
-ret            ;; returns from a subroutine
-jmp [4000]     ;; jumps to address r0 + 4000
-jmp 4000       ;; jumps to address 4000
-jmp .my_label  ;; jumps to my_label
+;; this text will be ignored !
 ```
-
-#### Comparisons:
-
-```asm
-eq r0, r2   ;; skips next instruction if r0 == r2
-eq r0, 35   ;; skips next instruction if r0 == 35
-neq r0, r2  ;; skips next instruction if r0 != r2
-neq r0, 35  ;; skips next instruction if r0 != 35
+### 2. Numeric literals
+There are multiple ways to write literals in chip8-asm, as all usual bases are supported:
+```c++
+255                ;; decimal
+0b11111111         ;; binary
+0b1111'1111        ;; binary with delimiter
+0xFF               ;; hexadecimal
+0o377              ;; octal
 ```
-
-Examples:
-```asm
-eq rf, 255  ;; if rf == 255, skips jump to case_not_equal
-jmp .case_not_equal
-jmp .case_equal
+You can also use ascii to represent integral values
 ```
+'A'  ;; evaluates to integer 65
+```
+>Note: You cannot only manipulate values in range [0-255], as it is restricted by the ISA
 
+### 3. Registers
 
-#### Maths:
-Common operations:
+The chip-8 has 16 registers, one byte each. In chip8-asm, they are named from `r0` to `rf`. However, please be careful when using the `rf` register, as it is used by some instruction as an indicator.
+
+### 4. Arithmetical and logical operations
+The chip-8 only defines addition and subtraction instructions, as well as the regular bitwise operations
+##### Arithmetical
 ```asm
 add r0, r2   ;; adds r2 to register r0, carry flag is set
 add rd, 15   ;; adds 15 to register rd, carry flag is not changed
 sub rb, r2   ;; r2 is subtracted from rb, carry flag is set
 suba r1, r2  ;; sets r1 to r2 minus r1, carry flag is set
 ```
-
-Bitwise operations:
+> Note: registers in this example can be changed to any other general purpose register
+##### Logical
 ```asm
 or r1, r2   ;; sets r1 to r1 OR r2
 and r1, r2  ;; sets r1 to r1 AND r2
@@ -111,104 +83,195 @@ xor r1, r2  ;; sets r1 to r1 xor r2
 shr r1      ;; stores MSB of r1 to rf then shifts r1 to the right by 1
 shl r1      ;; stores LSB of r1 to rf then shifts r1 to the left by 1
 ```
+> Note: registers in this example can be changed to any other general purpose register
 
-GPR Manipulation:
+### 5. Control flow
+You are quite probably going to need to jump or conditionally execute different code paths, the chip-8 offers you basic instructions to implement this
+#### Unconditional jumps
 ```asm
-rdump rb     ;; stores each register value from r1 to rb (included) contiguously in memory starting from address I.
-rload rb     ;; sores values from memory starting at address I to register r1 to rb (included).
-
-mov re, 0xFF ;; sets re to value 0xFF
-mov ra, rd   ;; stores rd into ra
-swp ra, rd   ;; swaps registers values
+jmp [0x32]      ;; jumps to the address (r0 + 0x32)
+jmp 0x32        ;; jumps to the address 0x32
+jmp .my_label   ;; jumps to label
 ```
+
+#### Conditional jumps
+The chip-8 uses a "skip next if ..." rather than a "jump if ..." idiom:
+```asm
+se r0, r2      ;; skips next instruction if r0 == r2
+se r0, 32      ;; skips next instruction if r0 == 32
+sne r0, r2     ;; skips next instruction if r0 != r2
+sne r0, 35     ;; skips next instruction if r0 != 35
+```
+This means you can write conditional jumps this way
+```asm
+se r2, 0xCC
+jmp .case_not_equal
+jmp .case_equal
+```
+However, this happens to be trickier with `>` and `<` comparisons, as there is only one existing jump instruction. For example, in x86, you would do something like this...
+```asm
+cmp cx, 0xCC     ;; compare cx and 0xCC and store result in indicator flags
+ja case_above    ;; jump to label if cx > 0xCC
+...
+```
+...which becomes the following in chip-8 assembly:
+```asm
+mov r0, 0xCC         ;; move immediate in temporary register (now cloberred)
+suba r0, r2          ;; compare r0 to r2 by subtracting (r0 = r2 - r0), (vf = r2 > r0)
+se rf, 0             ;; if rf == 1 then r2 > r0
+jmp .case_above      ;; jump to label if rf == 1
+...
+```
+#### Labels
+To define code location to which the processor can jump, you need to define labels
+```
+	jmp .label_name
+
+.label_name:
+	...code...	
+``` 
+There is a reserved label name called `.main`, which is your program entry-point, and that any chip8-asm program must define
+
+### 6. Procedures
+chip8-asm allows the programmer to define procedures
+
+```asm
+proc my_proc 
+	xor r0, r0
+
+.done:
+	ret            ;; return from procedure to sne instruction
+endp my_proc
+
+.main:
+	call my_proc
+	sne r0, 0
+```
+
+### 7. Constants
+You can declare constants using the `define` keyword:
+```
+define MAX_HEALTH 100  ;; assign constant value 100 to identifier 'MAX_HEALTH'
+```
+Constant declarations can be limited to a procedure's scope:
+```asm
+proc my_proc
+	define value 0
+	...
+	ret
+endp my_proc
+
+.main:
+	define value 255
+	mov rd, value ;; rd will hold value 255
+```
+GPR Manipulation:
+```asm  
+rdump rb     ;; stores each register value from r1 to rb (included) contiguously in memory starting from address I.  
+rload rb     ;; sores values from memory starting at address I to register r1 to rb (included).  
+  
+mov re, 0xFF ;; sets re to value 0xFF  
+mov ra, rd   ;; stores rd into ra  
+swp ra, rd   ;; swaps registers values  
+```  
 
 SPR Manipulation:
-```asm
-mov ar, 3456  ;; sets address register to address 3456
-mov ar, r1   ;; sets address register to the location of the sprite for the character in r1
-add ar, r1   ;; adds r1 to address register, carry flag is not changed
-
-mov dt, r0  ;; sets the delay timer to r0
-mov st, r0  ;; sets the delay timer to r0
-
-mov rb, dt  ;; sets rb to dt
-```
+```asm  
+mov ar, 3456  ;; sets address register to address 3456  
+mov ar, r1   ;; sets address register to the location of the sprite for the character in r1  
+add ar, r1   ;; adds r1 to address register, carry flag is not changed  
+  
+mov dt, r0  ;; sets the delay timer to r0  
+mov st, r0  ;; sets the delay timer to r0  
+  
+mov rb, dt  ;; sets rb to dt  
+```  
 You cannot directly set the PC register, you must use the jmp instructions
 
 Stack Manipulation:
 
 Screen Manipulation:
-```asm
-draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with height N + 1 pixels
-cls             ;; clear screen
-```
+```asm  
+draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with height N + 1 pixels  
+cls             ;; clear screen  
+```  
 
 Keypad Manipulation:
-```asm
-kpw rd   ;; key press is awaited and stored in rd
-eq rb    ;; skips the next instruction of the key stored in rb is pressed
-neq rc   ;; skips the next instruction of the key stored in rc is not pressed
-```
+```asm  
+kpw rd   ;; key press is awaited and stored in rd  
+eq rb    ;; skips the next instruction of the key stored in rb is pressed  
+neq rc   ;; skips the next instruction of the key stored in rc is not pressed  
+```  
 
 Random Numbers:
-```asm
-rand r1, 34  ;; sets r1 to a random value between 0 et 34
-```
+```asm  
+rand r1, 34  ;; sets r1 to a random value between 0 et 34  
+```  
 
 BCD:
-```asm
-bcd re  ;; stores BCD representation of re register with the MSB at address I
-```
+```asm  
+bcd re  ;; stores BCD representation of re register with the MSB at address I  
+```  
 
 #### Inline opcodes:
 ccomp allows the programmer to put inline raw opcodes in the source file using the raw keyword:
 
-```asm
-define OPCODE 0x00E0
-
-.label:
-    raw(OPCODE)  ;; clear the screen
+```asm  
+define OPCODE 0x00E0  
+  
+.label:  
+ raw(OPCODE)  ;; clear the screen  
 ```
 
 
+## IV - Mnemonics and opcodes mapping
 
-### Instruction Table
+Reference for the instructions mnemonics and what machine code they produce once assembled
 
-|    mnemonics   |      opcode     |
-|:--------------:|:---------------:|
-|   add rX, rY   |       8XY4      |
-|   add rX, NN   |       7XNN      |
-|   sub rX, rY   |       8XY5      |
-|   suba rX, rY  |       8XY7      |
-|    or rX, rY   |       8XY1      |
-|   and rX, rY   |       8XY2      |
-|   xor rX, rY   |       8XY3      |
-|     shr rX     |       8XYE      |
-|     shl rX     |       8XY6      |
-|    rdump rX    |       FX55      |
-|    rload rX    |       FX65      |
-|   mov rX, NN   |       6XNN      |
-|   mov rX, rY   |       8XY0      |
-|   swp rX, rD   | ccomp extension |
-|   mov ar, NNN  |       ANNN      |
-|   mov ar, rX   |       FX29      |
-|   add ar, rX   |       FX1E      |
-|   mov dt, rX   |       FX15      |
-|   mov st, rX   |       FX18      |
-| draw rX, rY, N |       DXYN      |
-|       cls      |       00E0      |
-|   rand rX, NN  |       CXNN      |
-|     bcd rX     |       FX33      |
-|     kpw rX     |       FX0A      |
-|      eq rX     |       EX9E      |
-|     neq rX     |       EXA1      |
-|       ret      |       00EE      |
-|     jmp NNN    |       1NNN      |
-|   jmp .label   |       1NNN      |
-|    call NNN    |       2NNN      |
-|    jmp [NNN]   |       BNNN      |
-|    eq rX, NN   |       3XNN      |
-|   neq rX, NN   |       4XNN      |
-|    eq rX, rY   |       5XY0      |
-|   neq rX, rY   |       9XY0      |
-|   mov rX, dt   |       FX07      |
+|    mnemonics    |      opcode     |
+|:---------------:|:---------------:|
+|   add rX, rY    |       8XY4      |
+|   add rX, NN    |       7XNN      |
+|   sub rX, rY    |       8XY5      |
+|   suba rX, rY   |       8XY7      |
+|    or rX, rY    |       8XY1      |
+|   and rX, rY    |       8XY2      |
+|   xor rX, rY    |       8XY3      |
+|     shr rX      |       8XYE      |
+|     shl rX      |       8XY6      |
+|    rdump rX     |       FX55      |
+|    rload rX     |       FX65      |
+|   mov rX, NN    |       6XNN      |
+|   mov rX, rY    |       8XY0      |
+|   swp rX, rD    |    micro-code   |
+|   mov ar, NNN   |       ANNN      |
+|   mov ar, rX    |       FX29      |
+|   add ar, rX    |       FX1E      |
+|   mov dt, rX    |       FX15      |
+|   mov st, rX    |       FX18      |
+| draw rX, rY, N  |       DXYN      |
+|       cls       |       00E0      |
+|   rand rX, NN   |       CXNN      |
+|     bcd rX      |       FX33      |
+|     kpw rX      |       FX0A      |
+|      eq rX      |       EX9E      |
+|     neq rX      |       EXA1      |
+|       ret       |       00EE      |
+|     jmp NNN     |       1NNN      |
+|   jmp .label    |       1NNN      |
+| call subroutine |       2NNN      |
+|    jmp [NNN]    |       BNNN      |
+|    eq rX, NN    |       3XNN      |
+|   neq rX, NN    |       4XNN      |
+|    eq rX, rY    |       5XY0      |
+|   neq rX, rY    |       9XY0      |
+|   mov rX, dt    |       FX07      |
+
+> Note: `swp rX, rD` is an assembler extension generating the appropriate code needed to swap 2 registers.
+
+
+
+## License
+
+MIT
+
