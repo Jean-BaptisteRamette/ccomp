@@ -10,7 +10,7 @@ namespace ccomp
 {
     namespace
     {
-        std::unordered_set<std::string_view> keywords = { "define", "main", "raw" };
+        std::unordered_set<std::string_view> keywords = { "define", "raw", "proc", "endp" };
         std::unordered_set<std::string_view> spec_regs = { "pc", "sp", "ar", "dt", "st" };
 
         std::unordered_set<std::string_view> gp_regs = {
@@ -49,29 +49,31 @@ namespace ccomp
             "cls",
             "rand",
             "bcd",
-            "kpw",
-            "eq",
-            "neq",
+            "wkey",
+            "ske",
+            "skne",
             "ret",
             "jmp",
-            "call"
+            "call",
+			"se",
+			"sne"
         };
 
         token_type map_token_type(std::string_view lexeme)
         {
-            if (keywords.contains(lexeme))
-                return token_type::keyword;
-
-            if (spec_regs.contains(lexeme))
-                return token_type::special_register;
-
             if (gp_regs.contains(lexeme))
                 return token_type::gp_register;
 
             if (instructions.contains(lexeme))
                 return token_type::instruction;
 
-            return token_type::identifier;
+			if (spec_regs.contains(lexeme))
+				return token_type::special_register;
+
+			if (keywords.contains(lexeme))
+				return token_type::keyword;
+
+			return token_type::identifier;
         }
     }
 
@@ -114,7 +116,7 @@ namespace ccomp
 
     lexer::lexer(ccomp::stream&& istream) : istream(std::move(istream)) {}
 
-	token lexer::make_token(token_type type, std::string lexeme)
+	token lexer::make_token(token_type type, std::string lexeme) const
 	{
 		source_location source_loc = cursor;
 		source_loc.step_back(lexeme.size());
@@ -284,7 +286,7 @@ namespace ccomp
         return istream.substr(begin, istream.tellg() - begin);
     }
 
-	std::string lexer::read_special_char()
+	std::string lexer::read_special_char() const
 	{
 		return istream.substr(istream.tellg(), 1);
 	}

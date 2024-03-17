@@ -161,11 +161,11 @@ namespace ccomp
         void skip_wspaces();
 
 		CCOMP_NODISCARD
-		token make_token(token_type type, std::string lexeme = {});
+		token make_token(token_type type, std::string lexeme = {}) const;
 
         CCOMP_NODISCARD std::string read_numeric_lexeme();
         CCOMP_NODISCARD std::string read_alpha_lexeme();
-		CCOMP_NODISCARD std::string read_special_char();
+		CCOMP_NODISCARD std::string read_special_char() const;
 
     CCOMP_PRIVATE:
         ccomp::stream istream;
