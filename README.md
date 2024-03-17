@@ -4,10 +4,10 @@
 This project is a work-in-progress and is not usable yet !
 
 ## Summary
-I. Features
-II. What does it look like ?
-III. Language specifications
-IV. Instruction reference
+- I. Features
+- II. What does it look like ?
+- III. Language specifications
+- IV. Instruction reference
 
 ## I - Features
 
@@ -38,7 +38,8 @@ IV. Instruction reference
 8. General purpose register manipulation
 9. Special purpose register manipulation
 10. Inline opcodes
-11. Others
+11. I/O
+12. Others
 
 ### 1. Comments
 Use the `;;` characters to write comments
@@ -59,7 +60,7 @@ You can also use ascii to represent integral values
 ```
 'A'  ;; evaluates to integer 65
 ```
->Note: You cannot only manipulate values in range [0-255], as it is restricted by the ISA
+>Note: You can only manipulate values in range [0-255], as it is restricted by the ISA
 
 ### 3. Registers
 
@@ -165,7 +166,9 @@ endp my_proc
 	define value 255
 	mov rd, value ;; rd will hold value 255
 ```
-GPR Manipulation:
+
+### 8. General purpose registers manipulation
+
 ```asm  
 rdump rb     ;; stores each register value from r1 to rb (included) contiguously in memory starting from address I.  
 rload rb     ;; sores values from memory starting at address I to register r1 to rb (included).  
@@ -175,99 +178,103 @@ mov ra, rd   ;; stores rd into ra
 swp ra, rd   ;; swaps registers values  
 ```  
 
-SPR Manipulation:
+### 9. Special purpose registers manipulation
+
 ```asm  
 mov ar, 3456  ;; sets address register to address 3456  
-mov ar, r1   ;; sets address register to the location of the sprite for the character in r1  
-add ar, r1   ;; adds r1 to address register, carry flag is not changed  
+mov ar, r1    ;; sets address register to the location of the sprite for the character in r1  
+add ar, r1    ;; adds r1 to address register, carry flag is not changed  
   
-mov dt, r0  ;; sets the delay timer to r0  
-mov st, r0  ;; sets the delay timer to r0  
+mov dt, r0    ;; sets the delay timer to r0  
+mov st, r0    ;; sets the delay timer to r0  
   
-mov rb, dt  ;; sets rb to dt  
+mov rb, dt    ;; sets rb to dt  
 ```  
-You cannot directly set the PC register, you must use the jmp instructions
+> Note: You cannot directly set the instruction pointer register (PC), you must use the `jmp`/`call` and `ret` instructions.
 
-Stack Manipulation:
 
-Screen Manipulation:
-```asm  
-draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with height N + 1 pixels  
-cls             ;; clear screen  
-```  
+### 10. Inline opcodes
 
-Keypad Manipulation:
-```asm  
-kpw rd   ;; key press is awaited and stored in rd  
-eq rb    ;; skips the next instruction of the key stored in rb is pressed  
-neq rc   ;; skips the next instruction of the key stored in rc is not pressed  
-```  
-
-Random Numbers:
-```asm  
-rand r1, 34  ;; sets r1 to a random value between 0 et 34  
-```  
-
-BCD:
-```asm  
-bcd re  ;; stores BCD representation of re register with the MSB at address I  
-```  
-
-#### Inline opcodes:
-ccomp allows the programmer to put inline raw opcodes in the source file using the raw keyword:
+chip8-asm allows the programmer to put inline raw opcodes in the source file using the raw keyword:
 
 ```asm  
 define OPCODE 0x00E0  
   
 .label:  
- raw(OPCODE)  ;; clear the screen  
+    raw(OPCODE)  ;; clear the screen  
 ```
 
+### 11. I/O
+
+Drawing
+```asm  
+draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with a height of N + 1 pixels
+cls             ;; clear screen  
+```  
+
+Input key
+```asm  
+wkey rd   ;; key press is awaited and stored in rd  
+ske rb    ;; skips the next instruction if the key stored in rb is pressed  
+skne rc   ;; skips the next instruction if the key stored in rc is not pressed  
+```  
+
+### 12. Others
+
+Random number generator 
+```asm  
+rand r1, 34  ;; sets r1 to a random value between 0 et 34  
+```  
+
+Binary-coded-decimal
+```asm  
+bcd re  ;; stores BCD representation of re register with the MSB at address I  
+```  
 
 ## IV - Mnemonics and opcodes mapping
 
 Reference for the instructions mnemonics and what machine code they produce once assembled
 
-|    mnemonics    |      opcode     |
-|:---------------:|:---------------:|
-|   add rX, rY    |       8XY4      |
-|   add rX, NN    |       7XNN      |
-|   sub rX, rY    |       8XY5      |
-|   suba rX, rY   |       8XY7      |
-|    or rX, rY    |       8XY1      |
-|   and rX, rY    |       8XY2      |
-|   xor rX, rY    |       8XY3      |
-|     shr rX      |       8XYE      |
-|     shl rX      |       8XY6      |
-|    rdump rX     |       FX55      |
-|    rload rX     |       FX65      |
-|   mov rX, NN    |       6XNN      |
-|   mov rX, rY    |       8XY0      |
-|   swp rX, rD    |    micro-code   |
-|   mov ar, NNN   |       ANNN      |
-|   mov ar, rX    |       FX29      |
-|   add ar, rX    |       FX1E      |
-|   mov dt, rX    |       FX15      |
-|   mov st, rX    |       FX18      |
-| draw rX, rY, N  |       DXYN      |
-|       cls       |       00E0      |
-|   rand rX, NN   |       CXNN      |
-|     bcd rX      |       FX33      |
-|     kpw rX      |       FX0A      |
-|      eq rX      |       EX9E      |
-|     neq rX      |       EXA1      |
-|       ret       |       00EE      |
-|     jmp NNN     |       1NNN      |
-|   jmp .label    |       1NNN      |
-| call subroutine |       2NNN      |
-|    jmp [NNN]    |       BNNN      |
-|    eq rX, NN    |       3XNN      |
-|   neq rX, NN    |       4XNN      |
-|    eq rX, rY    |       5XY0      |
-|   neq rX, rY    |       9XY0      |
-|   mov rX, dt    |       FX07      |
+|    mnemonics    |  opcodes   |
+|:---------------:|:----------:|
+|   add rX, rY    |    8XY4    |
+|   add rX, NN    |    7XNN    |
+|   sub rX, rY    |    8XY5    |
+|   suba rX, rY   |    8XY7    |
+|    or rX, rY    |    8XY1    |
+|   and rX, rY    |    8XY2    |
+|   xor rX, rY    |    8XY3    |
+|     shr rX      |    8XYE    |
+|     shl rX      |    8XY6    |
+|    rdump rX     |    FX55    |
+|    rload rX     |    FX65    |
+|   mov rX, NN    |    6XNN    |
+|   mov rX, rY    |    8XY0    |
+|   swp rX, rD    | micro-code |
+|   mov ar, NNN   |    ANNN    |
+|   mov ar, rX    |    FX29    |
+|   add ar, rX    |    FX1E    |
+|   mov dt, rX    |    FX15    |
+|   mov st, rX    |    FX18    |
+| draw rX, rY, N  |    DXYN    |
+|       cls       |    00E0    |
+|   rand rX, NN   |    CXNN    |
+|     bcd rX      |    FX33    |
+|     wkey rX     |    FX0A    |
+|     ske rX      |    EX9E    |
+|     skne rX     |    EXA1    |
+|       ret       |    00EE    |
+|     jmp NNN     |    1NNN    |
+|   jmp .label    |    1NNN    |
+| call subroutine |    2NNN    |
+|    jmp [NNN]    |    BNNN    |
+|    se rX, NN    |    3XNN    |
+|   sne rX, NN    |    4XNN    |
+|    se rX, rY    |    5XY0    |
+|   sne rX, rY    |    9XY0    |
+|   mov rX, dt    |    FX07    |
 
-> Note: `swp rX, rD` is an assembler extension generating the appropriate code needed to swap 2 registers.
+> Note: `swp rX, rD` is a chip8-asm extension generating the appropriate code needed to swap 2 registers.
 
 
 
