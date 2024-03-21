@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(lexer_token_alpha)
         BOOST_REQUIRE(lex->next_token().type == token_type::instruction);
         BOOST_REQUIRE(lex->next_token().type == token_type::instruction);
         BOOST_REQUIRE(lex->next_token().type == token_type::identifier);
-        BOOST_REQUIRE(lex->next_token().type == token_type::gp_register);
+        BOOST_REQUIRE(lex->next_token().type == token_type::register_name);
         BOOST_REQUIRE(lex->next_token().type == token_type::eof);
     }
 }
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(lexer_token_numeric)
         auto lex = lexer::from_buffer("1234567890)");
 
         BOOST_REQUIRE(lex->next_token().lexeme == "1234567890");
-        BOOST_REQUIRE(lex->next_token().type == token_type::special_character);
+        BOOST_REQUIRE(lex->next_token().type == token_type::parenthesis_close);
     }
 
     {
@@ -166,9 +166,9 @@ BOOST_AUTO_TEST_CASE(parser_node_tests)
 
         auto parser = parser::from_buffer(code);
 
-		const auto ir = parser->make_ast();
+		const auto ast = parser->make_ast();
 
-		BOOST_REQUIRE(ir.branches.size() == 2);
+		BOOST_REQUIRE(ast.branches.size() == 2);
     }
 
 	{
@@ -178,9 +178,9 @@ BOOST_AUTO_TEST_CASE(parser_node_tests)
 				"raw(test_opcode)\n";
 
 		auto parser = parser::from_buffer(code);
-		auto ir = parser->make_ast();
+		const auto ast = parser->make_ast();
 
-		BOOST_REQUIRE(ir.branches.size() == 3);
+		BOOST_REQUIRE(ast.branches.size() == 3);
 	}
 
 	{
@@ -193,5 +193,13 @@ BOOST_AUTO_TEST_CASE(parser_node_tests)
 		auto parser = parser::from_buffer(code);
 
 		BOOST_REQUIRE_THROW(parser->make_ast(), parser_exception::expected_others_error);
+	}
+
+	{
+		constexpr auto code = ".main:\n";
+		auto parser = parser::from_buffer(code);
+		const auto ast = parser->make_ast();
+
+		BOOST_REQUIRE(ast.branches.size() == 1);
 	}
 }

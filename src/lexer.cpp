@@ -1,4 +1,5 @@
 #include <unordered_set>
+#include <unordered_map>
 #include <filesystem>
 #include <fstream>
 
@@ -10,10 +11,24 @@ namespace ccomp
 {
     namespace
     {
-        std::unordered_set<std::string_view> keywords = { "define", "raw", "proc", "endp" };
-        std::unordered_set<std::string_view> spec_regs = { "pc", "sp", "ar", "dt", "st" };
+		using lexeme_set = std::unordered_set<std::string_view>;
 
-        std::unordered_set<std::string_view> gp_regs = {
+        const lexeme_set keywords = {
+			"define",
+			"raw",
+			"proc",
+			"endp"
+		};
+
+        const lexeme_set special_regs_name = {
+			"pc",
+			"sp",
+			"ar",
+			"dt",
+			"st"
+		};
+
+        const lexeme_set general_regs_name = {
             "r0",
             "r1",
             "r2",
@@ -32,7 +47,7 @@ namespace ccomp
             "rf"
         };
 
-        std::unordered_set<std::string_view> instructions = {
+        const lexeme_set instructions = {
             "add",
             "sub",
             "suba",
@@ -59,16 +74,23 @@ namespace ccomp
 			"sne"
         };
 
+		const std::unordered_map<char, token_type> special_characters = {
+				{ '[', token_type::bracket_open },
+				{ ']', token_type::bracket_close },
+				{ '(', token_type::parenthesis_open },
+				{ ')', token_type::parenthesis_close},
+				{ '.', token_type::dot},
+				{ ':', token_type::colon},
+				{ ',', token_type::comma}
+		};
+
         token_type map_token_type(std::string_view lexeme)
         {
-            if (gp_regs.contains(lexeme))
-                return token_type::gp_register;
+            if (general_regs_name.contains(lexeme) || special_regs_name.contains(lexeme))
+                return token_type::register_name;
 
             if (instructions.contains(lexeme))
                 return token_type::instruction;
-
-			if (spec_regs.contains(lexeme))
-				return token_type::special_register;
 
 			if (keywords.contains(lexeme))
 				return token_type::keyword;
@@ -162,9 +184,9 @@ namespace ccomp
             return make_token(map_token_type(lexeme), lexeme);
         }
 
-        if (std::string_view { "[]():,." }.contains(c))
+        if (special_characters.contains(c))
         {
-            const auto tok = make_token(token_type::special_character, read_special_char());
+            const auto tok = make_token(special_characters.at(c), read_special_char());
             next_chr();
             return tok;
         }

@@ -43,14 +43,18 @@ namespace ccomp
         // call, ret, jmp, cls...
         instruction,
 
-        // pc, sp, ar, dt, st
-        special_register,
+		// special and general purpose registers
+		register_name,
 
-        // r0 - r9
-        gp_register,
+		bracket_open,
+		bracket_close,
 
-        // []():,.
-        special_character
+		parenthesis_open,
+		parenthesis_close,
+
+		colon,
+		dot,
+		comma
     };
 
 	CCOMP_NODISCARD
@@ -72,12 +76,22 @@ namespace ccomp
 				return "identifier";
 			case token_type::instruction:
 				return "instruction";
-			case token_type::special_register:
-				return "special register";
-			case token_type::gp_register:
-				return "general purpose register";
-			case token_type::special_character:
-				return "special character";
+			case token_type::register_name:
+				return "register name";
+			case token_type::bracket_open:
+				return "open bracket";
+			case token_type::bracket_close:
+				return "close bracket";
+			case token_type::parenthesis_open:
+				return "open parenthesis";
+			case token_type::parenthesis_close:
+				return "close parenthesis";
+			case token_type::colon:
+				return "colon";
+			case token_type::comma:
+				return "comma";
+			case token_type::dot:
+				return "dot";
 
 			default:
 				return "unknown";
@@ -92,12 +106,12 @@ namespace ccomp
 		for (const auto type : types)
 		{
 			if (!joined.empty())
-				joined += ',';
+				joined += ", ";
 
 			joined += ccomp::to_string(type);
 		}
 
-		return joined;
+		return '(' + joined + ')';
 	}
 
 	struct source_location

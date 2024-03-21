@@ -1,5 +1,7 @@
 ;; skipped
+define VALUE 10
+
 raw(255)
 raw(0b1111'0000)
 raw(test)
-raw(define)
+raw(VALUE)
