@@ -132,7 +132,8 @@ namespace ccomp
 
 		void step_back(size_t steps = 1)
 		{
-			col -= steps;
+			if (col >= steps)
+				col -= steps;
 		}
 	};
 

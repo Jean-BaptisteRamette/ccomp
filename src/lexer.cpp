@@ -105,7 +105,6 @@ namespace ccomp
         if (!path.ends_with(".c8"))
             log::warn("Input file {} should have .c8 extension", path);
 
-
         if (!std::filesystem::exists(path))
         {
             ec = error_code::file_not_found_err;
@@ -175,16 +174,15 @@ namespace ccomp
         if (istream.eof())
             return make_token(token_type::eof);
 
-        if (std::isdigit(c))
+        else if (std::isdigit(c))
             return make_token(token_type::numerical, read_numeric_lexeme());
 
-        if (std::isalpha(c))
+        else if (std::isalpha(c))
         {
             const auto lexeme = read_alpha_lexeme();
             return make_token(map_token_type(lexeme), lexeme);
         }
-
-        if (special_characters.contains(c))
+        else if (special_characters.contains(c))
         {
             const auto tok = make_token(special_characters.at(c), read_special_char());
             next_chr();
@@ -269,24 +267,23 @@ namespace ccomp
 
         for (char c = next_chr(); ; c = next_chr())
         {
+			// Verify we have a something like 0xFF'FF and not 0xFF''FF
             if (c == '\'')
             {
-                if (std::isalnum(peek_chr()))
-                    continue;
+				if (std::isalnum(peek_chr()))
+					continue;
 
                 istream.unget();
                 break;
             }
-
-            if(!std::isalnum(c))
+            else if(!std::isalnum(c))
             {
                 if (c != '\0')
                     istream.unget();
 
                 break;
             }
-
-            if (!base_has_digit(base, c))
+            else if (!base_has_digit(base, c))
                 throw lexer_exception::numeric_base_error(cursor, c, base);
         }
 
@@ -313,6 +310,3 @@ namespace ccomp
 		return istream.substr(istream.tellg(), 1);
 	}
 }
-
-
-
