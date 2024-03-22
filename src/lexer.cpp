@@ -12,12 +12,13 @@ namespace ccomp
     namespace
     {
 		using lexeme_set = std::unordered_set<std::string_view>;
+		using lexeme_map = std::unordered_map<std::string_view, token_type>;
 
-        const lexeme_set keywords = {
-			"define",
-			"raw",
-			"proc",
-			"endp"
+        const lexeme_map keywords = {
+				{ "define", token_type::keyword_define     },
+				{ "raw",    token_type::keyword_raw        },
+				{ "proc",   token_type::keyword_proc_start },
+				{ "endp",   token_type::keyword_proc_end   }
 		};
 
         const lexeme_set special_regs_name = {
@@ -93,10 +94,24 @@ namespace ccomp
                 return token_type::instruction;
 
 			if (keywords.contains(lexeme))
-				return token_type::keyword;
+				return keywords.at(lexeme);
 
 			return token_type::identifier;
         }
+
+		bool base_has_digit(int base, char digit)
+		{
+			if (base == 10 &&  digit >= '0' && digit <= '9')  return true;
+			if (base ==  8 &&  digit >= '0' && digit <= '7')  return true;
+			if (base ==  2 && (digit == '0' || digit == '1')) return true;
+
+			digit = static_cast<char>(std::tolower(digit));
+
+			if (base == 16 && ((digit >= '0' && digit<= '9') || (digit>= 'a' && digit <= 'f')))
+				return true;
+
+			return false;
+		};
     }
 
 
@@ -142,7 +157,12 @@ namespace ccomp
 		source_location source_loc = cursor;
 		source_loc.step_back(lexeme.size());
 
-		return { .type = type, .lexeme = std::move(lexeme), .source_location = source_loc };
+		return { .type = type, .source_location = source_loc, .data = std::move(lexeme) };
+	}
+
+	token lexer::make_numerical_token(uint16_t numerical_value) const
+	{
+		return { .type = token_type::numerical, .source_location = cursor, .data = numerical_value };
 	}
 
 	std::vector<token> lexer::enumerate_tokens()
@@ -175,7 +195,7 @@ namespace ccomp
             return make_token(token_type::eof);
 
         else if (std::isdigit(c))
-            return make_token(token_type::numerical, read_numeric_lexeme());
+            return make_numerical_token(read_numeric_lexeme());
 
         else if (std::isalpha(c))
         {
@@ -184,12 +204,11 @@ namespace ccomp
         }
         else if (special_characters.contains(c))
         {
-            const auto tok = make_token(special_characters.at(c), read_special_char());
-            next_chr();
-            return tok;
+			next_chr();
+            return make_token(special_characters.at(c));
         }
 
-        throw lexer_exception::undefined_token_error(make_token(token_type::undefined));
+        throw lexer_exception::undefined_character_token(c, cursor);
     }
 
     char lexer::peek_chr() const
@@ -224,9 +243,9 @@ namespace ccomp
             next_chr();
     }
 
-    std::string lexer::read_numeric_lexeme()
+    uint16_t lexer::read_numeric_lexeme()
     {
-        const int base = [this]()
+        const auto base = [this]() -> int
         {
             if (peek_chr() != '0')
                 return 10;
@@ -238,56 +257,57 @@ namespace ccomp
                 case 'x': return 16;
                 case 'o': return 8;
                 case 'b': return 2;
-                default:  return std::isdigit(peek_chr()) ? 10 : - 1;
+
+                default:
+					break;
             }
+
+			if (std::isdigit(peek_chr()))
+				return 10;
+
+			throw lexer_exception::numeric_base_error(cursor, peek_chr(), 10);
         }();
 
-        if (base == -1)
-            throw lexer_exception::numeric_base_error(cursor, peek_chr(), 10);
+		std::string numeric_lexeme;
 
-        auto base_has_digit = [](int base, char digit) -> bool
-        {
-            if (base == 10 &&  digit >= '0' && digit <= '9')  return true;
-            if (base ==  8 &&  digit >= '0' && digit <= '7')  return true;
-            if (base ==  2 && (digit == '0' || digit == '1')) return true;
-
-            digit = static_cast<char>(std::tolower(digit));
-
-            if (base == 16 && ((digit >= '0' && digit<= '9') || (digit>= 'a' && digit <= 'f')))
-                return true;
-
-            return false;
-        };
-
-        const size_t begin = istream.tellg();
-
-        // skip base character
-        if (base != 10)
-            next_chr();
+		if (base != 10)
+			next_chr();
 
         for (char c = next_chr(); ; c = next_chr())
         {
-			// Verify we have a something like 0xFF'FF and not 0xFF''FF
-            if (c == '\'')
-            {
-				if (std::isalnum(peek_chr()))
-					continue;
+			if (std::isalnum(c))
+			{
+				if (!base_has_digit(base, c))
+					throw lexer_exception::numeric_base_error(cursor, c, base);
 
-                istream.unget();
-                break;
-            }
-            else if(!std::isalnum(c))
-            {
-                if (c != '\0')
-                    istream.unget();
+				numeric_lexeme += c;
+			}
+			else if (c == '\'' && !std::isalnum(peek_chr()))
+			{
+				istream.unget();
+				break;
+			}
+			else
+           	{
+           		if (c != '\0')
+           	        istream.unget();
 
-                break;
-            }
-            else if (!base_has_digit(base, c))
-                throw lexer_exception::numeric_base_error(cursor, c, base);
+				break;
+           	}
         }
 
-        return istream.substr(begin, istream.tellg() - begin);
+		uint16_t constant_value {};
+		const auto [_, ec] = std::from_chars(
+									numeric_lexeme.data(),
+									numeric_lexeme.data() + numeric_lexeme.size(),
+									constant_value,
+									base
+							 );
+
+		if (ec == std::errc::result_out_of_range)
+			throw lexer_exception::numeric_constant_too_large(cursor, numeric_lexeme);
+
+		return constant_value;
     }
 
     std::string lexer::read_alpha_lexeme()
@@ -304,9 +324,4 @@ namespace ccomp
 
         return istream.substr(begin, istream.tellg() - begin);
     }
-
-	std::string lexer::read_special_char() const
-	{
-		return istream.substr(istream.tellg(), 1);
-	}
 }

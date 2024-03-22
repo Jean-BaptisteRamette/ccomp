@@ -43,22 +43,22 @@ namespace ccomp
     {
         ast::abstract_tree ast;
 
-		while (auto block = parse_next_block())
+		while (auto block = parse_primary_block())
 			ast.add_statement(std::move(block));
 
         return ast;
     }
 
-	ast::statement parser::parse_next_block()
+	ast::statement parser::parse_primary_block()
 	{
 		if (token_it == std::end(tokens))
 			return {};
 
-		if (token_it->lexeme == "raw")
-			return parse_raw();
-		else if (token_it->lexeme == "define")
+		if (token_it->type == token_type::keyword_define)
 			return parse_define();
-		else if (token_it->lexeme == ".")
+		else if (token_it->type == token_type::keyword_raw)
+			return parse_raw();
+		else if (token_it->type == token_type::dot)
 			return parse_subroutine();
 
 		throw parser_exception::unexpected_error(*token_it);
@@ -66,7 +66,7 @@ namespace ccomp
 
 	ast::statement parser::parse_raw()
 	{
-		expect(token_type::keyword);
+		expect(token_type::keyword_raw);
 		expect(token_type::parenthesis_open);
 
 		auto token = expect(token_type::numerical, token_type::identifier);
@@ -78,7 +78,7 @@ namespace ccomp
 
 	ast::statement parser::parse_define()
 	{
-		expect(token_type::keyword);
+		expect(token_type::keyword_define);
 
 		auto identifier = expect(token_type::identifier);
 		auto value = expect(token_type::numerical);
@@ -96,14 +96,11 @@ namespace ccomp
 
 	ast::statement parser::parse_subroutine()
 	{
-		// expect(token_type::special_character);
+		return {};
+	}
 
-		// auto label = expect(token_type::identifier);
-
-		// expect(token_type::special_character);
-
-		// return std::make_unique<ast::subroutine_statement>(label.lexeme);
-
+	ast::statement parser::parse_label()
+	{
 		return {};
 	}
 

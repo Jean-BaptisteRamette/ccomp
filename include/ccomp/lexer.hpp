@@ -12,6 +12,7 @@
 
 #include <string_view>
 #include <exception>
+#include <variant>
 #include <memory>
 #include <format>
 
@@ -23,96 +24,25 @@ namespace ccomp
 {
     enum class token_type
     {
-        undefined,
-
         eof,
 
-        // [0-9-a-f-A-F]
-        numerical,
-
-        // 'A' (quotes included)
-        // TODO
-        byte_ascii,
-
-        // define, raw (instructions not included
-        keyword,
-
-        // constants defined with the "define" keywords and label names
-        identifier,
-
-        // call, ret, jmp, cls...
-        instruction,
-
-		// special and general purpose registers
-		register_name,
-
+		numerical,           // [0-9-a-f-A-F]
+        byte_ascii,          // 'A' (quotes included)
+        keyword_define,      // define x ...
+		keyword_raw,         // raw(...)
+		keyword_proc_start,  // proc ...
+		keyword_proc_end,    // endp
+        identifier,          // constants defined with the "define" keywords and label names
+        instruction,         // call, ret, jmp, cls...
+		register_name,       // special and general purpose registers
 		bracket_open,
 		bracket_close,
-
 		parenthesis_open,
 		parenthesis_close,
-
 		colon,
 		dot,
 		comma
     };
-
-	CCOMP_NODISCARD
-	constexpr std::string_view to_string(token_type type)
-	{
-		switch (type)
-		{
-			case token_type::undefined:
-				return "undefined";
-			case token_type::eof:
-				return "eof";
-			case token_type::numerical:
-				return "numerical";
-			case token_type::byte_ascii:
-				return "ascii";
-			case token_type::keyword:
-				return "keyword";
-			case token_type::identifier:
-				return "identifier";
-			case token_type::instruction:
-				return "instruction";
-			case token_type::register_name:
-				return "register name";
-			case token_type::bracket_open:
-				return "open bracket";
-			case token_type::bracket_close:
-				return "close bracket";
-			case token_type::parenthesis_open:
-				return "open parenthesis";
-			case token_type::parenthesis_close:
-				return "close parenthesis";
-			case token_type::colon:
-				return "colon";
-			case token_type::comma:
-				return "comma";
-			case token_type::dot:
-				return "dot";
-
-			default:
-				return "unknown";
-		}
-	}
-
-	CCOMP_NODISCARD
-	inline std::string to_string(std::initializer_list<token_type> types)
-	{
-		std::string joined;
-
-		for (const auto type : types)
-		{
-			if (!joined.empty())
-				joined += ", ";
-
-			joined += ccomp::to_string(type);
-		}
-
-		return '(' + joined + ')';
-	}
 
 	struct source_location
 	{
@@ -140,8 +70,9 @@ namespace ccomp
 	struct token
     {
         token_type type;
-        std::string lexeme;
 		source_location source_location;
+
+		std::variant<uint16_t, std::string> data;
     };
 
     class lexer final
@@ -175,12 +106,11 @@ namespace ccomp
         void skip_comment();
         void skip_wspaces();
 
-		CCOMP_NODISCARD
-		token make_token(token_type type, std::string lexeme = {}) const;
+		CCOMP_NODISCARD token make_token(token_type type, std::string lexeme = {}) const;
+		CCOMP_NODISCARD token make_numerical_token(uint16_t numerical_value) const;
 
-        CCOMP_NODISCARD std::string read_numeric_lexeme();
+		CCOMP_NODISCARD uint16_t    read_numeric_lexeme();
         CCOMP_NODISCARD std::string read_alpha_lexeme();
-		CCOMP_NODISCARD std::string read_special_char() const;
 
     CCOMP_PRIVATE:
         ccomp::stream istream;
@@ -206,19 +136,101 @@ namespace ccomp
             const int base;
         };
 
-        struct undefined_token_error : std::runtime_error
+		struct numeric_constant_too_large : std::runtime_error
+		{
+			numeric_constant_too_large(source_location source_loc, std::string numeric_lexeme_)
+					: std::runtime_error(std::format("Numeric constant {} at line {} column {} is too large for a 16-bit value.",
+													 numeric_lexeme_,
+													 source_loc.line,
+													 source_loc.col)),
+					  numeric_lexeme(std::move(numeric_lexeme_))
+			{}
+
+			std::string numeric_lexeme;
+		};
+
+        struct undefined_character_token : std::runtime_error
         {
-            explicit undefined_token_error(const token& token_)
-                : std::runtime_error(std::format("Unknown token {} at line {} column {}.",
-									 token_.lexeme,
-									 token_.source_location.line,
-									 token_.source_location.col)),
-                  token(token_)
+            explicit undefined_character_token(char c_, const source_location& location)
+                : std::runtime_error(std::format("Character '{}' cannot match any token at line {} column {}.",
+									 c_,
+									 location.line,
+									 location.col)),
+				  c(c_)
             {}
 
-            const token token;
+            const char c;
         };
     };
+
+	namespace
+	{
+		CCOMP_NODISCARD
+		constexpr std::string_view to_string(token_type type)
+		{
+			switch (type)
+			{
+				case token_type::eof:
+					return "eof";
+				case token_type::numerical:
+					return "numerical";
+				case token_type::byte_ascii:
+					return "ascii";
+				case token_type::keyword_define:
+					return "define";
+				case token_type::keyword_raw:
+					return "raw";
+				case token_type::identifier:
+					return "identifier";
+				case token_type::instruction:
+					return "instruction";
+				case token_type::register_name:
+					return "register name";
+				case token_type::bracket_open:
+					return "open bracket";
+				case token_type::bracket_close:
+					return "close bracket";
+				case token_type::parenthesis_open:
+					return "open parenthesis";
+				case token_type::parenthesis_close:
+					return "close parenthesis";
+				case token_type::colon:
+					return "colon";
+				case token_type::comma:
+					return "comma";
+				case token_type::dot:
+					return "dot";
+
+				default:
+					return "undefined";
+			}
+		}
+
+		CCOMP_NODISCARD
+		inline std::string to_string(std::initializer_list<token_type> types)
+		{
+			std::string joined;
+
+			for (const auto type : types)
+			{
+				if (!joined.empty())
+					joined += ", ";
+
+				joined += ccomp::to_string(type);
+			}
+
+			return '(' + joined + ')';
+		}
+
+		CCOMP_NODISCARD
+		inline std::string to_string(const token& token)
+		{
+			if (std::holds_alternative<uint16_t>(token.data))
+				return std::to_string(std::get<uint16_t>(token.data));
+
+			return std::get<std::string>(token.data);
+		}
+	}
 };
 
 

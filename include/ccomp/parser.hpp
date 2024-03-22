@@ -25,7 +25,7 @@ namespace ccomp
 		{
 			explicit expected_more_error(const token& last_token_)
 					: parser_error(std::format("Expected more tokens after last token \"{}\" while parsing at line {} column {}",
-											   last_token_.lexeme,
+											   ccomp::to_string(last_token_),
 											   last_token_.source_location.line,
 											   last_token_.source_location.col)),
 					  last_token(last_token_)
@@ -42,7 +42,7 @@ namespace ccomp
 
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
 					: parser_error(std::format("Parser got token \"{}\" but expected a token of type {} while parsing at line {} column {}.",
-											   unexpected_.lexeme,
+											   ccomp::to_string(unexpected_),
 											   ccomp::to_string(expected_types_),
 											   unexpected_.source_location.line,
 											   unexpected_.source_location.col)),
@@ -58,7 +58,7 @@ namespace ccomp
 		{
 			explicit unexpected_error(const token& unexpected_)
 					: parser_error(std::format("Unexpected token {} while parsing at line {} column {}.",
-											   unexpected_.lexeme,
+											   ccomp::to_string(unexpected_),
 											   unexpected_.source_location.line,
 											   unexpected_.source_location.col)),
 					  unexpected(unexpected_)
@@ -101,11 +101,12 @@ namespace ccomp
 		token advance();
         CCOMP_NODISCARD size_t remaining_tokens() const;
 
-        CCOMP_NODISCARD ast::statement parse_next_block();
+        CCOMP_NODISCARD ast::statement parse_primary_block();
         CCOMP_NODISCARD ast::statement parse_raw();
         CCOMP_NODISCARD ast::statement parse_define();
         CCOMP_NODISCARD ast::statement parse_instruction();
         CCOMP_NODISCARD ast::statement parse_subroutine();
+		CCOMP_NODISCARD ast::statement parse_label();
         CCOMP_NODISCARD ast::statement parse_operand();
 
     CCOMP_PRIVATE:
