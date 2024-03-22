@@ -120,9 +120,9 @@ namespace ccomp
 
     namespace lexer_exception
     {
-        struct numeric_base_error : std::runtime_error
+        struct invalid_digit_for_base : std::runtime_error
         {
-            numeric_base_error(source_location source_loc, char digit_, int base_)
+            invalid_digit_for_base(source_location source_loc, char digit_, int base_)
                 : std::runtime_error(std::format("Invalid digit {} for numeric base {} at line {} column {}.",
 									 digit_,
 									 base_,

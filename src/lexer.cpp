@@ -183,12 +183,15 @@ namespace ccomp
 
         if (c == ';')
         {
-            next_chr();
-            if (next_chr() != ';')
-				throw std::runtime_error("Expected a second \";\" for comment.");
+			do
+			{
+				next_chr();
+				if (next_chr() != ';')
+					throw std::runtime_error("Expected a second \";\" for comment.");
 
-            skip_comment();
-            c = peek_chr();
+				skip_comment();
+				c = peek_chr();
+			} while (c == ';');
         }
 
         if (istream.eof())
@@ -231,7 +234,7 @@ namespace ccomp
     void lexer::skip_comment()
     {
         // Assumes comment was already detected
-        while (!istream.eof() && next_chr() != '\n')
+        while (!istream.eof() && peek_chr() != '\n')
             next_chr();
 
         skip_wspaces();
@@ -265,7 +268,7 @@ namespace ccomp
 			if (std::isdigit(peek_chr()))
 				return 10;
 
-			throw lexer_exception::numeric_base_error(cursor, peek_chr(), 10);
+			throw lexer_exception::invalid_digit_for_base(cursor, peek_chr(), 10);
         }();
 
 		std::string numeric_lexeme;
@@ -278,14 +281,17 @@ namespace ccomp
 			if (std::isalnum(c))
 			{
 				if (!base_has_digit(base, c))
-					throw lexer_exception::numeric_base_error(cursor, c, base);
+					throw lexer_exception::invalid_digit_for_base(cursor, c, base);
 
 				numeric_lexeme += c;
 			}
-			else if (c == '\'' && !std::isalnum(peek_chr()))
+			else if (c == '\'')
 			{
-				istream.unget();
-				break;
+				if (!std::isalnum(peek_chr()))
+				{
+					istream.unget();
+					break;
+				}
 			}
 			else
            	{
