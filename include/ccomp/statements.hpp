@@ -10,7 +10,6 @@ namespace ccomp::ast
 	struct base_statement;
 
     struct procedure_statement;
-    struct operand;
     struct instruction_statement;
     struct define_statement;
     struct raw_statement;
@@ -26,35 +25,29 @@ namespace ccomp::ast
 		base_statement& operator=(const base_statement&) = delete;
 		base_statement& operator=(base_statement&&) = delete;
 
-		CCOMP_NODISCARD virtual source_location source_begin() const = 0;
-		CCOMP_NODISCARD virtual source_location source_end()   const = 0;
+		CCOMP_NODISCARD virtual size_t source_line_begin() const = 0;
+		CCOMP_NODISCARD virtual size_t source_line_end()   const = 0;
 
         virtual ~base_statement() = default;
 	};
 
     struct procedure_statement : base_statement
     {
-        procedure_statement(std::string name_, std::vector<statement> inner_statements_)
-            : name(std::move(name_)),
+        procedure_statement(token name_beg_, token name_end_, std::vector<statement> inner_statements_)
+            : base_statement(),
+			  name_beg(std::move(name_beg_)),
+			  name_end(std::move(name_end_)),
               inner_statements(std::move(inner_statements_))
         {}
 
-		CCOMP_NODISCARD
-		source_location source_begin() const override
-		{
-			return {};
-		}
+		CCOMP_NODISCARD size_t source_line_begin() const override { return name_beg.source_location.line; }
+		CCOMP_NODISCARD size_t source_line_end()   const override { return name_end.source_location.line; }
 
-		CCOMP_NODISCARD
-		source_location source_end() const override
-		{
-			return {};
-		}
-
-        std::string name;
+        const token name_beg;
+		const token name_end;
 
 		// raw, define, instructions and label statements
-        std::vector<statement> inner_statements;
+        const std::vector<statement> inner_statements;
     };
 
     struct instruction_operand
@@ -79,25 +72,25 @@ namespace ccomp::ast
 			return *this;
 		}
 
-        bool indirection;
-
 		token operand;
+        bool indirection;
     };
 
     struct instruction_statement : base_statement
     {
 		instruction_statement(token mnemonic_, std::vector<instruction_operand> operands_)
-			: mnemonic(std::move(mnemonic_)),
+			: base_statement(),
+			  mnemonic(std::move(mnemonic_)),
 			  operands(std::move(operands_))
 		{}
 
-		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
-		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+		CCOMP_NODISCARD size_t source_line_begin() const override {  return mnemonic.source_location.line; }
+		CCOMP_NODISCARD size_t source_line_end()   const override {  return mnemonic.source_location.line; }
 
-    	token mnemonic;
+    	const token mnemonic;
 
 		// chip-8 instructions 0 to 3 operands
-		std::vector<instruction_operand> operands;
+		const std::vector<instruction_operand> operands;
     };
 
     struct define_statement : base_statement
@@ -108,11 +101,11 @@ namespace ccomp::ast
 			  value(std::move(value_))
         {}
 
-		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
-		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+		CCOMP_NODISCARD size_t source_line_begin() const override {  return identifier.source_location.line; }
+		CCOMP_NODISCARD size_t source_line_end()   const override {  return value.source_location.line; }
 
-        token identifier;
-        token value;
+        const token identifier;
+        const token value;
     };
 
     struct raw_statement : base_statement
@@ -122,23 +115,23 @@ namespace ccomp::ast
 			  opcode(std::move(opcode_))
 		{}
 
-		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
-		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+		CCOMP_NODISCARD size_t source_line_begin() const override {  return opcode.source_location.line; }
+		CCOMP_NODISCARD size_t source_line_end()   const override {  return opcode.source_location.line; }
 
-        token opcode;
+        const token opcode;
     };
 
 	struct label_statement : base_statement
 	{
 		explicit label_statement(token identifier_)
 			: base_statement(),
-			  identifier_(std::move(identifier_))
+			  identifier(std::move(identifier_))
 		{}
 
-		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
-		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+		CCOMP_NODISCARD size_t source_line_begin() const override {  return identifier.source_location.line; }
+		CCOMP_NODISCARD size_t source_line_end()   const override {  return identifier.source_location.line; }
 
-		token identifier_;
+		const token identifier;
 	};
 }
 

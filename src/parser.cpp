@@ -56,8 +56,8 @@ namespace ccomp
 
 	token parser::advance()
 	{
-		if (reached_eof())
-			throw std::runtime_error("Unexpected EOF while parsing !");
+		if (no_more_tokens())
+			throw parser_exception::parser_error("Expected more tokens before end of file.");
 
 		const token t = *token_it;
 		++token_it;
@@ -65,7 +65,7 @@ namespace ccomp
 		return t;
 	}
 
-    bool parser::reached_eof() const
+    bool parser::no_more_tokens() const
     {
         return token_it == std::end(tokens);
     }
@@ -82,7 +82,7 @@ namespace ccomp
 
 	ast::statement parser::parse_primary_statement()
 	{
-		if (reached_eof())
+		if (no_more_tokens())
 			return {};
 
 		switch (token_it->type)
@@ -153,12 +153,10 @@ namespace ccomp
 
 	ast::statement parser::parse_procedure()
 	{
-		expect(token_type::keyword_proc_start);
-
 		auto parse_inner_statement = [&]() -> ast::statement
 		{
-			if (reached_eof())
-				throw std::runtime_error("Unexpected EOF while parsing !");
+			if (no_more_tokens())
+				throw parser_exception::parser_error("Found unexpected EOF before function end.");
 
 			switch (token_it->type)
 			{
@@ -169,14 +167,15 @@ namespace ccomp
 				case token_type::dot:              return parse_label();
 
 				case token_type::keyword_proc_start:
-					throw std::runtime_error("Cannot define a procedure inside another");
+					throw parser_exception::parser_error("Cannot define a procedure inside another.");
 
 				default:
 					throw parser_exception::unexpected_error(*token_it);
 			}
 		};
 
-		auto proc_name = expect(token_type::identifier);
+		expect(token_type::keyword_proc_start);
+		auto proc_name_beg = expect(token_type::identifier);
 
 		std::vector<ast::statement> inner_statements;
 
@@ -184,19 +183,14 @@ namespace ccomp
 			inner_statements.push_back(std::move(block));
 
 		expect(token_type::keyword_proc_end);
-		const auto proc_name_end = expect(token_type::identifier);
+		auto proc_name_end = expect(token_type::identifier);
 
-		if (proc_name_end.data != proc_name.data)
-			throw parser_exception::parser_error(
-					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
-					proc_name.source_location.line,
-					proc_name_end.source_location.line,
-					ccomp::to_string(proc_name),
-					ccomp::to_string(proc_name_end)
-				);
+		if (proc_name_end.data != proc_name_beg.data)
+			throw parser_exception::unmatching_procedure_names(proc_name_beg, proc_name_end);
 
 		return std::make_unique<ast::procedure_statement>(
-					ccomp::to_string(proc_name),
+					std::move(proc_name_beg),
+					std::move(proc_name_end),
 					std::move(inner_statements)
 				);
 	}

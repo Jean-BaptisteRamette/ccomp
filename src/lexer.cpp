@@ -111,7 +111,7 @@ namespace ccomp
 				return true;
 
 			return false;
-		};
+		}
     }
 
 
@@ -268,7 +268,7 @@ namespace ccomp
 			if (std::isdigit(peek_chr()))
 				return 10;
 
-			throw lexer_exception::invalid_digit_for_base(cursor, peek_chr(), 10);
+			throw lexer_exception::invalid_digit_for_base(peek_chr(), 10, cursor);
         }();
 
 		std::string numeric_lexeme;
@@ -281,7 +281,7 @@ namespace ccomp
 			if (std::isalnum(c))
 			{
 				if (!base_has_digit(base, c))
-					throw lexer_exception::invalid_digit_for_base(cursor, c, base);
+					throw lexer_exception::invalid_digit_for_base(c, base, cursor);
 
 				numeric_lexeme += c;
 			}
@@ -311,7 +311,7 @@ namespace ccomp
 							 );
 
 		if (ec == std::errc::result_out_of_range)
-			throw lexer_exception::numeric_constant_too_large(cursor, numeric_lexeme);
+			throw lexer_exception::numeric_constant_too_large(numeric_lexeme, cursor);
 
 		return constant_value;
     }

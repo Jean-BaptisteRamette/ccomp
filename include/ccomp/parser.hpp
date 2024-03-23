@@ -18,61 +18,48 @@ namespace ccomp
 		struct parser_error : std::runtime_error
 		{
 			explicit parser_error(std::string_view message)
-					: std::runtime_error(message.data())
+				: std::runtime_error(message.data())
 			{}
 
 			template<typename ...Args>
 			explicit parser_error(std::string_view fmt_message, Args&&... args)
-					: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
+				: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
 			{}
 		};
 
-		struct expected_more_error : parser_error
+		struct unmatching_procedure_names : parser_error
 		{
-			explicit expected_more_error(const token& last_token_)
-					: parser_error("Expected more tokens after last token \"{}\" while parsing at line {} column {}",
-											   ccomp::to_string(last_token_),
-											   last_token_.source_location.line,
-											   last_token_.source_location.col),
-					  last_token(last_token_)
+			unmatching_procedure_names(const token& proc_name_beg, const token& proc_name_end)
+				: parser_error(
+					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
+					proc_name_beg.source_location.line,
+					proc_name_end.source_location.line,
+					ccomp::to_string(proc_name_beg),
+					ccomp::to_string(proc_name_end))
 			{}
-
-			const token last_token;
 		};
 
 		struct expected_others_error : parser_error
 		{
-			expected_others_error(const token& unexpected_, token_type expected_type)
-					: expected_others_error(unexpected_, { expected_type })
-			{}
-
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
-					: parser_error(
-							"Parser got token \"{}\" but expected a token of type {} while parsing at line {} column {}.",
-							ccomp::to_string(unexpected_),
-							ccomp::to_string(expected_types_),
-							unexpected_.source_location.line,
-							unexpected_.source_location.col),
-					  unexpected(unexpected_),
-					  expected_types(expected_types_)
+				: parser_error(
+					"Parser got token \"{}\" but expected a token of type {} while parsing at line {} column {}.",
+					ccomp::to_string(unexpected_),
+					ccomp::to_string(expected_types_),
+					unexpected_.source_location.line,
+					unexpected_.source_location.col)
 			{}
-
-			const token unexpected;
-			const std::initializer_list<token_type> expected_types;
 		};
 
 		struct unexpected_error : parser_error
 		{
 			explicit unexpected_error(const token& unexpected_)
-					: parser_error(
-							"Unexpected token {} while parsing at line {} column {}.",
-							ccomp::to_string(unexpected_),
-							unexpected_.source_location.line,
-							unexpected_.source_location.col),
-					  unexpected(unexpected_)
+				: parser_error(
+					"Unexpected token {} while parsing at line {} column {}.",
+					ccomp::to_string(unexpected_),
+					unexpected_.source_location.line,
+					unexpected_.source_location.col)
 			{}
-
-			const token unexpected;
 		};
 	}
 
@@ -107,7 +94,7 @@ namespace ccomp
 		};
 
 		CCOMP_NODISCARD token advance();
-        CCOMP_NODISCARD bool reached_eof() const;
+        CCOMP_NODISCARD bool no_more_tokens() const;
 
         CCOMP_NODISCARD ast::statement parse_primary_statement();
         CCOMP_NODISCARD ast::statement parse_raw();

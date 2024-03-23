@@ -120,48 +120,52 @@ namespace ccomp
 
     namespace lexer_exception
     {
-        struct invalid_digit_for_base : std::runtime_error
-        {
-            invalid_digit_for_base(source_location source_loc, char digit_, int base_)
-                : std::runtime_error(std::format("Invalid digit {} for numeric base {} at line {} column {}.",
-									 digit_,
-									 base_,
-									 source_loc.line,
-									 source_loc.col)),
-                  digit(digit_),
-                  base(base_)
-            {}
-
-            const char digit;
-            const int base;
-        };
-
-		struct numeric_constant_too_large : std::runtime_error
+		struct lexer_error : std::runtime_error
 		{
-			numeric_constant_too_large(source_location source_loc, std::string numeric_lexeme_)
-					: std::runtime_error(std::format("Numeric constant {} at line {} column {} is too large for a 16-bit value.",
-													 numeric_lexeme_,
-													 source_loc.line,
-													 source_loc.col)),
-					  numeric_lexeme(std::move(numeric_lexeme_))
+			explicit lexer_error(std::string_view message)
+				: std::runtime_error(message.data())
 			{}
 
-			std::string numeric_lexeme;
+			template<typename ...Args>
+			explicit lexer_error(std::string_view fmt_message, Args&&... args)
+				: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
+			{}
 		};
 
-        struct undefined_character_token : std::runtime_error
+        struct invalid_digit_for_base :lexer_error
         {
-            explicit undefined_character_token(char c_, const source_location& location)
-                : std::runtime_error(std::format("Character '{}' cannot match any token at line {} column {}.",
-									 c_,
-									 location.line,
-									 location.col)),
-				  c(c_)
+            invalid_digit_for_base(char digit, int base, const source_location& source_loc)
+                : lexer_error(
+						"Invalid digit \"{}\" for numeric base {} at line {} column {}.",
+						digit,
+						base,
+						source_loc.line,
+						source_loc.col)
             {}
-
-            const char c;
         };
-    };
+
+		struct numeric_constant_too_large : lexer_error
+		{
+			numeric_constant_too_large(std::string numeric_lexeme, const source_location& source_loc)
+				: lexer_error(
+						"Numeric constant \"{}\" at line {} column {} is too large for a 16-bit value.",
+						numeric_lexeme,
+						source_loc.line,
+						source_loc.col)
+			{}
+		};
+
+        struct undefined_character_token : lexer_error
+        {
+            explicit undefined_character_token(char c, const source_location& source_loc)
+                : lexer_error(
+						"Character \"{}\" cannot match any token at line {} column {}.",
+						c,
+						source_loc.line,
+						source_loc.col)
+            {}
+        };
+    }
 
 	namespace
 	{
@@ -231,7 +235,7 @@ namespace ccomp
 			return std::get<std::string>(token.data);
 		}
 	}
-};
+}
 
 
 #endif //CCOMP_LEXER_HPP
