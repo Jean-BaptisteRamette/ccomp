@@ -69,17 +69,11 @@ namespace ccomp
     public:
         explicit parser(std::vector<token>&& tokens_list);
 
-#ifdef UNIT_TESTS_ON
-        CCOMP_NODISCARD
-        static std::unique_ptr<parser> from_buffer(std::string_view buff);
-#endif
-
         ~parser() = default;
 
-        CCOMP_NODISCARD ast::abstract_tree make_tree();
+        [[nodiscard]] ast::abstract_tree make_tree();
 
-    CCOMP_PRIVATE:
-
+    private:
 		template<typename... Args>
 		token expect(Args... types)
 		{
@@ -93,19 +87,19 @@ namespace ccomp
 			throw parser_exception::expected_others_error(t, expected_types);
 		};
 
-		CCOMP_NODISCARD token advance();
-        CCOMP_NODISCARD bool no_more_tokens() const;
+		[[nodiscard]] token advance();
+        [[nodiscard]] bool no_more_tokens() const;
 
-        CCOMP_NODISCARD ast::statement parse_primary_statement();
-        CCOMP_NODISCARD ast::statement parse_raw();
-        CCOMP_NODISCARD ast::statement parse_define();
-        CCOMP_NODISCARD ast::statement parse_instruction();
-        CCOMP_NODISCARD ast::statement parse_procedure();
-		CCOMP_NODISCARD ast::statement parse_label();
-        CCOMP_NODISCARD ast::instruction_operand parse_operand();
-		CCOMP_NODISCARD std::vector<ast::instruction_operand> parse_operands(std::string_view mnemonic);
+        [[nodiscard]] ast::statement parse_primary_statement();
+        [[nodiscard]] ast::statement parse_raw();
+        [[nodiscard]] ast::statement parse_define();
+        [[nodiscard]] ast::statement parse_instruction();
+        [[nodiscard]] ast::statement parse_procedure();
+		[[nodiscard]] ast::statement parse_label();
+        [[nodiscard]] ast::instruction_operand parse_operand();
+		[[nodiscard]] std::vector<ast::instruction_operand> parse_operands(std::string_view mnemonic);
 
-    CCOMP_PRIVATE:
+    private:
         const std::vector<token> tokens;
         std::vector<token>::const_iterator token_it;
     };

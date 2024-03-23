@@ -1,22 +1,13 @@
 #ifndef CCOMP_STATEMENTS_HPP
 #define CCOMP_STATEMENTS_HPP
 
+#include <ccomp/ast_visitor.hpp>
 #include <ccomp/lexer.hpp>
 #include <vector>
 
 
 namespace ccomp::ast
 {
-	struct base_statement;
-
-    struct procedure_statement;
-    struct instruction_statement;
-    struct define_statement;
-    struct raw_statement;
-	struct label_statement;
-
-	using statement = std::unique_ptr<base_statement>;
-
     struct base_statement
     {
 		base_statement() = default;
@@ -25,11 +16,15 @@ namespace ccomp::ast
 		base_statement& operator=(const base_statement&) = delete;
 		base_statement& operator=(base_statement&&) = delete;
 
-		CCOMP_NODISCARD virtual size_t source_line_begin() const = 0;
-		CCOMP_NODISCARD virtual size_t source_line_end()   const = 0;
+		virtual void accept(base_visitor&) const = 0;
+
+		[[nodiscard]] virtual size_t source_line_beg() const = 0;
+		[[nodiscard]] virtual size_t source_line_end() const = 0;
 
         virtual ~base_statement() = default;
 	};
+
+	using statement = std::unique_ptr<base_statement>;
 
     struct procedure_statement : base_statement
     {
@@ -40,8 +35,10 @@ namespace ccomp::ast
               inner_statements(std::move(inner_statements_))
         {}
 
-		CCOMP_NODISCARD size_t source_line_begin() const override { return name_beg.source_location.line; }
-		CCOMP_NODISCARD size_t source_line_end()   const override { return name_end.source_location.line; }
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override { return name_beg.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override { return name_end.source_location.line; }
 
         const token name_beg;
 		const token name_end;
@@ -84,8 +81,10 @@ namespace ccomp::ast
 			  operands(std::move(operands_))
 		{}
 
-		CCOMP_NODISCARD size_t source_line_begin() const override {  return mnemonic.source_location.line; }
-		CCOMP_NODISCARD size_t source_line_end()   const override {  return mnemonic.source_location.line; }
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override {  return mnemonic.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override {  return mnemonic.source_location.line; }
 
     	const token mnemonic;
 
@@ -101,8 +100,10 @@ namespace ccomp::ast
 			  value(std::move(value_))
         {}
 
-		CCOMP_NODISCARD size_t source_line_begin() const override {  return identifier.source_location.line; }
-		CCOMP_NODISCARD size_t source_line_end()   const override {  return value.source_location.line; }
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override {  return identifier.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override {  return value.source_location.line; }
 
         const token identifier;
         const token value;
@@ -115,8 +116,10 @@ namespace ccomp::ast
 			  opcode(std::move(opcode_))
 		{}
 
-		CCOMP_NODISCARD size_t source_line_begin() const override {  return opcode.source_location.line; }
-		CCOMP_NODISCARD size_t source_line_end()   const override {  return opcode.source_location.line; }
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override {  return opcode.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override {  return opcode.source_location.line; }
 
         const token opcode;
     };
@@ -128,8 +131,10 @@ namespace ccomp::ast
 			  identifier(std::move(identifier_))
 		{}
 
-		CCOMP_NODISCARD size_t source_line_begin() const override {  return identifier.source_location.line; }
-		CCOMP_NODISCARD size_t source_line_end()   const override {  return identifier.source_location.line; }
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override {  return identifier.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override {  return identifier.source_location.line; }
 
 		const token identifier;
 	};

@@ -1,19 +1,12 @@
 #ifndef CCOMP_LEXER_HPP
 #define CCOMP_LEXER_HPP
 
-#ifdef UNIT_TESTS_ON
-#define CCOMP_PRIVATE public
-#define CCOMP_NODISCARD
-#else
-#define CCOMP_PRIVATE private
-#define CCOMP_NODISCARD [[nodiscard]]
-#endif
-
 
 #include <string_view>
 #include <exception>
 #include <variant>
 #include <memory>
+#include <vector>
 #include <format>
 
 #include <ccomp/stream.hpp>
@@ -78,11 +71,11 @@ namespace ccomp
     class lexer final
     {
     public:
-        CCOMP_NODISCARD
+        [[nodiscard]]
         static std::unique_ptr<lexer> from_file(std::string_view path, error_code& ec);
 
 #ifdef UNIT_TESTS_ON
-        CCOMP_NODISCARD
+        [[nodiscard]]
         static std::unique_ptr<lexer> from_buffer(std::string_view buff);
 #endif
 
@@ -94,25 +87,25 @@ namespace ccomp
         lexer& operator=(const lexer&) = delete;
         lexer& operator=(lexer&&)      = delete;
 
-		CCOMP_NODISCARD std::vector<token> enumerate_tokens();
+		[[nodiscard]] std::vector<token> enumerate_tokens();
 
-    CCOMP_PRIVATE:
-		CCOMP_NODISCARD token next_token();
+    private:
+		[[nodiscard]] token next_token();
 
-        CCOMP_NODISCARD
+        [[nodiscard]]
         char peek_chr() const;
         char next_chr();
 
         void skip_comment();
         void skip_wspaces();
 
-		CCOMP_NODISCARD token make_token(token_type type, std::string lexeme = {}) const;
-		CCOMP_NODISCARD token make_numerical_token(uint16_t numerical_value) const;
+		[[nodiscard]] token make_token(token_type type, std::string lexeme = {}) const;
+		[[nodiscard]] token make_numerical_token(uint16_t numerical_value) const;
 
-		CCOMP_NODISCARD uint16_t    read_numeric_lexeme();
-        CCOMP_NODISCARD std::string read_alpha_lexeme();
+		[[nodiscard]] uint16_t    read_numeric_lexeme();
+        [[nodiscard]] std::string read_alpha_lexeme();
 
-    CCOMP_PRIVATE:
+    private:
         ccomp::stream istream;
         source_location cursor;
     };
@@ -169,7 +162,7 @@ namespace ccomp
 
 	namespace
 	{
-		CCOMP_NODISCARD
+		[[nodiscard]]
 		constexpr std::string_view to_string(token_type type)
 		{
 			switch (type)
@@ -210,7 +203,7 @@ namespace ccomp
 			}
 		}
 
-		CCOMP_NODISCARD
+		[[nodiscard]]
 		inline std::string to_string(std::initializer_list<token_type> types)
 		{
 			std::string joined;
@@ -226,7 +219,7 @@ namespace ccomp
 			return '(' + joined + ')';
 		}
 
-		CCOMP_NODISCARD
+		[[nodiscard]]
 		inline std::string to_string(const token& token)
 		{
 			if (std::holds_alternative<uint16_t>(token.data))

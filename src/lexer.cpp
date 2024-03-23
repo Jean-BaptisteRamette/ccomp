@@ -52,6 +52,8 @@ namespace ccomp
             "add",
             "sub",
             "suba",
+			"dec",
+			"inc",
             "or",
             "and",
             "xor",
@@ -225,7 +227,7 @@ namespace ccomp
 
         if (chr == '\n')
 			cursor.next_line();
-        else
+        else if (chr != 0)
 			cursor.advance();
 
         return chr;
@@ -265,7 +267,7 @@ namespace ccomp
 					break;
             }
 
-			if (std::isdigit(peek_chr()))
+			if (std::isdigit(peek_chr()) || std::isspace(peek_chr()))
 				return 10;
 
 			throw lexer_exception::invalid_digit_for_base(peek_chr(), 10, cursor);
@@ -318,16 +320,12 @@ namespace ccomp
 
     std::string lexer::read_alpha_lexeme()
     {
-        const size_t begin = istream.tellg();
+		std::string lexeme;
 
-        for (char c = next_chr(); c == '_' || std::isalnum(c); c = next_chr());
+		do
+			lexeme += next_chr();
+		while (peek_chr() == '_' || std::isalnum(peek_chr()));
 
-        if (!istream.eof())
-		{
-			cursor.step_back();
-			istream.unget();
-		}
-
-        return istream.substr(begin, istream.tellg() - begin);
+		return lexeme;
     }
 }

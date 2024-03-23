@@ -32,9 +32,9 @@ int main(int argc, char** argv)
     if (!lexer)
     {
         if (ec == ccomp::error_code::file_not_found_err)
-            ccomp::log::error("File {} not found.", input_file);
+            ccomp::log::error("File \"{}\" not found.", input_file);
         else if (ec == ccomp::error_code::io_err)
-            ccomp::log::error("Could not read file {}.", input_file);
+            ccomp::log::error("Could not read file \"{}\".", input_file);
 
         return EXIT_FAILURE;
     }
@@ -52,6 +52,7 @@ int main(int argc, char** argv)
 		ccomp::parser parser(std::move(tokens));
 
 		const auto ast = parser.make_tree();
+		ast.sanitize();
 
 	} catch (std::runtime_error& error)
 	{

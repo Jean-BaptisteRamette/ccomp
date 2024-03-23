@@ -11,6 +11,8 @@ namespace ccomp
 						{ "add",   2 },
 						{ "sub",   2 },
 						{ "suba",  2 },
+						{ "dec",   1 },
+						{ "inc",   1 },
 						{ "or",    2 },
 						{ "and",   2 },
 						{ "xor",   2 },
@@ -30,24 +32,10 @@ namespace ccomp
 						{ "ret",   0 },
 						{ "jmp",   1 },
 						{ "call",  1 },
+						{ "se",    2 },
+						{ "sne",   2 }
 		};
 	}
-
-
-#ifdef UNIT_TESTS_ON
-    std::unique_ptr<parser> parser::from_buffer(std::string_view buff)
-    {
-        auto lexer = ccomp::lexer::from_buffer(buff);
-
-        std::vector<ccomp::token> tokens;
-
-        for (auto token = lexer->next_token(); token.type != ccomp::token_type::eof; token = lexer->next_token())
-            tokens.push_back(token);
-
-        return std::make_unique<parser>(std::move(tokens));
-    }
-#endif
-
 
     parser::parser(std::vector<token> &&tokens_list)
         : tokens(std::move(tokens_list)),
