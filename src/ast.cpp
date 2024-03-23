@@ -2,8 +2,7 @@
 
 namespace ccomp::ast
 {
-    void abstract_tree::add_statement(ast::statement node)
-    {
-        branches.push_back(std::move(node));
-    }
+	abstract_tree::abstract_tree(std::vector<ast::statement> &&statements_list)
+		: branches(std::move(statements_list))
+	{}
 }

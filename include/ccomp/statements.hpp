@@ -2,18 +2,19 @@
 #define CCOMP_STATEMENTS_HPP
 
 #include <ccomp/lexer.hpp>
-#include <list>
+#include <vector>
 
 
 namespace ccomp::ast
 {
 	struct base_statement;
 
-    struct subroutine_statement;
-    struct oper_node;
+    struct procedure_statement;
+    struct operand;
     struct instruction_statement;
     struct define_statement;
     struct raw_statement;
+	struct label_statement;
 
 	using statement = std::unique_ptr<base_statement>;
 
@@ -25,39 +26,78 @@ namespace ccomp::ast
 		base_statement& operator=(const base_statement&) = delete;
 		base_statement& operator=(base_statement&&) = delete;
 
-        virtual ~base_statement() = default;
-    };
+		CCOMP_NODISCARD virtual source_location source_begin() const = 0;
+		CCOMP_NODISCARD virtual source_location source_end()   const = 0;
 
-    struct subroutine_statement : base_statement
+        virtual ~base_statement() = default;
+	};
+
+    struct procedure_statement : base_statement
     {
-        subroutine_statement(std::string name_, std::list<statement> inner_statements_)
+        procedure_statement(std::string name_, std::vector<statement> inner_statements_)
             : name(std::move(name_)),
               inner_statements(std::move(inner_statements_))
         {}
 
+		CCOMP_NODISCARD
+		source_location source_begin() const override
+		{
+			return {};
+		}
+
+		CCOMP_NODISCARD
+		source_location source_end() const override
+		{
+			return {};
+		}
+
         std::string name;
-        std::list<statement> inner_statements; // statements and instructions
+
+		// raw, define, instructions and label statements
+        std::vector<statement> inner_statements;
     };
 
-    struct oper_node : base_statement
+    struct instruction_operand
     {
-        bool indirection {};
+		// TODO: ATM this class does not need to inherit from base_statement
 
-        // note: we use a token because we need to know
-        // if the operand is number, identifier, or a register and if so which type
-        ccomp::token token;
+		explicit instruction_operand(token operand_, bool indirection_ = false)
+			: operand(std::move(operand_)),
+			  indirection(indirection_)
+		{}
+
+		instruction_operand(instruction_operand&& other) noexcept
+			: indirection(other.indirection),
+			  operand(std::move(other.operand))
+		{}
+
+		instruction_operand& operator=(instruction_operand&& other) noexcept
+		{
+			indirection = other.indirection;
+			operand = std::move(other.operand);
+
+			return *this;
+		}
+
+        bool indirection;
+
+		token operand;
     };
 
     struct instruction_statement : base_statement
     {
-        std::string_view mnemonic;
-        char operands;
+		instruction_statement(token mnemonic_, std::vector<instruction_operand> operands_)
+			: mnemonic(std::move(mnemonic_)),
+			  operands(std::move(operands_))
+		{}
 
-        // chip-8 instructions all have up to 2 operands
-        // except the draw instruction which has 3
-        oper_node lhs{};
-        oper_node rhs{};
-        oper_node opt{};
+		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
+		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+
+    	token mnemonic;
+
+		// chip-8 instructions 0 to 3 operands
+		std::vector<instruction_operand> operands;
     };
 
     struct define_statement : base_statement
@@ -67,6 +107,9 @@ namespace ccomp::ast
 			  identifier(std::move(identifier_)),
 			  value(std::move(value_))
         {}
+
+		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
+		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
 
         token identifier;
         token value;
@@ -79,8 +122,24 @@ namespace ccomp::ast
 			  opcode(std::move(opcode_))
 		{}
 
+		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
+		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+
         token opcode;
     };
+
+	struct label_statement : base_statement
+	{
+		explicit label_statement(token identifier_)
+			: base_statement(),
+			  identifier_(std::move(identifier_))
+		{}
+
+		CCOMP_NODISCARD source_location source_begin() const override {  return {}; }
+		CCOMP_NODISCARD source_location source_end()   const override {  return {}; }
+
+		token identifier_;
+	};
 }
 
 #endif //CCOMP_STATEMENTS_HPP

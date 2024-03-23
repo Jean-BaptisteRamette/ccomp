@@ -5,6 +5,34 @@
 
 namespace ccomp
 {
+	namespace
+	{
+		const std::unordered_map<std::string_view, unsigned char> operands_count = {
+						{ "add",   2 },
+						{ "sub",   2 },
+						{ "suba",  2 },
+						{ "or",    2 },
+						{ "and",   2 },
+						{ "xor",   2 },
+						{ "shr",   1 },
+						{ "shl",   1 },
+						{ "rdump", 1 },
+						{ "rload", 1 },
+						{ "mov",   2 },
+						{ "swp",   2 },
+						{ "draw",  3 },
+						{ "cls",   0 },
+						{ "rand",  2 },
+						{ "bcd",   1 },
+						{ "wkey",  1 },
+						{ "ske",   1 },
+						{ "snke",  1 },
+						{ "ret",   0 },
+						{ "jmp",   1 },
+						{ "call",  1 },
+		};
+	}
+
 
 #ifdef UNIT_TESTS_ON
     std::unique_ptr<parser> parser::from_buffer(std::string_view buff)
@@ -28,40 +56,46 @@ namespace ccomp
 
 	token parser::advance()
 	{
+		if (reached_eof())
+			throw std::runtime_error("Unexpected EOF while parsing !");
+
 		const token t = *token_it;
 		++token_it;
 
 		return t;
 	}
 
-    size_t parser::remaining_tokens() const
+    bool parser::reached_eof() const
     {
-        return std::distance(token_it, std::end(tokens));
+        return token_it == std::end(tokens);
     }
 
-    ast::abstract_tree parser::make_ast()
+    ast::abstract_tree parser::make_tree()
     {
-        ast::abstract_tree ast;
+		std::vector<ast::statement> statements;
 
-		while (auto block = parse_primary_block())
-			ast.add_statement(std::move(block));
+		while (auto block = parse_primary_statement())
+			statements.push_back(std::move(block));
 
-        return ast;
+        return ast::abstract_tree(std::move(statements));
     }
 
-	ast::statement parser::parse_primary_block()
+	ast::statement parser::parse_primary_statement()
 	{
-		if (token_it == std::end(tokens))
+		if (reached_eof())
 			return {};
 
-		if (token_it->type == token_type::keyword_define)
-			return parse_define();
-		else if (token_it->type == token_type::keyword_raw)
-			return parse_raw();
-		else if (token_it->type == token_type::dot)
-			return parse_subroutine();
+		switch (token_it->type)
+		{
+			case token_type::keyword_define:     return parse_define();
+			case token_type::keyword_raw:        return parse_raw();
+			case token_type::dot:                return parse_label();
+			case token_type::keyword_proc_start: return parse_procedure();
+			case token_type::instruction:        return parse_instruction();
 
-		throw parser_exception::unexpected_error(*token_it);
+			default:
+				throw parser_exception::unexpected_error(*token_it);
+		}
 	}
 
 	ast::statement parser::parse_raw()
@@ -89,23 +123,120 @@ namespace ccomp
 					);
 	}
 
-	ast::statement parser::parse_instruction()
+	std::vector<ast::instruction_operand> parser::parse_operands(std::string_view mnemonic)
 	{
-		return {};
+		const auto count = operands_count.at(mnemonic);
+
+		std::vector<ast::instruction_operand> operands;
+		operands.reserve(count);
+
+		for (auto i = 0; i < count; ++i)
+		{
+			operands.push_back(parse_operand());
+
+			if (i != count - 1)
+				expect(token_type::comma);
+		}
+
+		return operands;
 	}
 
-	ast::statement parser::parse_subroutine()
+	ast::statement parser::parse_instruction()
 	{
-		return {};
+		auto mnemonic = expect(token_type::instruction);
+
+		return std::make_unique<ast::instruction_statement>(
+					std::move(mnemonic),
+					parse_operands(ccomp::to_string(mnemonic))
+				);
+	}
+
+	ast::statement parser::parse_procedure()
+	{
+		expect(token_type::keyword_proc_start);
+
+		auto parse_inner_statement = [&]() -> ast::statement
+		{
+			if (reached_eof())
+				throw std::runtime_error("Unexpected EOF while parsing !");
+
+			switch (token_it->type)
+			{
+				case token_type::keyword_proc_end: return {};
+				case token_type::keyword_define:   return parse_define();
+				case token_type::keyword_raw:      return parse_raw();
+				case token_type::instruction:      return parse_instruction();
+				case token_type::dot:              return parse_label();
+
+				case token_type::keyword_proc_start:
+					throw std::runtime_error("Cannot define a procedure inside another");
+
+				default:
+					throw parser_exception::unexpected_error(*token_it);
+			}
+		};
+
+		auto proc_name = expect(token_type::identifier);
+
+		std::vector<ast::statement> inner_statements;
+
+		while (auto block = parse_inner_statement())
+			inner_statements.push_back(std::move(block));
+
+		expect(token_type::keyword_proc_end);
+		const auto proc_name_end = expect(token_type::identifier);
+
+		if (proc_name_end.data != proc_name.data)
+			throw parser_exception::parser_error(
+					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
+					proc_name.source_location.line,
+					proc_name_end.source_location.line,
+					ccomp::to_string(proc_name),
+					ccomp::to_string(proc_name_end)
+				);
+
+		return std::make_unique<ast::procedure_statement>(
+					ccomp::to_string(proc_name),
+					std::move(inner_statements)
+				);
 	}
 
 	ast::statement parser::parse_label()
 	{
-		return {};
+		expect(token_type::dot);
+		auto identifier = expect(token_type::identifier);
+		expect(token_type::colon);
+
+		return std::make_unique<ast::label_statement>(std::move(identifier));
 	}
 
-	ast::statement parser::parse_operand()
+	ast::instruction_operand parser::parse_operand()
 	{
-		return {};
+		auto token = expect(token_type::register_name,
+							token_type::identifier,
+							token_type::numerical,
+							token_type::dot,
+							token_type::bracket_open);
+
+		// Is the operand a jump label ?
+		if (token.type == token_type::dot)
+		{
+			auto label = expect(token_type::identifier);
+			return ast::instruction_operand(std::move(label));
+		}
+
+		// Is there an indirection ?
+		if (token.type == token_type::bracket_open)
+		{
+			auto inner_token = expect(token_type::identifier,
+									  token_type::numerical,
+									  token_type::register_name);
+
+			expect(token_type::bracket_close);
+
+			return ast::instruction_operand(std::move(inner_token), true);
+		}
+
+		return ast::instruction_operand(std::move(token));
 	}
 }

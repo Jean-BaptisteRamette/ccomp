@@ -32,9 +32,7 @@ namespace ccomp::ast
     class abstract_tree
     {
     public:
-        abstract_tree() = default;
-
-        void add_statement(ast::statement node);
+        explicit abstract_tree(std::vector<ast::statement>&& statements_list);
 
     CCOMP_PRIVATE:
         std::vector<ast::statement> branches {};

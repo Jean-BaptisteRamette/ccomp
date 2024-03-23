@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 		ccomp::parser parser(std::move(tokens));
 
-		const auto ast = parser.make_ast();
+		const auto ast = parser.make_tree();
 
 	} catch (std::runtime_error& error)
 	{
