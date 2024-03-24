@@ -29,14 +29,6 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 
 		ast::abstract_tree tree = parser.make_tree();
 
-		//
-		// TODO: Source location begin/end for nodes
-		//  	 Print Visitor
-		//       Parser tests
-		//       More parser exceptions
-		//       No more CCOMP_PRIVATE
-		//
-
 		BOOST_CHECK_EQUAL(tree.branches.size(), 6);
 	}
 

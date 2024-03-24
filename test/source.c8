@@ -1,7 +1,65 @@
-;; skipped
-define VALUE 10
+;; test program: source.c8
 
-raw(255)
-raw(0b1111'0000)
-raw(test)
-raw(VALUE)
+;; scopes[0] = { M1, M2, func1 }
+;; scopes[1] = { value1, .test_label }
+;; scopes[2] = { value2 }
+;; scopes[2] = { }
+;; scopes[1] = { value1, .test_label, .done }
+;; scopes[2] = { value2 }
+;; scopes[2] = { }
+;; scopes[1] = { }
+;; scopes[0] = { M1, M2, func1, func2 }
+;; scopes[1] = { value2, .done }
+;; scopes[2] = { value1 }
+;; scopes[2] = { }
+;; scopes[1] = { value2, .done, .done2 }
+;; scopes[2] = { }
+;; scopes[1] = { }
+;; scopes[0] = { M1, M2, func1, func2, value2, .main }
+;; scopes[1] = { value4 }
+;; scopes[1] = { }
+;; scopes[0] = { M1, M2, func1, func2, value2, .main, .game_over }
+;;
+
+define M1 100
+define M2  10
+
+proc func1
+    define value1 5
+
+.test_label:
+    define value2 5
+.done:
+    define value2 5
+    xor r0, r0
+    ret
+endp func1
+
+proc func2
+    define value2 6
+
+.done:
+    define value1 6
+    jmp .done
+
+.done2:
+    xor r0, value1
+    add r0, M2
+    ret
+endp func2
+
+proc func3
+    ret
+endp func3
+
+define value2 7
+
+.main:
+    define value4 8
+    mov r1, M1
+    mov r2, M2
+    call attack
+    call heal
+
+.game_over:
+    xor r0, r0

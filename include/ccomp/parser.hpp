@@ -43,11 +43,10 @@ namespace ccomp
 		{
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
 				: parser_error(
-					"Parser got token \"{}\" but expected a token of type {} while parsing at line {} column {}.",
+					"Parser got token \"{}\" but expected a token of type {} while parsing at {}.",
 					ccomp::to_string(unexpected_),
 					ccomp::to_string(expected_types_),
-					unexpected_.source_location.line,
-					unexpected_.source_location.col)
+					ccomp::to_string(unexpected_.source_location))
 			{}
 		};
 
@@ -55,10 +54,9 @@ namespace ccomp
 		{
 			explicit unexpected_error(const token& unexpected_)
 				: parser_error(
-					"Unexpected token {} while parsing at line {} column {}.",
+					"Unexpected token {} while parsing at {}.",
 					ccomp::to_string(unexpected_),
-					unexpected_.source_location.line,
-					unexpected_.source_location.col)
+					ccomp::to_string(unexpected_.source_location))
 			{}
 		};
 	}

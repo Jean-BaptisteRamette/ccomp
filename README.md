@@ -151,14 +151,14 @@ endp my_proc
 
 ### 7. Constants
 You can declare constants using the `define` keyword:
-```
+```asm
 define MAX_HEALTH 100  ;; assign constant value 100 to identifier 'MAX_HEALTH'
 ```
 Constant declarations can be limited to a procedure's scope:
 ```asm
 proc my_proc
 	define value 0
-	...
+	mov rd, value ;; rd will be 0
 	ret
 endp my_proc
 
@@ -166,6 +166,17 @@ endp my_proc
 	define value 255
 	mov rd, value ;; rd will hold value 255
 ```
+However, you cannot redefine a constant already defined in an outer scope
+```asm
+define value 0
+
+proc my_proc
+	define value 0  ;; invalid
+	mov rd, value
+	ret
+endp my_proc
+```
+
 
 ### 8. General purpose registers manipulation
 

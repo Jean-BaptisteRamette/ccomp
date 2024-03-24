@@ -9,6 +9,7 @@
 #include <vector>
 #include <format>
 
+#include <ccomp/source_location.hpp>
 #include <ccomp/stream.hpp>
 #include <ccomp/error.hpp>
 
@@ -37,28 +38,6 @@ namespace ccomp
 		comma
     };
 
-	struct source_location
-	{
-		size_t col  { 1 };
-		size_t line { 1 };
-
-		void next_line()
-		{
-			++line;
-			col = 1;
-		}
-
-		void advance()
-		{
-			++col;
-		}
-
-		void step_back(size_t steps = 1)
-		{
-			if (col >= steps)
-				col -= steps;
-		}
-	};
 
 	struct token
     {
@@ -67,6 +46,7 @@ namespace ccomp
 
 		std::variant<uint16_t, std::string> data;
     };
+
 
     class lexer final
     {
@@ -129,11 +109,10 @@ namespace ccomp
         {
             invalid_digit_for_base(char digit, int base, const source_location& source_loc)
                 : lexer_error(
-						"Invalid digit \"{}\" for numeric base {} at line {} column {}.",
+						"Invalid digit \"{}\" for numeric base {} at {}.",
 						digit,
 						base,
-						source_loc.line,
-						source_loc.col)
+						ccomp::to_string(source_loc))
             {}
         };
 
@@ -141,10 +120,9 @@ namespace ccomp
 		{
 			numeric_constant_too_large(std::string numeric_lexeme, const source_location& source_loc)
 				: lexer_error(
-						"Numeric constant \"{}\" at line {} column {} is too large for a 16-bit value.",
+						"Numeric constant \"{}\" at {} is too large for a 16-bit value.",
 						numeric_lexeme,
-						source_loc.line,
-						source_loc.col)
+						ccomp::to_string(source_loc))
 			{}
 		};
 
@@ -152,81 +130,77 @@ namespace ccomp
         {
             explicit undefined_character_token(char c, const source_location& source_loc)
                 : lexer_error(
-						"Character \"{}\" cannot match any token at line {} column {}.",
+						"Character \"{}\" cannot match any token at {}.",
 						c,
-						source_loc.line,
-						source_loc.col)
+						ccomp::to_string(source_loc))
             {}
         };
     }
 
-	namespace
+	[[nodiscard]]
+	constexpr std::string_view to_string(token_type type)
 	{
-		[[nodiscard]]
-		constexpr std::string_view to_string(token_type type)
+		switch (type)
 		{
-			switch (type)
-			{
-				case token_type::eof:
-					return "eof";
-				case token_type::numerical:
-					return "numerical";
-				case token_type::byte_ascii:
-					return "ascii";
-				case token_type::keyword_define:
-					return "define";
-				case token_type::keyword_raw:
-					return "raw";
-				case token_type::identifier:
-					return "identifier";
-				case token_type::instruction:
-					return "instruction";
-				case token_type::register_name:
-					return "register name";
-				case token_type::bracket_open:
-					return "open bracket";
-				case token_type::bracket_close:
-					return "close bracket";
-				case token_type::parenthesis_open:
-					return "open parenthesis";
-				case token_type::parenthesis_close:
-					return "close parenthesis";
-				case token_type::colon:
-					return "colon";
-				case token_type::comma:
-					return "comma";
-				case token_type::dot:
-					return "dot";
+			case token_type::eof:
+				return "eof";
+			case token_type::numerical:
+				return "numerical";
+			case token_type::byte_ascii:
+				return "ascii";
+			case token_type::keyword_define:
+				return "define";
+			case token_type::keyword_raw:
+				return "raw";
+			case token_type::identifier:
+				return "identifier";
+			case token_type::instruction:
+				return "instruction";
+			case token_type::register_name:
+				return "register name";
+			case token_type::bracket_open:
+				return "open bracket";
+			case token_type::bracket_close:
+				return "close bracket";
+			case token_type::parenthesis_open:
+				return "open parenthesis";
+			case token_type::parenthesis_close:
+				return "close parenthesis";
+			case token_type::colon:
+				return "colon";
+			case token_type::comma:
+				return "comma";
+			case token_type::dot:
+				return "dot";
 
-				default:
-					return "undefined";
-			}
+			default:
+				return "undefined";
+		}
+	}
+
+	[[nodiscard]]
+	inline std::string to_string(std::initializer_list<token_type> types)
+	{
+		std::string joined;
+
+		for (const auto type : types)
+		{
+			if (!joined.empty())
+				joined += ", ";
+
+			joined += ccomp::to_string(type);
 		}
 
-		[[nodiscard]]
-		inline std::string to_string(std::initializer_list<token_type> types)
-		{
-			std::string joined;
+		return '(' + joined + ')';
+	}
 
-			for (const auto type : types)
-			{
-				if (!joined.empty())
-					joined += ", ";
+	[[nodiscard]]
+	inline std::string to_string(const token& token)
+	{
+		if (std::holds_alternative<uint16_t>(token.data))
+			return std::to_string(std::get<uint16_t>(token.data));
 
-				joined += ccomp::to_string(type);
-			}
-
-			return '(' + joined + ')';
-		}
-
-		[[nodiscard]]
-		inline std::string to_string(const token& token)
-		{
-			if (std::holds_alternative<uint16_t>(token.data))
-				return std::to_string(std::get<uint16_t>(token.data));
-
-			return std::get<std::string>(token.data);
-		}
+		return std::get<std::string>(token.data);
 	}
 }
 

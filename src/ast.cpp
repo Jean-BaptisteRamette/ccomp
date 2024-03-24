@@ -10,9 +10,9 @@ namespace ccomp::ast
 
 	void abstract_tree::sanitize() const
 	{
-		sanitize_visitor visitor;
+		sanitize_visitor sanitizer;
 
 		for (const auto& branch : branches)
-			branch->accept(visitor);
+			branch->accept(sanitizer);
 	}
 }
