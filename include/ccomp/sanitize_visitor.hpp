@@ -2,6 +2,7 @@
 #define CCOMP_SANITIZE_VISITOR_HPP
 
 
+#include <unordered_map>
 #include <unordered_set>
 #include <stdexcept>
 #include <format>
@@ -14,8 +15,9 @@
 
 namespace ccomp::ast
 {
-	struct abstract_tree;
+	using symbol_set = std::unordered_map<std::string, source_location>;
 
+	struct abstract_tree;
 
 	class sanitize_visitor : public base_visitor
 	{
@@ -47,10 +49,11 @@ namespace ccomp::ast
 		bool scope_has_symbol(scope_id scope, const std::string& symbol);
 
 	private:
+
 		static constexpr unsigned char SCOPES_LEVEL = 3u;
-		std::array<std::unordered_set<std::string>, SCOPES_LEVEL> scopes;
+		std::array<symbol_set, SCOPES_LEVEL> scopes;
 		scope_id curr_scope_level = 0;
-		std::unordered_set<std::string> undefined_labels;
+		symbol_set undefined_labels;
 	};
 
 
@@ -68,11 +71,22 @@ namespace ccomp::ast
 			{}
 		};
 
+		inline std::string symbols_to_string(const symbol_set& symbols)
+		{
+			std::string joined;
+
+			for (const auto& [sym, loc] : symbols)
+				joined += std::format("\t --- \"{}\" at {}\n", sym, ccomp::to_string(loc));
+
+			return joined;
+		}
+
 		struct undefined_symbols : sanitize_error
 		{
-			explicit undefined_symbols(const std::unordered_set<std::string>& symbols)
+			explicit undefined_symbols(const symbol_set& symbols)
 				: sanitize_error(
-					"Sanitizer found undefined symbols \"{}\" at {}.")
+					"Sanitizer found undefined symbols:\n{}",
+					symbols_to_string(symbols))
 			{}
 		};
 

@@ -47,10 +47,10 @@ namespace ccomp::ast
 	{
 		for (const auto& [op, _] : statement.operands)
 		{
-			const auto sym = ccomp::to_string(op);
+			auto sym = ccomp::to_string(op);
 
 			if (op.type == token_type::identifier && !symbol_defined(sym))
-				undefined_labels.insert(sym);
+				undefined_labels.insert(std::make_pair(std::move(sym), op.source_location));
 		}
 	}
 
@@ -99,7 +99,7 @@ namespace ccomp::ast
 		if (symbol_defined(symbol))
 			throw sanitize_exception::already_defined_symbol(symbol, sym_loc);
 
-		scopes[curr_scope_level].insert(symbol);
+		scopes[curr_scope_level].insert({symbol, sym_loc});
 	}
 
 	bool sanitize_visitor::symbol_defined(const std::string &symbol)
