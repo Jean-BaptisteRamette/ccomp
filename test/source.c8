@@ -1,65 +1,31 @@
 ;; test program: source.c8
 
-;; scopes[0] = { M1, M2, func1 }
-;; scopes[1] = { value1, .test_label }
-;; scopes[2] = { value2 }
-;; scopes[2] = { }
-;; scopes[1] = { value1, .test_label, .done }
-;; scopes[2] = { value2 }
-;; scopes[2] = { }
-;; scopes[1] = { }
-;; scopes[0] = { M1, M2, func1, func2 }
-;; scopes[1] = { value2, .done }
-;; scopes[2] = { value1 }
-;; scopes[2] = { }
-;; scopes[1] = { value2, .done, .done2 }
-;; scopes[2] = { }
-;; scopes[1] = { }
-;; scopes[0] = { M1, M2, func1, func2, value2, .main }
-;; scopes[1] = { value4 }
-;; scopes[1] = { }
-;; scopes[0] = { M1, M2, func1, func2, value2, .main, .game_over }
+;; method 1:
+;;      store token ".done" and its scope N until we find it
+;;      if it was not defined in the scope N - 1 then throw an error
+;;
+;;
+;; TODO: store label symbol until we find it
+;;       when we leave the function and undefined_labels is not empty -> undefined error
+;;       when there is no more statements and undefined_labels is not empty -> undefined error
 ;;
 
-define M1 100
-define M2  10
-
-proc func1
-    define value1 5
-
-.test_label:
-    define value2 5
-.done:
-    define value2 5
-    xor r0, r0
+proc scope2
+.start:
+    jmp .somewhere
     ret
-endp func1
+endp scope1
 
-proc func2
-    define value2 6
-
-.done:
-    define value1 6
-    jmp .done
-
-.done2:
-    xor r0, value1
-    add r0, M2
+proc scope1
+    jmp .somewhere
     ret
-endp func2
+endp scope1
 
-proc func3
-    ret
-endp func3
-
-define value2 7
 
 .main:
-    define value4 8
-    mov r1, M1
-    mov r2, M2
-    call attack
-    call heal
+    jmp .somewhere // scope level 1
 
-.game_over:
-    xor r0, r0
+
+.exit:
+    xor r1, r1
+

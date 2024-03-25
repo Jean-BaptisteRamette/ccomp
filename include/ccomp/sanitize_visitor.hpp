@@ -14,6 +14,9 @@
 
 namespace ccomp::ast
 {
+	struct abstract_tree;
+
+
 	class sanitize_visitor : public base_visitor
 	{
 		using scope_id = unsigned char;
@@ -26,13 +29,17 @@ namespace ccomp::ast
 		sanitize_visitor& operator=(sanitize_visitor&&) = delete;
 		~sanitize_visitor() = default;
 
+		void traverse(const abstract_tree&);
+
 		void visit(const procedure_statement&) override;
 		void visit(const instruction_statement&) override;
-		void visit(const define_statement &) override;
+		void visit(const define_statement&) override;
 		void visit(const raw_statement&) override;
 		void visit(const label_statement&) override;
 
+
 	private:
+		void post_visit();
 		void push_scope();
 		void pop_scope();
 		void register_symbol(const std::string& symbol, const source_location& sym_loc);
@@ -43,6 +50,7 @@ namespace ccomp::ast
 		static constexpr unsigned char SCOPES_LEVEL = 3u;
 		std::array<std::unordered_set<std::string>, SCOPES_LEVEL> scopes;
 		scope_id curr_scope_level = 0;
+		std::unordered_set<std::string> undefined_labels;
 	};
 
 
@@ -60,13 +68,11 @@ namespace ccomp::ast
 			{}
 		};
 
-		struct undefined_symbol : sanitize_error
+		struct undefined_symbols : sanitize_error
 		{
-			undefined_symbol(const std::string& symbol, const source_location& where)
+			explicit undefined_symbols(const std::unordered_set<std::string>& symbols)
 				: sanitize_error(
-					"Sanitizer found undefined symbol \"{}\" at {}.",
-					symbol,
-					ccomp::to_string(where))
+					"Sanitizer found undefined symbols \"{}\" at {}.")
 			{}
 		};
 

@@ -16,6 +16,7 @@ add_executable(Boost_Tests_run
         lexer_tokens.cpp
         lexer_numeric.cpp
         parser_statements.cpp
+        symbol_sanitizer.cpp
         ${INCLUDES}
         ${SOURCES})
 

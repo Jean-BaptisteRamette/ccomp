@@ -11,14 +11,13 @@
 
 namespace ccomp::ast
 {
-    class abstract_tree
+    struct abstract_tree
     {
-    public:
         explicit abstract_tree(std::vector<ast::statement>&& statements_list);
 
 		void sanitize() const;
 
-        std::vector<ast::statement> branches {};
+        const std::vector<ast::statement> branches {};
     };
 }
 

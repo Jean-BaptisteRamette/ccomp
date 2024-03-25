@@ -12,7 +12,6 @@ namespace ccomp::ast
 	{
 		sanitize_visitor sanitizer;
 
-		for (const auto& branch : branches)
-			branch->accept(sanitizer);
+		sanitizer.traverse(*this);
 	}
 }

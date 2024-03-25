@@ -1,10 +1,19 @@
 #include <ccomp/sanitize_visitor.hpp>
 #include <ccomp/statements.hpp>
+#include <ccomp/ast.hpp>
 #include <format>
 
 
 namespace ccomp::ast
 {
+	void sanitize_visitor::traverse(const abstract_tree& ast)
+	{
+		for (const auto& branch : ast.branches)
+			branch->accept(*this);
+
+		post_visit();
+	}
+
 	void sanitize_visitor::push_scope()
 	{
 		++curr_scope_level;
@@ -29,6 +38,9 @@ namespace ccomp::ast
 			inner->accept(*this);
 
 		pop_scope();
+
+		if (!undefined_labels.empty())
+			throw sanitize_exception::undefined_symbols(undefined_labels);
 	}
 
 	void sanitize_visitor::visit(const instruction_statement& statement)
@@ -37,10 +49,27 @@ namespace ccomp::ast
 		{
 			const auto sym = ccomp::to_string(op);
 
-			// TODO: ATM jumping to a label defined after the instruction won't work
 			if (op.type == token_type::identifier && !symbol_defined(sym))
-				throw sanitize_exception::undefined_symbol(sym, op.source_location);
+				undefined_labels.insert(sym);
 		}
+	}
+
+	void sanitize_visitor::visit(const label_statement& statement)
+	{
+		const auto sym = ccomp::to_string(statement.identifier);
+
+		if (undefined_labels.contains(sym))
+			undefined_labels.erase(sym);
+
+		if (curr_scope_level > 1)
+			pop_scope();
+
+		register_symbol(
+				ccomp::to_string(statement.identifier),
+				statement.identifier.source_location
+			);
+
+		push_scope();
 	}
 
 	void sanitize_visitor::visit(const define_statement& statement)
@@ -59,19 +88,6 @@ namespace ccomp::ast
 			register_symbol(ccomp::to_string(sym), sym.source_location);
 	}
 
-	void sanitize_visitor::visit(const label_statement& statement)
-	{
-		if (curr_scope_level > 1)
-			pop_scope();
-
-		register_symbol(
-				ccomp::to_string(statement.identifier),
-				statement.identifier.source_location
-			);
-
-		push_scope();
-	}
-
 	void sanitize_visitor::register_symbol(const std::string& symbol, const source_location& sym_loc)
 	{
 		if (curr_scope_level >= scopes.size())
@@ -83,7 +99,6 @@ namespace ccomp::ast
 		if (symbol_defined(symbol))
 			throw sanitize_exception::already_defined_symbol(symbol, sym_loc);
 
-		// TODO: Also store the source location to be able to log where the symbol was defined first
 		scopes[curr_scope_level].insert(symbol);
 	}
 
@@ -99,5 +114,11 @@ namespace ccomp::ast
 	bool sanitize_visitor::scope_has_symbol(scope_id scope, const std::string &symbol)
 	{
 		return scopes[scope].contains(symbol);
+	}
+
+	void sanitize_visitor::post_visit()
+	{
+		if (!undefined_labels.empty())
+			throw sanitize_exception::undefined_symbols(undefined_labels);
 	}
 }
