@@ -22,14 +22,16 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				";; entry point label -> .main:\n"
 				".main:              \n"
 				"	add r1,   val\n"
-				"	sub r1,   r1"
+				"	sub r1,   r1\n"
+				".exit:\n"
+				"   raw(0000)\n"
 		);
 
 		auto parser = ccomp::parser(lex->enumerate_tokens());
 
 		ast::abstract_tree tree = parser.make_tree();
 
-		BOOST_CHECK_EQUAL(tree.branches.size(), 6);
+		BOOST_CHECK_EQUAL(tree.branches.size(), 5);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

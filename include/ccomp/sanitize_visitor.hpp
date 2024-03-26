@@ -3,7 +3,6 @@
 
 
 #include <unordered_map>
-#include <unordered_set>
 #include <stdexcept>
 #include <format>
 #include <string>
@@ -59,6 +58,16 @@ namespace ccomp::ast
 
 	namespace sanitize_exception
 	{
+		inline std::string symbols_to_string(const symbol_set& symbols)
+		{
+			std::string joined;
+
+			for (const auto& [sym, loc] : symbols)
+				joined += std::format("\t --- \"{}\" at {}\n", sym, ccomp::to_string(loc));
+
+			return joined;
+		}
+
 		struct sanitize_error : std::runtime_error
 		{
 			explicit sanitize_error(std::string_view message)
@@ -71,18 +80,15 @@ namespace ccomp::ast
 			{}
 		};
 
-		inline std::string symbols_to_string(const symbol_set& symbols)
-		{
-			std::string joined;
-
-			for (const auto& [sym, loc] : symbols)
-				joined += std::format("\t --- \"{}\" at {}\n", sym, ccomp::to_string(loc));
-
-			return joined;
-		}
-
 		struct undefined_symbols : sanitize_error
 		{
+			explicit undefined_symbols(const std::string& symbol, const source_location& where)
+				: sanitize_error(
+						"Sanitizer found undefined symbol: \"{}\" at {}.",
+						symbol,
+						ccomp::to_string(where))
+			{}
+
 			explicit undefined_symbols(const symbol_set& symbols)
 				: sanitize_error(
 					"Sanitizer found undefined symbols:\n{}",

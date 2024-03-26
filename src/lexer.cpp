@@ -82,7 +82,7 @@ namespace ccomp
 				{ ']', token_type::bracket_close },
 				{ '(', token_type::parenthesis_open },
 				{ ')', token_type::parenthesis_close},
-				{ '.', token_type::dot},
+				{ '.', token_type::dot_label},
 				{ ':', token_type::colon},
 				{ ',', token_type::comma}
 		};

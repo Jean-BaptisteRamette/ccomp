@@ -34,7 +34,7 @@ namespace ccomp
 		parenthesis_open,
 		parenthesis_close,
 		colon,
-		dot,
+		dot_label,
 		comma
     };
 
@@ -170,7 +170,7 @@ namespace ccomp
 				return "colon";
 			case token_type::comma:
 				return "comma";
-			case token_type::dot:
+			case token_type::dot_label:
 				return "dot";
 
 			default:

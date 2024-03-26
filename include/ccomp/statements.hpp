@@ -49,8 +49,6 @@ namespace ccomp::ast
 
     struct instruction_operand
     {
-		// TODO: ATM this class does not need to inherit from base_statement
-
 		explicit instruction_operand(token operand_, bool indirection_ = false)
 			: operand(std::move(operand_)),
 			  indirection(indirection_)
@@ -126,9 +124,10 @@ namespace ccomp::ast
 
 	struct label_statement : base_statement
 	{
-		explicit label_statement(token identifier_)
+		explicit label_statement(token identifier_, std::vector<statement> inner_statements_)
 			: base_statement(),
-			  identifier(std::move(identifier_))
+			  identifier(std::move(identifier_)),
+			  inner_statements(std::move(inner_statements_))
 		{}
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
@@ -137,6 +136,9 @@ namespace ccomp::ast
 		[[nodiscard]] size_t source_line_end() const override {  return identifier.source_location.line; }
 
 		const token identifier;
+
+		// raw, define, and instructions statements
+		const std::vector<statement> inner_statements;
 	};
 }
 

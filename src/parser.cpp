@@ -77,7 +77,7 @@ namespace ccomp
 		{
 			case token_type::keyword_define:     return parse_define();
 			case token_type::keyword_raw:        return parse_raw();
-			case token_type::dot:                return parse_label();
+			case token_type::dot_label:          return parse_label();
 			case token_type::keyword_proc_start: return parse_procedure();
 			case token_type::instruction:        return parse_instruction();
 
@@ -152,7 +152,7 @@ namespace ccomp
 				case token_type::keyword_define:   return parse_define();
 				case token_type::keyword_raw:      return parse_raw();
 				case token_type::instruction:      return parse_instruction();
-				case token_type::dot:              return parse_label();
+				case token_type::dot_label:        return parse_label();
 
 				case token_type::keyword_proc_start:
 					throw parser_exception::parser_error("Cannot define a procedure inside another.");
@@ -185,11 +185,39 @@ namespace ccomp
 
 	ast::statement parser::parse_label()
 	{
-		expect(token_type::dot);
+		auto parse_inner_statement = [&]() -> ast::statement
+		{
+			if (no_more_tokens())
+				return {};
+
+			switch (token_it->type)
+			{
+				case token_type::keyword_proc_end:
+				case token_type::dot_label:
+					return {};
+
+				case token_type::keyword_define: return parse_define();
+				case token_type::keyword_raw:    return parse_raw();
+				case token_type::instruction:    return parse_instruction();
+
+				default:
+					throw parser_exception::unexpected_error(*token_it);
+			}
+		};
+
+		expect(token_type::dot_label);
 		auto identifier = expect(token_type::identifier);
 		expect(token_type::colon);
 
-		return std::make_unique<ast::label_statement>(std::move(identifier));
+		std::vector<ast::statement> inner_statements;
+
+		while (auto block = parse_inner_statement())
+			inner_statements.push_back(std::move(block));
+
+		return std::make_unique<ast::label_statement>(
+					std::move(identifier),
+					std::move(inner_statements)
+				);
 	}
 
 	ast::instruction_operand parser::parse_operand()
@@ -197,11 +225,11 @@ namespace ccomp
 		auto token = expect(token_type::register_name,
 							token_type::identifier,
 							token_type::numerical,
-							token_type::dot,
+							token_type::dot_label,
 							token_type::bracket_open);
 
 		// Is the operand a jump label ?
-		if (token.type == token_type::dot)
+		if (token.type == token_type::dot_label)
 		{
 			auto label = expect(token_type::identifier);
 			return ast::instruction_operand(std::move(label));

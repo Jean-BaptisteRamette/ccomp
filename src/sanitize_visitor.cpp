@@ -56,20 +56,22 @@ namespace ccomp::ast
 
 	void sanitize_visitor::visit(const label_statement& statement)
 	{
-		const auto sym = ccomp::to_string(statement.identifier);
+		auto sym = ccomp::to_string(statement.identifier);
 
 		if (undefined_labels.contains(sym))
 			undefined_labels.erase(sym);
 
-		if (curr_scope_level > 1)
-			pop_scope();
-
 		register_symbol(
-				ccomp::to_string(statement.identifier),
+				sym,
 				statement.identifier.source_location
 			);
 
 		push_scope();
+
+		for (const auto& inner : statement.inner_statements)
+			inner->accept(*this);
+
+		pop_scope();
 	}
 
 	void sanitize_visitor::visit(const define_statement& statement)
@@ -82,10 +84,10 @@ namespace ccomp::ast
 
 	void sanitize_visitor::visit(const raw_statement& statement)
 	{
-		const auto& sym = statement.opcode;
+		const auto& token = statement.opcode;
 
-		if (sym.type == token_type::identifier)
-			register_symbol(ccomp::to_string(sym), sym.source_location);
+		if (token.type == token_type::identifier && !symbol_defined(ccomp::to_string(token)))
+			throw sanitize_exception::undefined_symbols(ccomp::to_string(token), token.source_location);
 	}
 
 	void sanitize_visitor::register_symbol(const std::string& symbol, const source_location& sym_loc)
