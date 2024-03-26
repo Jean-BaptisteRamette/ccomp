@@ -1,7 +1,7 @@
 #include <boost/test/unit_test.hpp>
 #include <ccomp/lexer.hpp>
 #include <ccomp/parser.hpp>
-#include <ccomp/sanitize_visitor.hpp>
+#include <ccomp/symbol_sanitizer.hpp>
 #include <ccomp/ast.hpp>
 
 using namespace ccomp;
@@ -32,7 +32,8 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 	BOOST_AUTO_TEST_CASE(check_undefined_in_raw_statement_throws)
 	{
-		auto lex = lexer::from_buffer("raw(val)\n");
+		auto lex = lexer::from_buffer("raw(val)\n"
+									  ".main:");
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
@@ -102,7 +103,8 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 									  "endp tmp\n"
 									  "proc tmp\n"
 									  "    ret\n"
-									  "endp tmp\n");
+									  "endp tmp\n"
+									  ".main:\n");
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
@@ -142,6 +144,14 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.sanitize());
+	}
+
+	BOOST_AUTO_TEST_CASE(check_main_label_defined_at_scope0)
+	{
+		auto lex = lexer::from_buffer(".not_main:");
+		auto p = parser(lex->enumerate_tokens());
+		const auto ast = p.make_tree();
+		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::sanitize_error);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

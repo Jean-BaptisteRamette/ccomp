@@ -1,5 +1,5 @@
 #include <ccomp/ast.hpp>
-#include <ccomp/sanitize_visitor.hpp>
+#include <ccomp/symbol_sanitizer.hpp>
 
 
 namespace ccomp::ast
@@ -10,7 +10,7 @@ namespace ccomp::ast
 
 	void abstract_tree::sanitize() const
 	{
-		sanitize_visitor sanitizer;
+		symbol_sanitizer sanitizer;
 
 		sanitizer.traverse(*this);
 	}

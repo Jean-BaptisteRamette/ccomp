@@ -1,4 +1,4 @@
-#include <ccomp/sanitize_visitor.hpp>
+#include <ccomp/symbol_sanitizer.hpp>
 #include <ccomp/statements.hpp>
 #include <ccomp/ast.hpp>
 #include <format>
@@ -6,7 +6,7 @@
 
 namespace ccomp::ast
 {
-	void sanitize_visitor::traverse(const abstract_tree& ast)
+	void symbol_sanitizer::traverse(const abstract_tree& ast)
 	{
 		for (const auto& branch : ast.branches)
 			branch->accept(*this);
@@ -14,18 +14,18 @@ namespace ccomp::ast
 		post_visit();
 	}
 
-	void sanitize_visitor::push_scope()
+	void symbol_sanitizer::push_scope()
 	{
 		++curr_scope_level;
 	}
 
-	void sanitize_visitor::pop_scope()
+	void symbol_sanitizer::pop_scope()
 	{
 		scopes[curr_scope_level].clear();
 		--curr_scope_level;
 	}
 
-	void sanitize_visitor::visit(const procedure_statement& statement)
+	void symbol_sanitizer::visit(const procedure_statement& statement)
 	{
 		register_symbol(
 				ccomp::to_string(statement.name_beg),
@@ -43,7 +43,7 @@ namespace ccomp::ast
 			throw sanitize_exception::undefined_symbols(undefined_labels);
 	}
 
-	void sanitize_visitor::visit(const instruction_statement& statement)
+	void symbol_sanitizer::visit(const instruction_statement& statement)
 	{
 		for (const auto& [op, _] : statement.operands)
 		{
@@ -54,7 +54,7 @@ namespace ccomp::ast
 		}
 	}
 
-	void sanitize_visitor::visit(const label_statement& statement)
+	void symbol_sanitizer::visit(const label_statement& statement)
 	{
 		auto sym = ccomp::to_string(statement.identifier);
 
@@ -74,7 +74,7 @@ namespace ccomp::ast
 		pop_scope();
 	}
 
-	void sanitize_visitor::visit(const define_statement& statement)
+	void symbol_sanitizer::visit(const define_statement& statement)
 	{
 		register_symbol(
 				ccomp::to_string(statement.identifier),
@@ -82,7 +82,7 @@ namespace ccomp::ast
 			);
 	}
 
-	void sanitize_visitor::visit(const raw_statement& statement)
+	void symbol_sanitizer::visit(const raw_statement& statement)
 	{
 		const auto& token = statement.opcode;
 
@@ -90,7 +90,7 @@ namespace ccomp::ast
 			throw sanitize_exception::undefined_symbols(ccomp::to_string(token), token.source_location);
 	}
 
-	void sanitize_visitor::register_symbol(const std::string& symbol, const source_location& sym_loc)
+	void symbol_sanitizer::register_symbol(const std::string& symbol, const source_location& sym_loc)
 	{
 		if (curr_scope_level >= scopes.size())
 			throw std::runtime_error(std::format(
@@ -104,7 +104,7 @@ namespace ccomp::ast
 		scopes[curr_scope_level].insert({symbol, sym_loc});
 	}
 
-	bool sanitize_visitor::symbol_defined(const std::string &symbol)
+	bool symbol_sanitizer::symbol_defined(const std::string &symbol)
 	{
 		for (scope_id scp = 0; scp <= curr_scope_level; ++scp)
 			if (scope_has_symbol(scp, symbol))
@@ -113,14 +113,17 @@ namespace ccomp::ast
 		return false;
 	}
 
-	bool sanitize_visitor::scope_has_symbol(scope_id scope, const std::string &symbol)
+	bool symbol_sanitizer::scope_has_symbol(scope_id scope, const std::string &symbol)
 	{
 		return scopes[scope].contains(symbol);
 	}
 
-	void sanitize_visitor::post_visit()
+	void symbol_sanitizer::post_visit()
 	{
 		if (!undefined_labels.empty())
 			throw sanitize_exception::undefined_symbols(undefined_labels);
+
+		if (!scope_has_symbol(0, "main"))
+			throw sanitize_exception::sanitize_error("Entry-point label \".main\" was not defined.");
 	}
 }

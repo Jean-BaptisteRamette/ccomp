@@ -1,5 +1,5 @@
-#ifndef CCOMP_SANITIZE_VISITOR_HPP
-#define CCOMP_SANITIZE_VISITOR_HPP
+#ifndef CCOMP_SYMBOL_SANITIZER_HPP
+#define CCOMP_SYMBOL_SANITIZER_HPP
 
 
 #include <unordered_map>
@@ -18,17 +18,17 @@ namespace ccomp::ast
 
 	struct abstract_tree;
 
-	class sanitize_visitor : public base_visitor
+	class symbol_sanitizer : public base_visitor
 	{
 		using scope_id = unsigned char;
 
 	public:
-		sanitize_visitor() = default;
-		sanitize_visitor(const sanitize_visitor&) = delete;
-		sanitize_visitor(sanitize_visitor&&) = delete;
-		sanitize_visitor& operator=(const sanitize_visitor&) = delete;
-		sanitize_visitor& operator=(sanitize_visitor&&) = delete;
-		~sanitize_visitor() = default;
+		symbol_sanitizer() = default;
+		symbol_sanitizer(const symbol_sanitizer&) = delete;
+		symbol_sanitizer(symbol_sanitizer&&) = delete;
+		symbol_sanitizer& operator=(const symbol_sanitizer&) = delete;
+		symbol_sanitizer& operator=(symbol_sanitizer&&) = delete;
+		~symbol_sanitizer() = default;
 
 		void traverse(const abstract_tree&);
 
@@ -84,7 +84,7 @@ namespace ccomp::ast
 		{
 			explicit undefined_symbols(const std::string& symbol, const source_location& where)
 				: sanitize_error(
-						"Sanitizer found undefined symbol: \"{}\" at {}.",
+						"Sanitizer found an undefined symbol: \"{}\" at {}.",
 						symbol,
 						ccomp::to_string(where))
 			{}
@@ -109,4 +109,4 @@ namespace ccomp::ast
 }
 
 
-#endif //CCOMP_SANITIZE_VISITOR_HPP
+#endif //CCOMP_SYMBOL_SANITIZER_HPP
