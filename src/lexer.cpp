@@ -116,43 +116,9 @@ namespace ccomp
 		}
     }
 
-
-    std::unique_ptr<lexer> lexer::from_file(std::string_view path, error_code& ec)
-    {
-        if (!path.ends_with(".c8"))
-            log::warn("Input file {} should have .c8 extension", path);
-
-        if (!std::filesystem::exists(path))
-        {
-            ec = error_code::file_not_found_err;
-            return nullptr;
-        }
-
-        std::ifstream infile(path.data());
-
-        if (!infile)
-        {
-            ec = error_code::io_err;
-            return nullptr;
-        }
-
-        ccomp::stream istream(infile);
-
-		ec = error_code::ok;
-
-        return std::make_unique<lexer>(std::move(istream));
-    }
-
-
-#ifdef UNIT_TESTS_ON
-    std::unique_ptr<lexer> lexer::from_buffer(std::string_view buff)
-    {
-        ccomp::stream istream(buff.data());
-        return std::make_unique<lexer>(std::move(istream));
-    }
-#endif
-
-    lexer::lexer(ccomp::stream&& istream) : istream(std::move(istream)) {}
+	lexer::lexer(std::string&& buff)
+		: istream(std::move(buff))
+	{}
 
 	token lexer::make_token(token_type type, std::string lexeme) const
 	{

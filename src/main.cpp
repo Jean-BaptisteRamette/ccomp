@@ -3,7 +3,6 @@
 #include <ccomp/command_line.hpp>
 #include <ccomp/parser.hpp>
 #include <ccomp/lexer.hpp>
-#include <ccomp/error.hpp>
 #include <ccomp/log.hpp>
 
 
@@ -11,6 +10,19 @@
 #define CMDLINE_FLAG_INPUT  "-input"
 #define CMDLINE_FLAG_OUTPUT "-output"
 
+
+std::string program_buffer(const std::filesystem::path& path)
+{
+	if (path.extension() != ".c8")
+		ccomp::log::warn("Input file does not have the c8 extension");
+
+	std::ifstream is(path);
+
+	if (!is)
+		throw std::runtime_error("Could not open source file " + path.string());
+
+	return { std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>() };
+}
 
 
 int main(int argc, char** argv)
@@ -26,22 +38,10 @@ int main(int argc, char** argv)
     const auto input_file = ccomp::command_line::get_flag(CMDLINE_FLAG_INPUT);
     const auto output_file = ccomp::command_line::get_flag_or(CMDLINE_FLAG_OUTPUT, "out.c8c");
 
-    ccomp::error_code ec;
-    auto lexer = ccomp::lexer::from_file(input_file, ec);
-
-    if (!lexer)
-    {
-        if (ec == ccomp::error_code::file_not_found_err)
-            ccomp::log::error("File \"{}\" not found.", input_file);
-        else if (ec == ccomp::error_code::io_err)
-            ccomp::log::error("Could not read file \"{}\".", input_file);
-
-        return EXIT_FAILURE;
-    }
-
 	try
 	{
-		auto tokens = lexer->enumerate_tokens();
+		auto lexer = ccomp::lexer(program_buffer(input_file));
+		auto tokens = lexer.enumerate_tokens();
 
 		if (tokens.empty())
 		{

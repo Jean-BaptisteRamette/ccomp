@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 	{
 		BOOST_TEST_MESSAGE("Checking the lexer separates the input stream and identifies tokens correctly");
 
-		auto lex = lexer::from_buffer(
+		auto lex = lexer(
 					"define val 0b1010'1010\n"
 					"raw(val)\n"
 					"proc my_function\n"
@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 					"sub r1,r1\n"
 				);
 
-		const auto tokens = lex->enumerate_tokens();
+		const auto tokens = lex.enumerate_tokens();
 		const std::vector<token_type> expected = {
 				token_type::keyword_define, token_type::identifier, token_type::numerical,
 				token_type::keyword_raw, token_type::parenthesis_open, token_type::identifier, token_type::parenthesis_close,
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 	{
 		BOOST_TEST_MESSAGE("Checking the lexer ignores comments and handle whitespaces correctly");
 
-		auto lex = lexer::from_buffer(
+		auto lex = lexer(
 				";; test program: source.c8\n"
 				"\n"
 				"define M1 10\n"
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 				""
 		);
 
-		const auto tokens = lex->enumerate_tokens();
+		const auto tokens = lex.enumerate_tokens();
 
 		const std::vector<token_type> expected = {
 				token_type::keyword_define, token_type::identifier, token_type::numerical,

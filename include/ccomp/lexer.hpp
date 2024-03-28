@@ -9,9 +9,9 @@
 #include <vector>
 #include <format>
 
+#include <ccomp/assembler_error.hpp>
 #include <ccomp/source_location.hpp>
 #include <ccomp/stream.hpp>
-#include <ccomp/error.hpp>
 
 
 namespace ccomp
@@ -38,12 +38,10 @@ namespace ccomp
 		comma
     };
 
-
 	struct token
     {
         token_type type;
 		source_location source_location;
-
 		std::variant<uint16_t, std::string> data;
     };
 
@@ -51,15 +49,8 @@ namespace ccomp
     class lexer final
     {
     public:
-        [[nodiscard]]
-        static std::unique_ptr<lexer> from_file(std::string_view path, error_code& ec);
+        explicit lexer(std::string&& buff);
 
-#ifdef UNIT_TESTS_ON
-        [[nodiscard]]
-        static std::unique_ptr<lexer> from_buffer(std::string_view buff);
-#endif
-
-        explicit lexer(ccomp::stream&& istream);
         ~lexer() = default;
 
         lexer(const lexer&)            = delete;
@@ -93,22 +84,10 @@ namespace ccomp
 
     namespace lexer_exception
     {
-		struct lexer_error : std::runtime_error
-		{
-			explicit lexer_error(std::string_view message)
-				: std::runtime_error(message.data())
-			{}
-
-			template<typename ...Args>
-			explicit lexer_error(std::string_view fmt_message, Args&&... args)
-				: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
-			{}
-		};
-
-        struct invalid_digit_for_base :lexer_error
+        struct invalid_digit_for_base : assembler_error
         {
             invalid_digit_for_base(char digit, int base, const source_location& source_loc)
-                : lexer_error(
+                : assembler_error(
 						"Invalid digit \"{}\" for numeric base {} at {}.",
 						digit,
 						base,
@@ -116,20 +95,20 @@ namespace ccomp
             {}
         };
 
-		struct numeric_constant_too_large : lexer_error
+		struct numeric_constant_too_large : assembler_error
 		{
 			numeric_constant_too_large(std::string numeric_lexeme, const source_location& source_loc)
-				: lexer_error(
+				: assembler_error(
 						"Numeric constant \"{}\" at {} is too large for a 16-bit value.",
 						numeric_lexeme,
 						ccomp::to_string(source_loc))
 			{}
 		};
 
-        struct undefined_character_token : lexer_error
+        struct undefined_character_token : assembler_error
         {
             explicit undefined_character_token(char c, const source_location& source_loc)
-                : lexer_error(
+                : assembler_error(
 						"Character \"{}\" cannot match any token at {}.",
 						c,
 						ccomp::to_string(source_loc))

@@ -11,26 +11,26 @@ BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
 		BOOST_TEST_MESSAGE("checking comma separated digits syntax");
 
 		{
-			auto lex = lexer::from_buffer("0xFF'FF");
-			auto token = lex->enumerate_tokens()[0];
+			auto lex = lexer("0xFF'FF");
+			auto token = lex.enumerate_tokens()[0];
 			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xFFFF);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0xF'F'F'F");
-			auto token = lex->enumerate_tokens()[0];
+			auto lex = lexer("0xF'F'F'F");
+			auto token = lex.enumerate_tokens()[0];
 			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xFFFF);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0b1111'1111'0000'0000");
-			auto token = lex->enumerate_tokens()[0];
+			auto lex = lexer("0b1111'1111'0000'0000");
+			auto token = lex.enumerate_tokens()[0];
 			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0b1111'1111'0000'0000);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0b1111'1111''0000'0000");
-			BOOST_CHECK_THROW(lex->enumerate_tokens(), lexer_exception::undefined_character_token);
+			auto lex = lexer("0b1111'1111''0000'0000");
+			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::undefined_character_token);
 		}
 	}
 
@@ -39,14 +39,14 @@ BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
 		BOOST_TEST_MESSAGE("checking out of range value detection");
 
 		{
-			auto lex = lexer::from_buffer("65535");
-			auto token = lex->enumerate_tokens()[0];
+			auto lex = lexer("65535");
+			auto token = lex.enumerate_tokens()[0];
 			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 65535);
 		}
 
 		{
-			auto lex = lexer::from_buffer("65536");
-			BOOST_CHECK_THROW(lex->enumerate_tokens(), lexer_exception::numeric_constant_too_large);
+			auto lex = lexer("65536");
+			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::numeric_constant_too_large);
 		}
 	}
 
@@ -55,24 +55,24 @@ BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
 		BOOST_TEST_MESSAGE("checking invalid digits for numeric base");
 
 		{
-			auto lex = lexer::from_buffer("0xABCD");
-			auto token = lex->enumerate_tokens()[0];
+			auto lex = lexer("0xABCD");
+			auto token = lex.enumerate_tokens()[0];
 			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xABCD);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0xG");
-			BOOST_CHECK_THROW(lex->enumerate_tokens(), lexer_exception::invalid_digit_for_base);
+			auto lex = lexer("0xG");
+			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0b1111'2000");
-			BOOST_CHECK_THROW(lex->enumerate_tokens(), lexer_exception::invalid_digit_for_base);
+			auto lex = lexer("0b1111'2000");
+			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
 		}
 
 		{
-			auto lex = lexer::from_buffer("0o778");
-			BOOST_CHECK_THROW(lex->enumerate_tokens(), lexer_exception::invalid_digit_for_base);
+			auto lex = lexer("0o778");
+			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
 		}
 	}
 

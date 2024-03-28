@@ -3,6 +3,7 @@
 
 
 #include <string_view>
+#include <filesystem>
 #include <fstream>
 
 
@@ -11,17 +12,15 @@ namespace ccomp
     class stream
     {
     public:
-        explicit stream(std::ifstream& src_stream);
         explicit stream(std::string&& src_stream);
 
         [[nodiscard]] bool eof() const;
 		[[nodiscard]] char peek() const;
         char get();
-        void   unget();
+        void unget();
 
     private:
         std::string buffer;
-
         size_t read {};
     };
 }

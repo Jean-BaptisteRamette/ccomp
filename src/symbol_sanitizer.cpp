@@ -123,6 +123,6 @@ namespace ccomp
 			throw sanitize_exception::undefined_symbols(undefined_labels);
 
 		if (!scope_has_symbol(0, "main"))
-			throw sanitize_exception::sanitize_error("Entry-point label \".main\" was not defined.");
+			throw assembler_error("Entry-point label \".main\" was not defined.");
 	}
 }

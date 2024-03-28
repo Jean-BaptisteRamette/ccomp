@@ -8,7 +8,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 
 	BOOST_AUTO_TEST_CASE(my_test)
 	{
-		auto lex = lexer::from_buffer(
+		auto lex = lexer(
 				";; test program\n"
 				"\n"
 				";; constant definition\n"
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				"   raw(0000)\n"
 		);
 
-		auto parser = ccomp::parser(lex->enumerate_tokens());
+		auto parser = ccomp::parser(lex.enumerate_tokens());
 
 		ast::abstract_tree tree = parser.make_tree();
 

@@ -57,6 +57,6 @@ namespace ccomp
 
 	bool instruction_generator::operands_types_ok(const ast::instruction_statement& instruction) const
 	{
-
+		return true;
 	}
 }

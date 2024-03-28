@@ -3,9 +3,10 @@
 
 namespace ccomp
 {
-    stream::stream(std::ifstream& src_stream) : buffer(std::istreambuf_iterator<char>(src_stream), std::istreambuf_iterator<char>()), read {0 } {}
-
-    stream::stream(std::string&& src_stream) : buffer(std::move(src_stream)), read {0 } {}
+    stream::stream(std::string&& src_stream)
+		: buffer(std::move(src_stream)),
+		  read { 0 }
+	{}
 
     bool stream::eof() const
     {
