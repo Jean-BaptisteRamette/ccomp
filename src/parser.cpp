@@ -5,37 +5,6 @@
 
 namespace ccomp
 {
-	namespace
-	{
-		const std::unordered_map<std::string_view, unsigned char> operands_count = {
-						{ "add",   2 },
-						{ "sub",   2 },
-						{ "suba",  2 },
-						{ "dec",   1 },
-						{ "inc",   1 },
-						{ "or",    2 },
-						{ "and",   2 },
-						{ "xor",   2 },
-						{ "shr",   1 },
-						{ "shl",   1 },
-						{ "rdump", 1 },
-						{ "rload", 1 },
-						{ "mov",   2 },
-						{ "swp",   2 },
-						{ "draw",  3 },
-						{ "cls",   0 },
-						{ "rand",  2 },
-						{ "bcd",   1 },
-						{ "wkey",  1 },
-						{ "ske",   1 },
-						{ "snke",  1 },
-						{ "ret",   0 },
-						{ "jmp",   1 },
-						{ "call",  1 },
-						{ "se",    2 },
-						{ "sne",   2 }
-		};
-	}
 
     parser::parser(std::vector<token> &&tokens_list)
         : tokens(std::move(tokens_list)),
@@ -45,7 +14,7 @@ namespace ccomp
 	token parser::advance()
 	{
 		if (no_more_tokens())
-			throw parser_exception::parser_error("Expected more tokens before end of file.");
+			throw assembler_error("Expected more tokens before end of file.");
 
 		const token t = *token_it;
 		++token_it;
@@ -113,7 +82,7 @@ namespace ccomp
 
 	std::vector<ast::instruction_operand> parser::parse_operands(std::string_view mnemonic)
 	{
-		const auto count = operands_count.at(mnemonic);
+		const auto count = inst::get_operands_count(mnemonic);
 
 		std::vector<ast::instruction_operand> operands;
 		operands.reserve(count);
@@ -144,7 +113,7 @@ namespace ccomp
 		auto parse_inner_statement = [&]() -> ast::statement
 		{
 			if (no_more_tokens())
-				throw parser_exception::parser_error("Found unexpected EOF before function end.");
+				throw assembler_error("Found unexpected EOF before function end.");
 
 			switch (token_it->type)
 			{
@@ -155,7 +124,7 @@ namespace ccomp
 				case token_type::dot_label:        return parse_label();
 
 				case token_type::keyword_proc_start:
-					throw parser_exception::parser_error("Cannot define a procedure inside another.");
+					throw assembler_error("Cannot define a procedure inside another.");
 
 				default:
 					throw parser_exception::unexpected_error(*token_it);

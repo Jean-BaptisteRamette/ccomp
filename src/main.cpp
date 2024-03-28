@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 		ccomp::parser parser(std::move(tokens));
 
 		const auto ast = parser.make_tree();
-		ast.sanitize();
+		const auto binary = ast.generate();
 
 	} catch (std::runtime_error& error)
 	{

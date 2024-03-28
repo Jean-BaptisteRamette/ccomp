@@ -7,6 +7,7 @@
 #include <vector>
 #include <format>
 
+#include <ccomp/assembler_error.hpp>
 #include <ccomp/lexer.hpp>
 #include <ccomp/ast.hpp>
 
@@ -15,22 +16,10 @@ namespace ccomp
 {
 	namespace parser_exception
 	{
-		struct parser_error : std::runtime_error
-		{
-			explicit parser_error(std::string_view message)
-				: std::runtime_error(message.data())
-			{}
-
-			template<typename ...Args>
-			explicit parser_error(std::string_view fmt_message, Args&&... args)
-				: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
-			{}
-		};
-
-		struct unmatching_procedure_names : parser_error
+		struct unmatching_procedure_names : assembler_error
 		{
 			unmatching_procedure_names(const token& proc_name_beg, const token& proc_name_end)
-				: parser_error(
+				: assembler_error(
 					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
 					proc_name_beg.source_location.line,
 					proc_name_end.source_location.line,
@@ -39,10 +28,10 @@ namespace ccomp
 			{}
 		};
 
-		struct expected_others_error : parser_error
+		struct expected_others_error : assembler_error
 		{
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
-				: parser_error(
+				: assembler_error(
 					"Parser got token \"{}\" but expected a token of type {} while parsing at {}.",
 					ccomp::to_string(unexpected_),
 					ccomp::to_string(expected_types_),
@@ -50,10 +39,10 @@ namespace ccomp
 			{}
 		};
 
-		struct unexpected_error : parser_error
+		struct unexpected_error : assembler_error
 		{
 			explicit unexpected_error(const token& unexpected_)
-				: parser_error(
+				: assembler_error(
 					"Unexpected token {} while parsing at {}.",
 					ccomp::to_string(unexpected_),
 					ccomp::to_string(unexpected_.source_location))

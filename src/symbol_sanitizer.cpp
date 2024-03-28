@@ -1,12 +1,11 @@
 #include <ccomp/symbol_sanitizer.hpp>
 #include <ccomp/statements.hpp>
-#include <ccomp/ast.hpp>
 #include <format>
 
 
-namespace ccomp::ast
+namespace ccomp
 {
-	void symbol_sanitizer::traverse(const abstract_tree& ast)
+	void symbol_sanitizer::traverse(const ast::abstract_tree& ast)
 	{
 		for (const auto& branch : ast.branches)
 			branch->accept(*this);
@@ -25,7 +24,7 @@ namespace ccomp::ast
 		--curr_scope_level;
 	}
 
-	void symbol_sanitizer::visit(const procedure_statement& statement)
+	void symbol_sanitizer::visit(const ast::procedure_statement& statement)
 	{
 		register_symbol(
 				ccomp::to_string(statement.name_beg),
@@ -43,7 +42,7 @@ namespace ccomp::ast
 			throw sanitize_exception::undefined_symbols(undefined_labels);
 	}
 
-	void symbol_sanitizer::visit(const instruction_statement& statement)
+	void symbol_sanitizer::visit(const ast::instruction_statement& statement)
 	{
 		for (const auto& [op, _] : statement.operands)
 		{
@@ -54,7 +53,7 @@ namespace ccomp::ast
 		}
 	}
 
-	void symbol_sanitizer::visit(const label_statement& statement)
+	void symbol_sanitizer::visit(const ast::label_statement& statement)
 	{
 		auto sym = ccomp::to_string(statement.identifier);
 
@@ -74,7 +73,7 @@ namespace ccomp::ast
 		pop_scope();
 	}
 
-	void symbol_sanitizer::visit(const define_statement& statement)
+	void symbol_sanitizer::visit(const ast::define_statement& statement)
 	{
 		register_symbol(
 				ccomp::to_string(statement.identifier),
@@ -82,7 +81,7 @@ namespace ccomp::ast
 			);
 	}
 
-	void symbol_sanitizer::visit(const raw_statement& statement)
+	void symbol_sanitizer::visit(const ast::raw_statement& statement)
 	{
 		const auto& token = statement.opcode;
 

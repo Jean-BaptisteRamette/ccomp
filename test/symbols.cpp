@@ -2,7 +2,7 @@
 #include <ccomp/lexer.hpp>
 #include <ccomp/parser.hpp>
 #include <ccomp/symbol_sanitizer.hpp>
-#include <ccomp/ast.hpp>
+
 
 using namespace ccomp;
 
@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::undefined_symbols);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::undefined_symbols);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_undefined_procedure_call_throws)
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::undefined_symbols);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::undefined_symbols);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_undefined_in_raw_statement_throws)
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::undefined_symbols);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::undefined_symbols);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_pre_defined_symbol)
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::already_defined_symbol);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::already_defined_symbol);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_in_procedure_already_defined_throws)
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::already_defined_symbol);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::already_defined_symbol);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_procedure_already_defined_throws)
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::already_defined_symbol);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::already_defined_symbol);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_scope_separation_proc_and_section)
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 		auto lex = lexer::from_buffer(".not_main:");
 		auto p = parser(lex->enumerate_tokens());
 		const auto ast = p.make_tree();
-		BOOST_CHECK_THROW(ast.sanitize(), ast::sanitize_exception::sanitize_error);
+		BOOST_CHECK_THROW(ast.sanitize(), sanitize_exception::sanitize_error);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -8,17 +8,18 @@
 #include <string>
 #include <array>
 
+#include <ccomp/assembler_error.hpp>
 #include <ccomp/source_location.hpp>
 #include <ccomp/ast_visitor.hpp>
+#include <ccomp/ast.hpp>
 
 
-namespace ccomp::ast
+namespace ccomp
 {
 	using symbol_set = std::unordered_map<std::string, source_location>;
 
-	struct abstract_tree;
 
-	class symbol_sanitizer : public base_visitor
+	class symbol_sanitizer final : public ast::base_visitor
 	{
 		using scope_id = unsigned char;
 
@@ -30,13 +31,13 @@ namespace ccomp::ast
 		symbol_sanitizer& operator=(symbol_sanitizer&&) = delete;
 		~symbol_sanitizer() = default;
 
-		void traverse(const abstract_tree&);
+		void traverse(const ast::abstract_tree&);
 
-		void visit(const procedure_statement&) override;
-		void visit(const instruction_statement&) override;
-		void visit(const define_statement&) override;
-		void visit(const raw_statement&) override;
-		void visit(const label_statement&) override;
+		void visit(const ast::procedure_statement&) override;
+		void visit(const ast::instruction_statement&) override;
+		void visit(const ast::define_statement&) override;
+		void visit(const ast::raw_statement&) override;
+		void visit(const ast::label_statement&) override;
 
 
 	private:
@@ -68,38 +69,26 @@ namespace ccomp::ast
 			return joined;
 		}
 
-		struct sanitize_error : std::runtime_error
-		{
-			explicit sanitize_error(std::string_view message)
-				: std::runtime_error(message.data())
-			{}
-
-			template<typename ...Args>
-			explicit sanitize_error(std::string_view fmt_message, Args&&... args)
-				: std::runtime_error(std::vformat(fmt_message, std::make_format_args(args...)))
-			{}
-		};
-
-		struct undefined_symbols : sanitize_error
+		struct undefined_symbols : assembler_error
 		{
 			explicit undefined_symbols(const std::string& symbol, const source_location& where)
-				: sanitize_error(
+				: assembler_error(
 						"Sanitizer found an undefined symbol: \"{}\" at {}.",
 						symbol,
 						ccomp::to_string(where))
 			{}
 
 			explicit undefined_symbols(const symbol_set& symbols)
-				: sanitize_error(
-					"Sanitizer found undefined symbols:\n{}",
+				: assembler_error(
+					"Sanitizer found the following undefined symbols:\n{}",
 					symbols_to_string(symbols))
 			{}
 		};
 
-		struct already_defined_symbol : sanitize_error
+		struct already_defined_symbol : assembler_error
 		{
 			already_defined_symbol(const std::string& symbol, const source_location& where)
-				: sanitize_error(
+				: assembler_error(
 					"Sanitizer found an already defined symbol \"{}\" at {}.",
 					symbol,
 					ccomp::to_string(where))
