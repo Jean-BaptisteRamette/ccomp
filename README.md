@@ -219,7 +219,7 @@ define OPCODE 0x00E0
 
 Drawing
 ```asm  
-draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with a height of N + 1 pixels
+draw rb, ra, N  ;; draws a sprite at coordinates (rb, ra) with a height of N + 1 digits
 cls             ;; clear screen  
 ```  
 

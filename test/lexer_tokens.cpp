@@ -48,6 +48,8 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 		auto lex = lexer(
 				";; test program: source.c8\n"
 				"\n"
+				"sprite my_sprite [ 0xFF, 0b1111'0000, 0xEE ]\n"
+				"\n"
 				"define M1 10\n"
 				"define M2 3\n"
 				"\n"
@@ -84,6 +86,9 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 		const auto tokens = lex.enumerate_tokens();
 
 		const std::vector<token_type> expected = {
+				token_type::keyword_sprite, token_type::identifier, token_type::bracket_open,
+				token_type::numerical, token_type::comma, token_type::numerical, token_type::comma,
+				token_type::numerical, token_type::bracket_close,
 				token_type::keyword_define, token_type::identifier, token_type::numerical,
 				token_type::keyword_define, token_type::identifier, token_type::numerical,
 				token_type::keyword_proc_start, token_type::identifier,

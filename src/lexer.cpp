@@ -16,65 +16,61 @@ namespace ccomp
 
         const lexeme_map keywords = {
 				{ "define", token_type::keyword_define     },
+				{ "sprite", token_type::keyword_sprite     },
 				{ "raw",    token_type::keyword_raw        },
 				{ "proc",   token_type::keyword_proc_start },
 				{ "endp",   token_type::keyword_proc_end   }
 		};
 
-        const lexeme_set special_regs_name = {
-			"pc",
-			"sp",
-			"ar",
-			"dt",
-			"st"
-		};
-
         const lexeme_set general_regs_name = {
-            "r0",
-            "r1",
-            "r2",
-            "r3",
-            "r4",
-            "r5",
-            "r6",
-            "r7",
-            "r8",
-            "r9",
-            "ra",
-            "rb",
-            "rc",
-            "rd",
-            "re",
-            "rf"
+				"ar",
+				"dt",
+				"st",
+            	"r0",
+            	"r1",
+            	"r2",
+            	"r3",
+            	"r4",
+            	"r5",
+            	"r6",
+            	"r7",
+            	"r8",
+            	"r9",
+            	"ra",
+            	"rb",
+            	"rc",
+            	"rd",
+            	"re",
+            	"rf"
         };
 
         const lexeme_set instructions = {
-            "add",
-            "sub",
-            "suba",
-			"dec",
-			"inc",
-            "or",
-            "and",
-            "xor",
-            "shr",
-            "shl",
-            "rdump",
-            "rload",
-            "mov",
-            "swp",
-            "draw",
-            "cls",
-            "rand",
-            "bcd",
-            "wkey",
-            "ske",
-            "skne",
-            "ret",
-            "jmp",
-            "call",
-			"se",
-			"sne"
+            	"add",
+            	"sub",
+            	"suba",
+				"dec",
+				"inc",
+            	"or",
+            	"and",
+            	"xor",
+            	"shr",
+            	"shl",
+            	"rdump",
+            	"rload",
+            	"mov",
+            	"swp",
+            	"draw",
+            	"cls",
+            	"rand",
+            	"bcd",
+            	"wkey",
+            	"ske",
+            	"skne",
+            	"ret",
+            	"jmp",
+            	"call",
+				"se",
+				"sne"
         };
 
 		const std::unordered_map<char, token_type> special_characters = {
@@ -89,7 +85,7 @@ namespace ccomp
 
         token_type map_token_type(std::string_view lexeme)
         {
-            if (general_regs_name.contains(lexeme) || special_regs_name.contains(lexeme))
+            if (general_regs_name.contains(lexeme))
                 return token_type::register_name;
 
             if (instructions.contains(lexeme))

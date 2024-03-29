@@ -27,7 +27,7 @@ namespace ccomp
 	void symbol_sanitizer::visit(const ast::procedure_statement& statement)
 	{
 		register_symbol(
-				ccomp::to_string(statement.name_beg),
+				statement.name_beg.to_string(),
 				statement.name_beg.source_location
 			);
 
@@ -46,7 +46,7 @@ namespace ccomp
 	{
 		for (const auto& [op, _] : statement.operands)
 		{
-			auto sym = ccomp::to_string(op);
+			auto sym = op.to_string();
 
 			if (op.type == token_type::identifier && !symbol_defined(sym))
 				undefined_labels.insert(std::make_pair(std::move(sym), op.source_location));
@@ -55,13 +55,13 @@ namespace ccomp
 
 	void symbol_sanitizer::visit(const ast::label_statement& statement)
 	{
-		auto sym = ccomp::to_string(statement.identifier);
+		auto sym = statement.identifier.to_string();
 
 		if (undefined_labels.contains(sym))
 			undefined_labels.erase(sym);
 
 		register_symbol(
-				sym,
+				std::move(sym),
 				statement.identifier.source_location
 			);
 
@@ -76,7 +76,21 @@ namespace ccomp
 	void symbol_sanitizer::visit(const ast::define_statement& statement)
 	{
 		register_symbol(
-				ccomp::to_string(statement.identifier),
+				statement.identifier.to_string(),
+				statement.identifier.source_location
+			);
+	}
+
+	void symbol_sanitizer::visit(const ast::sprite_statement& statement)
+	{
+		if (curr_scope_level != 0)
+			throw assembler_error(
+					"Sprite \"{}\" at line {} must have a global scope",
+					statement.identifier.to_string(),
+					statement.source_line_beg());
+
+		register_symbol(
+				statement.identifier.to_string(),
 				statement.identifier.source_location
 			);
 	}
@@ -85,22 +99,21 @@ namespace ccomp
 	{
 		const auto& token = statement.opcode;
 
-		if (token.type == token_type::identifier && !symbol_defined(ccomp::to_string(token)))
-			throw sanitize_exception::undefined_symbols(ccomp::to_string(token), token.source_location);
+		if (token.type == token_type::identifier && !symbol_defined(token.to_string()))
+			throw sanitize_exception::undefined_symbols(token.to_string(), token.source_location);
 	}
 
-	void symbol_sanitizer::register_symbol(const std::string& symbol, const source_location& sym_loc)
+	void symbol_sanitizer::register_symbol(std::string&& symbol, const source_location& sym_loc)
 	{
 		if (curr_scope_level >= scopes.size())
-			throw std::runtime_error(std::format(
+			throw assembler_error(
 						"Could not register symbol \"{}\" because we exceeded the maximum amount of scopes.",
-						symbol)
-					);
+						symbol);
 
 		if (symbol_defined(symbol))
 			throw sanitize_exception::already_defined_symbol(symbol, sym_loc);
 
-		scopes[curr_scope_level].insert({symbol, sym_loc});
+		scopes[curr_scope_level].insert({std::move(symbol), sym_loc});
 	}
 
 	bool symbol_sanitizer::symbol_defined(const std::string &symbol)

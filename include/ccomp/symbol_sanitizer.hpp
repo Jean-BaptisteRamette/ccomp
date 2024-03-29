@@ -36,6 +36,7 @@ namespace ccomp
 		void visit(const ast::procedure_statement&) override;
 		void visit(const ast::instruction_statement&) override;
 		void visit(const ast::define_statement&) override;
+		void visit(const ast::sprite_statement&) override;
 		void visit(const ast::raw_statement&) override;
 		void visit(const ast::label_statement&) override;
 
@@ -44,7 +45,7 @@ namespace ccomp
 		void post_visit();
 		void push_scope();
 		void pop_scope();
-		void register_symbol(const std::string& symbol, const source_location& sym_loc);
+		void register_symbol(std::string&& symbol, const source_location& sym_loc);
 		bool symbol_defined(const std::string& symbol);
 		bool scope_has_symbol(scope_id scope, const std::string& symbol);
 

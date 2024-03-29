@@ -23,8 +23,8 @@ namespace ccomp
 					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
 					proc_name_beg.source_location.line,
 					proc_name_end.source_location.line,
-					ccomp::to_string(proc_name_beg),
-					ccomp::to_string(proc_name_end))
+					proc_name_beg.to_string(),
+					proc_name_end.to_string())
 			{}
 		};
 
@@ -33,7 +33,7 @@ namespace ccomp
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
 				: assembler_error(
 					"Parser got token \"{}\" but expected a token of type {} while parsing at {}.",
-					ccomp::to_string(unexpected_),
+					unexpected_.to_string(),
 					ccomp::to_string(expected_types_),
 					ccomp::to_string(unexpected_.source_location))
 			{}
@@ -44,7 +44,7 @@ namespace ccomp
 			explicit unexpected_error(const token& unexpected_)
 				: assembler_error(
 					"Unexpected token {} while parsing at {}.",
-					ccomp::to_string(unexpected_),
+					unexpected_.to_string(),
 					ccomp::to_string(unexpected_.source_location))
 			{}
 		};
@@ -74,12 +74,14 @@ namespace ccomp
 			throw parser_exception::expected_others_error(t, expected_types);
 		};
 
-		[[nodiscard]] token advance();
+		token advance();
+		[[nodiscard]] bool advance_if(token_type type);
         [[nodiscard]] bool no_more_tokens() const;
 
         [[nodiscard]] ast::statement parse_primary_statement();
         [[nodiscard]] ast::statement parse_raw();
         [[nodiscard]] ast::statement parse_define();
+		[[nodiscard]] ast::statement parse_sprite();
         [[nodiscard]] ast::statement parse_instruction();
         [[nodiscard]] ast::statement parse_procedure();
 		[[nodiscard]] ast::statement parse_label();

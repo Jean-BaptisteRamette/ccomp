@@ -23,6 +23,7 @@ namespace ccomp
 		numerical,           // [0-9-a-f-A-F]
         byte_ascii,          // 'A' (quotes included)
         keyword_define,      // define x ...
+		keyword_sprite,      // sprite name [.., .., ..]
 		keyword_raw,         // raw(...)
 		keyword_proc_start,  // proc ...
 		keyword_proc_end,    // endp
@@ -43,6 +44,19 @@ namespace ccomp
         token_type type;
 		source_location source_location;
 		std::variant<uint16_t, std::string> data;
+
+		[[nodiscard]] std::string to_string() const
+		{
+			if (std::holds_alternative<uint16_t>(data))
+				return std::to_string(std::get<uint16_t>(data));
+
+			return std::get<std::string>(data);
+		}
+
+		[[nodiscard]] uint16_t to_integer() const
+		{
+			return std::get<uint16_t>(data);
+		}
     };
 
 
@@ -171,15 +185,6 @@ namespace ccomp
 		}
 
 		return '(' + joined + ')';
-	}
-
-	[[nodiscard]]
-	inline std::string to_string(const token& token)
-	{
-		if (std::holds_alternative<uint16_t>(token.data))
-			return std::to_string(std::get<uint16_t>(token.data));
-
-		return std::get<std::string>(token.data);
 	}
 }
 

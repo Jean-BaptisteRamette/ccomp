@@ -11,6 +11,17 @@ namespace ccomp
 		  token_it(std::begin(tokens))
     {}
 
+	bool parser::advance_if(token_type type)
+	{
+		if (token_it->type == type)
+		{
+			advance();
+			return true;
+		}
+
+		return false;
+	}
+
 	token parser::advance()
 	{
 		if (no_more_tokens())
@@ -45,6 +56,7 @@ namespace ccomp
 		switch (token_it->type)
 		{
 			case token_type::keyword_define:     return parse_define();
+			case token_type::keyword_sprite:     return parse_sprite();
 			case token_type::keyword_raw:        return parse_raw();
 			case token_type::dot_label:          return parse_label();
 			case token_type::keyword_proc_start: return parse_procedure();
@@ -80,6 +92,30 @@ namespace ccomp
 					);
 	}
 
+	ast::statement parser::parse_sprite()
+	{
+		expect(token_type::keyword_sprite);
+
+		auto identifier = expect(token_type::identifier);
+		expect(token_type::bracket_open);
+
+		std::vector<uint8_t> digits;
+
+		do
+		{
+			auto token = expect(token_type::numerical);
+			digits.push_back(token.to_integer());
+		}
+		while (advance_if(token_type::comma));
+
+		expect(token_type::bracket_close);
+
+		return std::make_unique<ast::sprite_statement>(
+						std::move(identifier),
+						std::move(digits)
+					);
+	}
+
 	std::vector<ast::instruction_operand> parser::parse_operands(std::string_view mnemonic)
 	{
 		const auto count = inst::get_operands_count(mnemonic);
@@ -104,7 +140,7 @@ namespace ccomp
 
 		return std::make_unique<ast::instruction_statement>(
 					std::move(mnemonic),
-					parse_operands(ccomp::to_string(mnemonic))
+					parse_operands(mnemonic.to_string())
 				);
 	}
 

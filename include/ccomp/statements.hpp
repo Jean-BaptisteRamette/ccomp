@@ -107,6 +107,23 @@ namespace ccomp::ast
         const token value;
     };
 
+	struct sprite_statement : base_statement
+	{
+		sprite_statement(token identifier_, std::vector<uint8_t> digits_)
+			: base_statement(),
+			  identifier(std::move(identifier_)),
+			  digits(std::move(digits_))
+		{}
+
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		[[nodiscard]] size_t source_line_beg() const override { return identifier.source_location.line; }
+		[[nodiscard]] size_t source_line_end() const override { return identifier.source_location.line; }
+
+		const token identifier;
+		const std::vector<uint8_t> digits;
+	};
+
     struct raw_statement : base_statement
     {
 		explicit raw_statement(token opcode_)

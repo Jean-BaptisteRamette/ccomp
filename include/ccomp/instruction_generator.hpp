@@ -24,6 +24,7 @@ namespace ccomp
 		void visit(const ast::procedure_statement&) override;
 		void visit(const ast::instruction_statement&) override;
 		void visit(const ast::define_statement&) override;
+		void visit(const ast::sprite_statement&) override;
 		void visit(const ast::raw_statement&) override;
 		void visit(const ast::label_statement&) override;
 

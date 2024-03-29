@@ -41,6 +41,11 @@ namespace ccomp
 		// store the value in a map
 	}
 
+	void instruction_generator::visit(const ast::sprite_statement&)
+	{
+
+	}
+
 	void instruction_generator::visit(const ast::raw_statement&)
 	{
 		// check if it encodes to a valid instruction
