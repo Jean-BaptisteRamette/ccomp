@@ -1,4 +1,4 @@
-#include <ccomp/instructions.hpp>
+#include <ccomp/arch.hpp>
 #include <ccomp/parser.hpp>
 #include <ccomp/log.hpp>
 
@@ -118,7 +118,7 @@ namespace ccomp
 
 	std::vector<ast::instruction_operand> parser::parse_operands(std::string_view mnemonic)
 	{
-		const auto count = inst::get_operands_count(mnemonic);
+		const auto count = arch::operands_count(mnemonic);
 
 		std::vector<ast::instruction_operand> operands;
 		operands.reserve(count);
@@ -244,8 +244,7 @@ namespace ccomp
 		if (token.type == token_type::bracket_open)
 		{
 			auto inner_token = expect(token_type::identifier,
-									  token_type::numerical,
-									  token_type::register_name);
+									  token_type::numerical);
 
 			expect(token_type::bracket_close);
 

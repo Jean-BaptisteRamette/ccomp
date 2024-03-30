@@ -41,6 +41,8 @@ namespace ccomp
 
 	struct token
     {
+		~token() = default;
+
         token_type type;
 		source_location source_location;
 		std::variant<uint16_t, std::string> data;

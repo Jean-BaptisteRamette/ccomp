@@ -1,6 +1,6 @@
 #include <ccomp/ast.hpp>
 #include <ccomp/symbol_sanitizer.hpp>
-#include <ccomp/instruction_generator.hpp>
+#include <ccomp/generator.hpp>
 
 
 namespace ccomp::ast
@@ -13,7 +13,7 @@ namespace ccomp::ast
 	{
 		sanitize();
 
-		instruction_generator generator;
+		generator generator;
 
 		return generator.generate(*this);
 	}

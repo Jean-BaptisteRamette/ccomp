@@ -97,6 +97,9 @@ namespace ccomp
 
 	void symbol_sanitizer::visit(const ast::raw_statement& statement)
 	{
+		if (curr_scope_level == 0)
+			throw assembler_error("Invalid scope level for raw statement at line {}", statement.source_line_beg());
+
 		const auto& token = statement.opcode;
 
 		if (token.type == token_type::identifier && !symbol_defined(token.to_string()))

@@ -67,6 +67,16 @@ namespace ccomp::ast
 			return *this;
 		}
 
+		[[nodiscard]] bool is_reg() const
+		{
+			return operand.type == token_type::register_name;
+		}
+
+		[[nodiscard]] bool is_imm() const
+		{
+			return operand.type == token_type::numerical || operand.type == token_type::identifier;
+		}
+
 		token operand;
         bool indirection;
     };
