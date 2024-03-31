@@ -48,7 +48,6 @@ namespace ccomp
             	"add",
             	"sub",
             	"suba",
-				"dec",
 				"inc",
             	"or",
             	"and",

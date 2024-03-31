@@ -33,6 +33,29 @@ namespace ccomp
 	private:
 		[[nodiscard]] arch::opcode encode_add(const std::vector<ast::instruction_operand>& operands) const;
 		[[nodiscard]] arch::opcode encode_sub(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_suba(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_or(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_and(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_xor(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_shr(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_shl(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_rdump(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_rload(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_mov(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_swp(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_draw(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_cls(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_rand(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_bcd(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_wkey(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_ske(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_skne(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_ret(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_jmp(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_call(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_se(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_sne(const std::vector<ast::instruction_operand>& operands) const;
+		[[nodiscard]] arch::opcode encode_inc(const std::vector<ast::instruction_operand>& operands) const;
 
 		void post_visit();
 		[[nodiscard]] uint16_t to_integer(const token&) const;
@@ -45,15 +68,38 @@ namespace ccomp
 
 		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {
 				{ "add", &generator::encode_add },
-				{ "sub", &generator::encode_sub }
+				{ "sub", &generator::encode_sub },
+				{ "suba", &generator::encode_suba },
+				{ "or", &generator::encode_or },
+				{ "and", &generator::encode_and },
+				{ "xor", &generator::encode_xor },
+				{ "shr", &generator::encode_shr },
+				{ "shl", &generator::encode_shl },
+				{ "rdump", &generator::encode_rdump },
+				{ "rload", &generator::encode_rload },
+				{ "mov", &generator::encode_mov },
+				{ "swp", &generator::encode_swp },
+				{ "draw", &generator::encode_draw },
+				{ "cls", &generator::encode_cls },
+				{ "rand", &generator::encode_rand },
+				{ "bcd", &generator::encode_bcd },
+				{ "wkey", &generator::encode_wkey },
+				{ "ske", &generator::encode_ske },
+				{ "skne", &generator::encode_skne },
+				{ "ret", &generator::encode_ret },
+				{ "jmp", &generator::encode_jmp },
+				{ "call", &generator::encode_call },
+				{ "se", &generator::encode_se },
+				{ "sne", &generator::encode_sne },
+				{ "inc", &generator::encode_inc },
 		};
 	};
 
 	namespace generator_exception
 	{
-		struct generator_invalid_operand_type : assembler_error
+		struct instruction_invalid_operand : assembler_error
 		{
-			generator_invalid_operand_type()
+			instruction_invalid_operand()
 				: assembler_error("Invalid operands types for instruction")
 			{}
 		};

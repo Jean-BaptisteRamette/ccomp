@@ -61,6 +61,7 @@ namespace ccomp::arch
 	constexpr auto MASK_RDUMP_R8 = make_operands_mask({ reg_rx });
 	constexpr auto MASK_RLOAD_R8 = make_operands_mask({ reg_rx });
 	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ reg_rx, imm8 });
+	constexpr auto MASK_MOV_R8_R8 = make_operands_mask({ reg_rx, reg_rx });
 	constexpr auto MASK_MOV_AR_R8 = make_operands_mask({ reg_ar, reg_rx });
 	constexpr auto MASK_ADD_AR_R8 = make_operands_mask({ reg_ar, reg_rx });
 	constexpr auto MASK_MOV_DT_R8 = make_operands_mask({ reg_dt, reg_rx });
@@ -76,14 +77,50 @@ namespace ccomp::arch
 	constexpr auto MASK_SNE_R8_I8 = make_operands_mask({ reg_rx, imm8 });
 	constexpr auto MASK_SE_R8_R8 = make_operands_mask({ reg_rx, reg_rx });
 	constexpr auto MASK_SNE_R8_R8 = make_operands_mask({ reg_rx, reg_rx });
+	constexpr auto MASK_INC_R8 = make_operands_mask({ reg_rx });
 
 
     unsigned char operands_count(std::string_view mnemonic);
 	unsigned char regname2regindex(std::string_view regname);
 
+	opcode _00E0();
+	opcode _00EE();
+
+	opcode _5XY0(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _8XY0(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _8XY1(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _8XY2(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _8XY3(uint8_t reg_index1, uint8_t reg_index2);
 	opcode _8XY4(uint8_t reg_index1, uint8_t reg_index2);
 	opcode _8XY5(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _8XY7(uint8_t reg_index1, uint8_t reg_index2);
+	opcode _9XY0(uint8_t reg_index1, uint8_t reg_index2);
+
+	opcode _3XNN(uint8_t reg_index, uint8_t imm);
+	opcode _4XNN(uint8_t reg_index, uint8_t imm);
+	opcode _6XNN(uint8_t reg_index, uint8_t imm);
 	opcode _7XNN(uint8_t reg_index, uint8_t imm);
+	opcode _CXNN(uint8_t reg_index, uint8_t imm);
+
+	opcode _EX9E(uint8_t reg_index);
+	opcode _EXA1(uint8_t reg_index);
+	opcode _FX07(uint8_t reg_index);
+	opcode _FX0A(uint8_t reg_index);
+	opcode _FX29(uint8_t reg_index);
+	opcode _FX15(uint8_t reg_index);
+	opcode _FX18(uint8_t reg_index);
+	opcode _FX1E(uint8_t reg_index);
+	opcode _FX33(uint8_t reg_index);
+	opcode _FX55(uint8_t reg_index);
+	opcode _FX65(uint8_t reg_index);
+
+	opcode _1NNN(/* TODO */);
+	opcode _2NNN(/* TODO */);
+	opcode _BNNN(/* TODO */);
+	opcode _ANNN(/* TODO */);
+
+	opcode _DXYN(uint8_t reg_index1, uint8_t reg_index2, uint8_t imm);
+
 }
 
 #endif //CCOMP_ARCH_HPP
