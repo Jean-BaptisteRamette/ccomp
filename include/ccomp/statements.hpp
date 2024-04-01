@@ -72,6 +72,11 @@ namespace ccomp::ast
 			return operand.type == token_type::register_name;
 		}
 
+		[[nodiscard]] std::string reg_name() const
+		{
+			return operand.to_string();
+		}
+
 		[[nodiscard]] bool is_imm() const
 		{
 			return operand.type == token_type::numerical || operand.type == token_type::identifier;

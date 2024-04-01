@@ -11,17 +11,6 @@ namespace ccomp
 		  token_it(std::begin(tokens))
     {}
 
-	bool parser::advance_if(token_type type)
-	{
-		if (token_it->type == type)
-		{
-			advance();
-			return true;
-		}
-
-		return false;
-	}
-
 	token parser::advance()
 	{
 		if (no_more_tokens())
@@ -116,19 +105,26 @@ namespace ccomp
 					);
 	}
 
-	std::vector<ast::instruction_operand> parser::parse_operands(std::string_view mnemonic)
+	std::vector<ast::instruction_operand> parser::parse_operands()
 	{
-		const auto count = arch::operands_count(mnemonic);
-
 		std::vector<ast::instruction_operand> operands;
-		operands.reserve(count);
 
-		for (auto i = 0; i < count; ++i)
+		// ret
+		// shr r8
+		// shr r8, r9
+		// jmp @label
+		// call subroutine
+
+		while (next_any_of(token_type::identifier,
+						   token_type::register_name,
+						   token_type::at_label,
+						   token_type::numerical,
+						   token_type::bracket_open))
 		{
 			operands.push_back(parse_operand());
 
-			if (i != count - 1)
-				expect(token_type::comma);
+			if (!advance_if(token_type::comma))
+				break;
 		}
 
 		return operands;
@@ -140,7 +136,7 @@ namespace ccomp
 
 		return std::make_unique<ast::instruction_statement>(
 					std::move(mnemonic),
-					parse_operands(mnemonic.to_string())
+					parse_operands()
 				);
 	}
 
@@ -230,11 +226,11 @@ namespace ccomp
 		auto token = expect(token_type::register_name,
 							token_type::identifier,
 							token_type::numerical,
-							token_type::dot_label,
+							token_type::at_label,
 							token_type::bracket_open);
 
 		// Is the operand a jump label ?
-		if (token.type == token_type::dot_label)
+		if (token.type == token_type::at_label)
 		{
 			auto label = expect(token_type::identifier);
 			return ast::instruction_operand(std::move(label));

@@ -2,6 +2,7 @@
 #define CCOMP_PARSER_HPP
 
 
+#include <unordered_set>
 #include <unordered_map>
 #include <string_view>
 #include <vector>
@@ -74,8 +75,32 @@ namespace ccomp
 			throw parser_exception::expected_others_error(t, expected_types);
 		};
 
+		template<typename... Args>
+		[[nodiscard]] bool advance_if(Args... types)
+		{
+			std::unordered_set<token_type> expected_types { types... };
+
+			if (expected_types.contains(token_it->type))
+			{
+				advance();
+				return true;
+			}
+
+			return false;
+		};
+
+		template<typename... Args>
+		[[nodiscard]] bool next_any_of(Args... types)
+		{
+			if (no_more_tokens())
+				return false;
+
+			std::unordered_set<token_type> set { types... };
+
+			return set.contains(token_it->type);
+		};
+
 		token advance();
-		[[nodiscard]] bool advance_if(token_type type);
         [[nodiscard]] bool no_more_tokens() const;
 
         [[nodiscard]] ast::statement parse_primary_statement();
@@ -86,7 +111,7 @@ namespace ccomp
         [[nodiscard]] ast::statement parse_procedure();
 		[[nodiscard]] ast::statement parse_label();
         [[nodiscard]] ast::instruction_operand parse_operand();
-		[[nodiscard]] std::vector<ast::instruction_operand> parse_operands(std::string_view mnemonic);
+		[[nodiscard]] std::vector<ast::instruction_operand> parse_operands();
 
     private:
         const std::vector<token> tokens;

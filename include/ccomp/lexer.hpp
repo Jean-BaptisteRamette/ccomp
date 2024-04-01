@@ -36,6 +36,7 @@ namespace ccomp
 		parenthesis_close,
 		colon,
 		dot_label,
+		at_label,
 		comma
     };
 
@@ -165,6 +166,8 @@ namespace ccomp
 				return "comma";
 			case token_type::dot_label:
 				return "dot";
+			case token_type::at_label:
+				return "@";
 
 			default:
 				return "undefined";

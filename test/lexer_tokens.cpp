@@ -60,16 +60,16 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 				"    xor r0, r0\n"
 				"\n"
 				"    sne r1, 0\n"
-				"    jmp .done\n"
+				"    jmp @done\n"
 				"\n"
 				".iter:\n"
 				"    sne r2, 0\n"
-				"    jmp .done\n"
+				"    jmp @done\n"
 				"\n"
 				"    add r0, r1\n"
-				"    dec r2\n"
+				"    inc r2\n"
 				"\n"
-				"    jmp .iter\n"
+				"    jmp @iter\n"
 				"\n"
 				".done:\n"
 				"    ret\n"
@@ -94,13 +94,13 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 				token_type::keyword_proc_start, token_type::identifier,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::register_name,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::numerical,
-				token_type::instruction, token_type::dot_label, token_type::identifier,
+				token_type::instruction, token_type::at_label, token_type::identifier,
 				token_type::dot_label, token_type::identifier, token_type::colon,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::numerical,
-				token_type::instruction, token_type::dot_label, token_type::identifier,
+				token_type::instruction, token_type::at_label, token_type::identifier,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::register_name,
 				token_type::instruction, token_type::register_name,
-				token_type::instruction, token_type::dot_label, token_type::identifier,
+				token_type::instruction, token_type::at_label, token_type::identifier,
 				token_type::dot_label, token_type::identifier, token_type::colon,
 				token_type::instruction,
 				token_type::keyword_proc_end, token_type::identifier,

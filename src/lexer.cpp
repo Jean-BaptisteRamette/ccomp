@@ -78,6 +78,7 @@ namespace ccomp
 				{ '(', token_type::parenthesis_open },
 				{ ')', token_type::parenthesis_close},
 				{ '.', token_type::dot_label},
+				{ '@', token_type::at_label},
 				{ ':', token_type::colon},
 				{ ',', token_type::comma}
 		};

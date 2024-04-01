@@ -27,6 +27,9 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				"	sub r1,   r1\n"
 				".exit:\n"
 				"   raw(0000)\n"
+				"   xor r0, r0\n"
+				"   shr r0\n"
+				"   cls\n"
 		);
 
 		auto parser = ccomp::parser(lex.enumerate_tokens());

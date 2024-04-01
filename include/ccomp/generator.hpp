@@ -58,11 +58,16 @@ namespace ccomp
 		[[nodiscard]] arch::opcode encode_inc(const std::vector<ast::instruction_operand>& operands) const;
 
 		void post_visit();
-		[[nodiscard]] uint16_t to_integer(const token&) const;
+
+		[[nodiscard]] arch::imm operand2imm(const token& token,
+											arch::imm_format imm_max = arch::imm_format::imm8) const;
+
+		[[nodiscard]] arch::imm operand2imm(const ast::instruction_operand& operand,
+											arch::imm_format type = arch::imm_format::imm8) const;
 
 	private:
 		std::vector<arch::opcode> binary;
-		std::unordered_map<std::string, uint16_t> constants;
+		std::unordered_map<std::string, arch::imm> constants;
 
 		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&) const;
 
@@ -97,10 +102,17 @@ namespace ccomp
 
 	namespace generator_exception
 	{
-		struct instruction_invalid_operand : assembler_error
+		struct invalid_operand_type : assembler_error
 		{
-			instruction_invalid_operand()
+			invalid_operand_type()
 				: assembler_error("Invalid operands types for instruction")
+			{}
+		};
+
+		struct invalid_immediate_format : assembler_error
+		{
+			invalid_immediate_format()
+				: assembler_error("Immediate is too big for expected operand format")
 			{}
 		};
 	}
