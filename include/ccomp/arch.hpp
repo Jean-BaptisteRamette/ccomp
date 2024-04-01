@@ -91,8 +91,6 @@ namespace ccomp::arch
 	constexpr auto MASK_INC_R8 = make_operands_mask({ operand_type::reg_rx });
 
 
-    unsigned char operands_count(std::string_view mnemonic);
-
 	opcode _00E0();
 	opcode _00EE();
 

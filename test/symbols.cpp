@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	BOOST_AUTO_TEST_CASE(check_undefined_jump_label_throws)
 	{
 		auto lex = lexer(".main:\n"
-						 "    jmp .exit");
+						 "    jmp @exit");
 
 		auto p = parser(lex.enumerate_tokens());
 		const auto ast = p.make_tree();
@@ -31,8 +31,8 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 
 	BOOST_AUTO_TEST_CASE(check_undefined_in_raw_statement_throws)
 	{
-		auto lex = lexer("raw(val)\n"
-						 ".main:");
+		auto lex = lexer(".main:\n"
+						 "    raw(val)");
 
 		auto p = parser(lex.enumerate_tokens());
 		const auto ast = p.make_tree();
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	BOOST_AUTO_TEST_CASE(check_pre_defined_symbol)
 	{
 		auto lex = lexer(".main:\n"
-						 "    jmp .exit\n"
+						 "    jmp @exit\n"
 						 ".exit:\n");
 
 		auto p = parser(lex.enumerate_tokens());
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	{
 		auto lex = lexer("proc tmp\n"
 						 ".start:\n"
-						 "    jmp .done\n"
+						 "    jmp @done\n"
 						 ".unreferenced:\n"
 						 ".done:\n"
 						 "    ret\n"
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	BOOST_AUTO_TEST_CASE(check_already_defined_throws)
 	{
 		auto lex = lexer(".main:\n"
-						 "    jmp .main\n"
+						 "    jmp @main\n"
 						 ".main:\n");
 
 		auto p = parser(lex.enumerate_tokens());
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	{
 		auto lex = lexer("proc tmp\n"
 						 ".start:\n"
-						 "    jmp .start\n"
+						 "    jmp @start\n"
 						 ".start:\n"
 						 "    ret\n"
 						 "endp tmp\n"
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "endp tmp\n"
 						 "\n"
 						 ".main:\n"
-						 "    jmp .done\n"
+						 "    jmp @done\n"
 						 ".done:\n");
 
 		auto p = parser(lex.enumerate_tokens());

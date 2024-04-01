@@ -78,6 +78,9 @@ namespace ccomp
 		template<typename... Args>
 		[[nodiscard]] bool advance_if(Args... types)
 		{
+			if (no_more_tokens())
+				return false;
+
 			std::unordered_set<token_type> expected_types { types... };
 
 			if (expected_types.contains(token_it->type))
