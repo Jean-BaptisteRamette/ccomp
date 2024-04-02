@@ -61,6 +61,9 @@ namespace ccomp
 
 	void generator::visit(const ast::instruction_statement& instruction)
 	{
+		if (instruction.operands.size() > arch::MAX_OPERANDS)
+			throw generator_exception::too_many_operands(instruction);
+
 		const auto mnemonic = instruction.mnemonic.to_string();
 		auto enc = mnemonic_encoders.at(mnemonic);
 
@@ -91,7 +94,7 @@ namespace ccomp
 
 	}
 
-	arch::imm generator::operand2imm(const token& token, arch::imm_format imm_max) const
+	arch::imm generator::operand2imm(const token& token, arch::imm_format imm_width) const
 	{
 		arch::imm imm;
 
@@ -100,8 +103,8 @@ namespace ccomp
 		else
 		 	imm = constants.at(token.to_string());
 
-		if (imm > imm_max)
-			throw generator_exception::invalid_immediate_format();
+		if (!arch::imm_matches_format(imm, imm_width))
+			throw generator_exception::invalid_immediate_format(imm, imm_width);
 
 		return imm;
 	}

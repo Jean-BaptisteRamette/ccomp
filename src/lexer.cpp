@@ -1,6 +1,5 @@
 #include <unordered_set>
 #include <unordered_map>
-#include <filesystem>
 #include <fstream>
 
 #include <ccomp/lexer.hpp>
@@ -124,7 +123,7 @@ namespace ccomp
 		return { .type = type, .source_location = source_loc, .data = std::move(lexeme) };
 	}
 
-	token lexer::make_numerical_token(uint16_t numerical_value) const
+	token lexer::make_numerical_token(arch::size_type numerical_value) const
 	{
 		return { .type = token_type::numerical, .source_location = cursor, .data = numerical_value };
 	}
@@ -210,7 +209,7 @@ namespace ccomp
             next_chr();
     }
 
-    uint16_t lexer::read_numeric_lexeme()
+    arch::size_type lexer::read_numeric_lexeme()
     {
         const auto base = [this]() -> int
         {
@@ -266,7 +265,7 @@ namespace ccomp
            	}
         }
 
-		uint16_t constant_value {};
+		arch::size_type constant_value {};
 		const auto [_, ec] = std::from_chars(
 									numeric_lexeme.data(),
 									numeric_lexeme.data() + numeric_lexeme.size(),

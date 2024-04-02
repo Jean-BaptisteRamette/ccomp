@@ -8,15 +8,16 @@
 
 namespace ccomp::arch
 {
-	using opcode = uint16_t;
+	using size_type = uint16_t;
+	using opcode = size_type;
 	using reg    = uint8_t;
-	using imm    = uint16_t;
+	using imm    = size_type;
 
 	enum imm_format
 	{
-		imm4  = 0x000F,
-		imm8  = 0x00FF,
-		imm12 = 0x0FFF
+		imm4  =  4,
+		imm8  =  8,
+		imm12 = 12
 	};
 
 	enum class operand_type
@@ -44,7 +45,12 @@ namespace ccomp::arch
 		imm8_indirect
 	};
 
-	constexpr uint16_t make_operands_mask(std::initializer_list<operand_type> operand_types)
+	[[nodiscard]] constexpr bool imm_matches_format(imm v, imm_format width)
+	{
+		return v < (1 << width);
+	}
+
+	[[nodiscard]] constexpr uint16_t make_operands_mask(std::initializer_list<operand_type> operand_types)
 	{
 		uint16_t mask = 0;
 		uint16_t shift = 0;
@@ -57,6 +63,8 @@ namespace ccomp::arch
 
 		return mask;
 	}
+
+	constexpr auto MAX_OPERANDS = 3;
 
 	constexpr auto MASK_ADD_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_ADD_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });

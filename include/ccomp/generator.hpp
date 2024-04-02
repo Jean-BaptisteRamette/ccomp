@@ -60,7 +60,7 @@ namespace ccomp
 		void post_visit();
 
 		[[nodiscard]] arch::imm operand2imm(const token& token,
-											arch::imm_format imm_max = arch::imm_format::imm8) const;
+											arch::imm_format imm_width = arch::imm_format::imm8) const;
 
 		[[nodiscard]] arch::imm operand2imm(const ast::instruction_operand& operand,
 											arch::imm_format type = arch::imm_format::imm8) const;
@@ -105,14 +105,27 @@ namespace ccomp
 		struct invalid_operand_type : assembler_error
 		{
 			invalid_operand_type()
-				: assembler_error("Invalid operands types for instruction")
+				: assembler_error("Invalid operands types for instruction.")
+			{}
+		};
+
+		struct too_many_operands : assembler_error
+		{
+			explicit too_many_operands(const ast::instruction_statement& statement)
+				: assembler_error("CHIP-8 instructions can have a maximum of {} operands per instruction.\n"
+								  "Constraint violated for instruction \"{}\" at {}.",
+								  arch::MAX_OPERANDS,
+								  statement.mnemonic.to_string(),
+								  to_string(statement.mnemonic.source_location))
 			{}
 		};
 
 		struct invalid_immediate_format : assembler_error
 		{
-			invalid_immediate_format()
-				: assembler_error("Immediate is too big for expected operand format")
+			invalid_immediate_format(arch::imm imm, arch::imm_format bit_format)
+				: assembler_error("Immediate value {} is too big for expected operand format of {} bits.",
+								  imm,
+								  bit_format)
 			{}
 		};
 	}

@@ -12,6 +12,7 @@
 #include <ccomp/assembler_error.hpp>
 #include <ccomp/source_location.hpp>
 #include <ccomp/stream.hpp>
+#include <ccomp/arch.hpp>
 
 
 namespace ccomp
@@ -86,10 +87,10 @@ namespace ccomp
         void skip_wspaces();
 
 		[[nodiscard]] token make_token(token_type type, std::string lexeme = {}) const;
-		[[nodiscard]] token make_numerical_token(uint16_t numerical_value) const;
+		[[nodiscard]] token make_numerical_token(arch::size_type numerical_value) const;
 
-		[[nodiscard]] uint16_t    read_numeric_lexeme();
-        [[nodiscard]] std::string read_alpha_lexeme();
+		[[nodiscard]] arch::size_type read_numeric_lexeme();
+        [[nodiscard]] std::string     read_alpha_lexeme();
 
     private:
         ccomp::stream istream;
