@@ -125,7 +125,7 @@ namespace ccomp
 			invalid_immediate_format(arch::imm imm, arch::imm_format bit_format)
 				: assembler_error("Immediate value {} is too big for expected operand format of {} bits.",
 								  imm,
-								  bit_format)
+								  static_cast<int>(bit_format))
 			{}
 		};
 	}
