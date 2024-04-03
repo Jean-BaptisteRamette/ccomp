@@ -8,6 +8,12 @@
 
 namespace ccomp::ast
 {
+	enum class statement_priority
+	{
+		procedure = 0,
+		first
+	};
+
     struct base_statement
     {
 		base_statement() = default;
@@ -16,12 +22,16 @@ namespace ccomp::ast
 		base_statement& operator=(const base_statement&) = delete;
 		base_statement& operator=(base_statement&&) = delete;
 
+		virtual ~base_statement() = default;
+
+		[[nodiscard]] virtual statement_priority priority() const { return statement_priority::first; }
+
 		virtual void accept(base_visitor&) const = 0;
 
 		[[nodiscard]] virtual size_t source_line_beg() const = 0;
 		[[nodiscard]] virtual size_t source_line_end() const = 0;
 
-        virtual ~base_statement() = default;
+
 	};
 
 	using statement = std::unique_ptr<base_statement>;
@@ -34,6 +44,8 @@ namespace ccomp::ast
 			  name_end(std::move(name_end_)),
               inner_statements(std::move(inner_statements_))
         {}
+
+		[[nodiscard]] statement_priority priority() const override { return statement_priority::procedure; }
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
@@ -49,22 +61,30 @@ namespace ccomp::ast
 
     struct instruction_operand
     {
-		explicit instruction_operand(token operand_, bool indirection_ = false)
+		explicit instruction_operand(token operand_, bool indirection_ = false, bool is_label_ = false)
 			: operand(std::move(operand_)),
-			  indirection(indirection_)
+			  indirection(indirection_),
+			  label(is_label_)
 		{}
 
 		instruction_operand(instruction_operand&& other) noexcept
-			: indirection(other.indirection),
-			  operand(std::move(other.operand))
+			: operand(std::move(other.operand)),
+			  indirection(other.indirection),
+			  label(other.label)
 		{}
 
 		instruction_operand& operator=(instruction_operand&& other) noexcept
 		{
-			indirection = other.indirection;
 			operand = std::move(other.operand);
+			indirection = other.indirection;
+			label = other.label;
 
 			return *this;
+		}
+
+		[[nodiscard]] bool is_label() const
+		{
+			return label;
 		}
 
 		[[nodiscard]] bool is_reg() const
@@ -84,6 +104,7 @@ namespace ccomp::ast
 
 		token operand;
         bool indirection;
+		bool label;
     };
 
     struct instruction_statement : base_statement

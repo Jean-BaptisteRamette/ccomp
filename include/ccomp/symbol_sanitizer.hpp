@@ -55,6 +55,7 @@ namespace ccomp
 		std::array<symbol_set, SCOPES_LEVEL> scopes;
 		scope_id curr_scope_level = 0;
 		symbol_set undefined_labels;
+		symbol_set undefined_procs;
 	};
 
 

@@ -49,10 +49,10 @@ namespace ccomp::arch
 	opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
 	opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }
 
-	opcode _1NNN(arch::imm imm12) { return 0; }
-	opcode _2NNN(arch::imm imm12) { return 0; }
-	opcode _BNNN(arch::imm imm12) { return 0; }
-	opcode _ANNN(arch::imm imm12) { return 0; }
+	opcode _1NNN(arch::imm imm12) { return ENCODE(0x1, imm12); }
+	opcode _2NNN(arch::imm imm12) { return ENCODE(0x2, imm12); }
+	opcode _BNNN(arch::imm imm12) { return ENCODE(0xB, imm12); }
+	opcode _ANNN(arch::imm imm12) { return ENCODE(0xA, imm12); }
 
 	opcode _DXYN(reg rx, reg ry, imm imm4) { return ENCODE(0xD, rx, ry, imm4); }
 }

@@ -21,7 +21,7 @@ namespace ccomp
 				{ "endp",   token_type::keyword_proc_end   }
 		};
 
-        const lexeme_set general_regs_name = {
+        const lexeme_set general_regs_names = {
 				"ar",
 				"dt",
 				"st",
@@ -84,7 +84,7 @@ namespace ccomp
 
         token_type map_token_type(std::string_view lexeme)
         {
-            if (general_regs_name.contains(lexeme))
+            if (general_regs_names.contains(lexeme))
                 return token_type::register_name;
 
             if (instructions.contains(lexeme))

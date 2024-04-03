@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 
 		ast::abstract_tree tree = parser.make_tree();
 
-		BOOST_CHECK_EQUAL(tree.branches.size(), 6);
+		BOOST_CHECK_EQUAL(tree.branches().size(), 6);
 	}
 
 BOOST_AUTO_TEST_SUITE_END()

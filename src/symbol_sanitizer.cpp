@@ -7,7 +7,7 @@ namespace ccomp
 {
 	void symbol_sanitizer::traverse(const ast::abstract_tree& ast)
 	{
-		for (const auto& branch : ast.branches)
+		for (const auto& branch : ast.branches())
 			branch->accept(*this);
 
 		post_visit();
@@ -26,8 +26,13 @@ namespace ccomp
 
 	void symbol_sanitizer::visit(const ast::procedure_statement& statement)
 	{
+		auto sym = statement.name_beg.to_string();
+
+		if (undefined_procs.contains(sym))
+			undefined_procs.erase(sym);
+
 		register_symbol(
-				statement.name_beg.to_string(),
+				std::move(sym),
 				statement.name_beg.source_location
 			);
 
@@ -44,12 +49,21 @@ namespace ccomp
 
 	void symbol_sanitizer::visit(const ast::instruction_statement& statement)
 	{
-		for (const auto& [op, _] : statement.operands)
+		for (const auto& operand : statement.operands)
 		{
-			auto sym = op.to_string();
+			const auto& operand_token = operand.operand;
 
-			if (op.type == token_type::identifier && !symbol_defined(sym))
-				undefined_labels.insert(std::make_pair(std::move(sym), op.source_location));
+			auto sym = operand_token.to_string();
+
+			if (operand_token.type == token_type::identifier && !symbol_defined(sym))
+			{
+				if (operand.is_label())
+					undefined_labels.insert(std::make_pair(std::move(sym), operand_token.source_location));
+				else if (statement.mnemonic.to_string() == "call")
+					undefined_procs.insert(std::make_pair(std::move(sym), operand_token.source_location));
+				else
+					throw sanitize_exception::undefined_symbols(sym, operand_token.source_location);
+			}
 		}
 	}
 
@@ -137,6 +151,9 @@ namespace ccomp
 	{
 		if (!undefined_labels.empty())
 			throw sanitize_exception::undefined_symbols(undefined_labels);
+
+		if (!undefined_procs.empty())
+			throw sanitize_exception::undefined_symbols(undefined_procs);
 
 		if (!scope_has_symbol(0, "main"))
 			throw assembler_error("Entry-point label \".main\" was not defined.");

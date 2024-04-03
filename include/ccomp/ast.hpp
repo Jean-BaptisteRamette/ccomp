@@ -2,9 +2,6 @@
 #define CCOMP_AST_HPP
 
 
-#include <string_view>
-#include <concepts>
-#include <memory>
 #include <vector>
 
 #include <ccomp/ast_visitor.hpp>
@@ -16,15 +13,16 @@ namespace ccomp::ast
     class abstract_tree
     {
 	public:
-        explicit abstract_tree(std::vector<ast::statement>&& statements_list);
+        explicit abstract_tree(std::vector<ast::statement>&& branches);
 
 		[[nodiscard]] std::vector<uint16_t> generate() const;
-
-	public:
-		const std::vector<ast::statement> branches {};
+		[[nodiscard]] const std::vector<ast::statement>& branches() const;
 
 	private:
 		void sanitize() const;
+
+	private:
+		std::vector<ast::statement> statements {};
     };
 }
 

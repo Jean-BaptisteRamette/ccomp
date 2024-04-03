@@ -41,7 +41,7 @@ namespace ccomp
 
 	std::vector<arch::opcode> generator::generate(const ast::abstract_tree& ast)
 	{
-		for (const auto& branch : ast.branches)
+		for (const auto& branch : ast.branches())
 			branch->accept(*this);
 
 		post_visit();
@@ -54,9 +54,9 @@ namespace ccomp
 		// TODO: Apply call/jmp patches
 	}
 
-	void generator::visit(const ast::procedure_statement&)
+	void generator::visit(const ast::procedure_statement& )
 	{
-		// visit inner
+
 	}
 
 	void generator::visit(const ast::instruction_statement& instruction)
@@ -65,10 +65,9 @@ namespace ccomp
 			throw generator_exception::too_many_operands(instruction);
 
 		const auto mnemonic = instruction.mnemonic.to_string();
-		auto enc = mnemonic_encoders.at(mnemonic);
+		auto encoder = mnemonic_encoders.at(mnemonic);
 
-		// We don't want to push back directly for procedures
-		// binary.push_back(encoder(instruction));
+		binary.push_back((this->*encoder)(instruction.operands));
 	}
 
 	void generator::visit(const ast::define_statement& statement)

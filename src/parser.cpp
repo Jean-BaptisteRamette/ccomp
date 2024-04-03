@@ -29,12 +29,12 @@ namespace ccomp
 
     ast::abstract_tree parser::make_tree()
     {
-		std::vector<ast::statement> statements;
+		std::vector<ast::statement> branches;
 
-		while (auto block = parse_primary_statement())
-			statements.push_back(std::move(block));
+		while (auto branch = parse_primary_statement())
+			branches.push_back(std::move(branch));
 
-        return ast::abstract_tree(std::move(statements));
+        return ast::abstract_tree(std::move(branches));
     }
 
 	ast::statement parser::parse_primary_statement()
@@ -108,12 +108,6 @@ namespace ccomp
 	std::vector<ast::instruction_operand> parser::parse_operands()
 	{
 		std::vector<ast::instruction_operand> operands;
-
-		// ret
-		// shr r8
-		// shr r8, r9
-		// jmp @label
-		// call subroutine
 
 		while (next_any_of(token_type::identifier,
 						   token_type::register_name,
@@ -233,7 +227,7 @@ namespace ccomp
 		if (token.type == token_type::at_label)
 		{
 			auto label = expect(token_type::identifier);
-			return ast::instruction_operand(std::move(label));
+			return ast::instruction_operand(std::move(label), false, true);
 		}
 
 		// Is there an indirection ?

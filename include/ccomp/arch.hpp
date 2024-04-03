@@ -10,8 +10,9 @@ namespace ccomp::arch
 {
 	using size_type = uint16_t;
 	using opcode = size_type;
-	using reg    = uint8_t;
 	using imm    = size_type;
+	using addr   = size_type;
+	using reg    = uint8_t;
 
 	enum imm_format
 	{

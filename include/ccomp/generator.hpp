@@ -66,8 +66,17 @@ namespace ccomp
 											arch::imm_format type = arch::imm_format::imm8) const;
 
 	private:
+
+		struct addr_patch
+		{
+			arch::addr at;
+			std::string sym;
+		};
+
 		std::vector<arch::opcode> binary;
 		std::unordered_map<std::string, arch::imm> constants;
+		std::unordered_map<std::string, arch::addr> sym_addresses;
+		std::vector<addr_patch> patches;
 
 		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&) const;
 
