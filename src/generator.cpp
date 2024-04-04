@@ -11,28 +11,12 @@ namespace ccomp
 
 	uint16_t make_operands_mask(const std::vector<ast::instruction_operand>& operands)
 	{
-		auto regname2optype = [](const auto& name) -> arch::operand_type
-		{
-			if (name == "ar") return arch::operand_type::reg_ar;
-			if (name == "st") return arch::operand_type::reg_st;
-			if (name == "dt") return arch::operand_type::reg_dt;
-
-			return arch::operand_type::reg_rx;
-		};
-
 		uint16_t mask = 0;
 		uint16_t shift = 0;
 
 		for (const auto& operand : operands)
 		{
-			arch::operand_type m;
-
-			if (operand.is_reg())
-				m = regname2optype(operand.operand.to_string());
-			else if (operand.is_imm())
-				m = arch::operand_type::imm8;
-
-			mask |= (static_cast<uint8_t>(m) << shift);
+			mask |= (static_cast<uint8_t>(operand.arch_type()) << shift);
 			shift += 3;
 		}
 
@@ -51,12 +35,16 @@ namespace ccomp
 
 	void generator::post_visit()
 	{
-		// TODO: Apply call/jmp patches
+		//
+		// Apply jmp/call that could not be encoded directly
+		//
+		for (const auto& [addr, sym] : patches)
+			binary[addr / sizeof(arch::opcode)] |= sym_addresses[sym];
 	}
 
-	void generator::visit(const ast::procedure_statement& )
+	void generator::visit(const ast::procedure_statement& procedure)
 	{
-
+		register_symbol_addr(procedure.name_beg.to_string());
 	}
 
 	void generator::visit(const ast::instruction_statement& instruction)
@@ -88,9 +76,25 @@ namespace ccomp
 		binary.push_back(operand2imm(statement.opcode));
 	}
 
-	void generator::visit(const ast::label_statement&)
+	void generator::visit(const ast::label_statement& label)
 	{
+		register_symbol_addr(label.identifier.to_string());
+	}
 
+	void generator::register_symbol_addr(std::string&& symbol)
+	{
+		if (sym_addresses.contains(symbol))
+			throw assembler_error("Generator found an already existing symbol {}, this should have been caught by the sanitizer.", symbol);
+
+		sym_addresses[std::move(symbol)] = binary.size();
+	}
+
+	void generator::register_patch_addr(std::string&& symbol)
+	{
+		patches.push_back({
+			.addr = static_cast<arch::addr>(binary.size()),
+			.sym = std::move(symbol)
+		});
 	}
 
 	arch::imm generator::operand2imm(const token& token, arch::imm_format imm_width) const
@@ -113,7 +117,7 @@ namespace ccomp
 		return operand2imm(operand.operand, imm);
 	}
 
-	arch::opcode generator::encode_add(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_add(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -135,7 +139,7 @@ namespace ccomp
 		}
 	}
 
-	arch::opcode generator::encode_sub(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_sub(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_SUB_R8_R8)
 			return arch::_8XY5(
@@ -145,7 +149,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_suba(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_suba(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_SUBA_R8_R8)
 			return arch::_8XY7(
@@ -155,7 +159,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_or(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_or(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_OR_R8_R8)
 			return arch::_8XY1(
@@ -165,7 +169,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_and(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_and(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_AND_R8_R8)
 			return arch::_8XY2(
@@ -175,7 +179,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_xor(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_xor(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_XOR_R8_R8)
 			return arch::_8XY3(
@@ -185,7 +189,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_shr(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_shr(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -202,7 +206,7 @@ namespace ccomp
 		}
 	}
 
-	arch::opcode generator::encode_shl(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_shl(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -219,7 +223,7 @@ namespace ccomp
 		}
 	}
 
-	arch::opcode generator::encode_rdump(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_rdump(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_RDUMP_R8)
 			return arch::_FX55(operand2reg(operands[0]));
@@ -227,7 +231,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_rload(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_rload(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_RLOAD_R8)
 			return arch::_FX65(operand2reg(operands[0]));
@@ -235,7 +239,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_mov(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_mov(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -251,13 +255,13 @@ namespace ccomp
 		}
 	}
 
-	arch::opcode generator::encode_swp(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_swp(const std::vector<ast::instruction_operand>& operands)
 	{
 		// TODO
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_draw(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_draw(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_DRAW_R8_R8_I8)
 			return arch::_DXYN(
@@ -268,7 +272,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_cls(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_cls(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (!operands.empty())
 			throw generator_exception::invalid_operand_type();
@@ -276,7 +280,7 @@ namespace ccomp
 		return arch::_00E0();
 	}
 
-	arch::opcode generator::encode_rand(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_rand(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_RAND_R8_I8)
 			return arch::_CXNN(
@@ -286,7 +290,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_bcd(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_bcd(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_BCD_R8)
 			return arch::_FX33(operand2reg(operands[0]));
@@ -294,7 +298,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_wkey(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_wkey(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_WKEY_R8)
 			return arch::_FX0A(operand2reg(operands[0]));
@@ -302,7 +306,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_ske(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_ske(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_SKE_R8)
 			return arch::_EX9E(operand2reg(operands[0]));
@@ -310,7 +314,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_skne(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_skne(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_SKNE_R8)
 			return arch::_EXA1(operand2reg(operands[0]));
@@ -318,7 +322,7 @@ namespace ccomp
 		throw generator_exception::invalid_operand_type();
 	}
 
-	arch::opcode generator::encode_ret(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_ret(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (!operands.empty())
 			throw generator_exception::invalid_operand_type();
@@ -326,21 +330,57 @@ namespace ccomp
 		return arch::_00EE();
 	}
 
-	arch::opcode generator::encode_jmp(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_jmp(const std::vector<ast::instruction_operand>& operands)
 	{
-		// TODO
+		switch (make_operands_mask(operands))
+		{
+			case arch::MASK_JMP_I12:
+				if (operands[0].is_label())
+				{
+					// jmp @label
+					register_patch_addr(operands[0].operand.to_string());
 
-		throw generator_exception::invalid_operand_type();
+					return arch::_1NNN(0);
+				}
+				else
+					// define where 0xBEEF
+					// jmp where
+					// jmp 0xBEEF
+					return arch::_1NNN(operand2imm(operands[0], arch::imm12));
+
+			// jmp [offset]
+			case arch::MASK_JMP_INDIRECT_I12:
+				return arch::_BNNN(operand2imm(operands[0], arch::imm12));
+
+			default:
+				throw generator_exception::invalid_operand_type();
+		}
 	}
 
-	arch::opcode generator::encode_call(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_call(const std::vector<ast::instruction_operand>& operands)
 	{
-		// TODO
+		switch (make_operands_mask(operands))
+		{
+			case arch::MASK_CALL_I12:
+				if (operands[0].is_procedure())
+				{
+					// call $function
+					register_patch_addr(operands[0].operand.to_string());
 
-		throw generator_exception::invalid_operand_type();
+					return arch::_2NNN(0);
+				}
+				else
+					// define my_addr 0xBEEF
+					// call my_addr
+					// call 0xBEEF
+					return arch::_2NNN(operand2imm(operands[0], arch::imm12));
+
+			default:
+				throw generator_exception::invalid_operand_type();
+		}
 	}
 
-	arch::opcode generator::encode_se(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_se(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -360,7 +400,7 @@ namespace ccomp
 
 	}
 
-	arch::opcode generator::encode_sne(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_sne(const std::vector<ast::instruction_operand>& operands)
 	{
 		switch (make_operands_mask(operands))
 		{
@@ -379,7 +419,7 @@ namespace ccomp
 		}
 	}
 
-	arch::opcode generator::encode_inc(const std::vector<ast::instruction_operand>& operands) const
+	arch::opcode generator::encode_inc(const std::vector<ast::instruction_operand>& operands)
 	{
 		if (make_operands_mask(operands) == arch::MASK_INC_R8)
 			return arch::_7XNN(operand2reg(operands[0]), 1);

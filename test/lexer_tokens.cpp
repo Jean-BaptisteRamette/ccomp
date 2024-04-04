@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 				".main:\n"
 				"    mov r1, M1\n"
 				"    mov r2, M2\n"
-				"    call multiply\n"
+				"    call $multiply\n"
 				""
 		);
 
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_SUITE(lexer_tokens)
 				token_type::dot_label, token_type::identifier, token_type::colon,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::identifier,
 				token_type::instruction, token_type::register_name, token_type::comma, token_type::identifier,
-				token_type::instruction, token_type::identifier,
+				token_type::instruction, token_type::dollar_proc, token_type::identifier,
 		};
 
 		BOOST_CHECK_EQUAL(std::size(tokens), std::size(expected));

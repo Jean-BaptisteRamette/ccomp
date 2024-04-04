@@ -38,6 +38,7 @@ namespace ccomp
 		colon,
 		dot_label,
 		at_label,
+		dollar_proc,
 		comma
     };
 
@@ -169,6 +170,8 @@ namespace ccomp
 				return "dot";
 			case token_type::at_label:
 				return "@";
+			case token_type::dollar_proc:
+				return "$";
 
 			default:
 				return "undefined";

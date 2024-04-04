@@ -31,31 +31,34 @@ namespace ccomp
 		void visit(const ast::label_statement&) override;
 
 	private:
-		[[nodiscard]] arch::opcode encode_add(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_sub(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_suba(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_or(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_and(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_xor(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_shr(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_shl(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_rdump(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_rload(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_mov(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_swp(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_draw(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_cls(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_rand(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_bcd(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_wkey(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_ske(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_skne(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_ret(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_jmp(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_call(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_se(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_sne(const std::vector<ast::instruction_operand>& operands) const;
-		[[nodiscard]] arch::opcode encode_inc(const std::vector<ast::instruction_operand>& operands) const;
+		void register_symbol_addr(std::string&& symbol);
+		void register_patch_addr(std::string&& symbol);
+
+		[[nodiscard]] arch::opcode encode_add(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_sub(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_suba(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_or(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_and(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_xor(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_shr(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_shl(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_rdump(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_rload(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_mov(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_swp(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_draw(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_cls(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_rand(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_bcd(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_wkey(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_ske(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_skne(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_ret(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_jmp(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_call(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_se(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_sne(const std::vector<ast::instruction_operand>& operands);
+		[[nodiscard]] arch::opcode encode_inc(const std::vector<ast::instruction_operand>& operands);
 
 		void post_visit();
 
@@ -69,7 +72,7 @@ namespace ccomp
 
 		struct addr_patch
 		{
-			arch::addr at;
+			arch::addr addr;
 			std::string sym;
 		};
 
@@ -78,7 +81,7 @@ namespace ccomp
 		std::unordered_map<std::string, arch::addr> sym_addresses;
 		std::vector<addr_patch> patches;
 
-		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&) const;
+		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&);
 
 		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {
 				{ "add", &generator::encode_add },

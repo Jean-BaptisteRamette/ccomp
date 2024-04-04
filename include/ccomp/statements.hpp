@@ -59,37 +59,78 @@ namespace ccomp::ast
         const std::vector<statement> inner_statements;
     };
 
-    struct instruction_operand
+    class instruction_operand
     {
-		explicit instruction_operand(token operand_, bool indirection_ = false, bool is_label_ = false)
-			: operand(std::move(operand_)),
-			  indirection(indirection_),
-			  label(is_label_)
+		enum class type
+		{
+			immediate,
+			reg,
+			indirection,
+			label,
+			procedure,
+		};
+
+		explicit instruction_operand(token operand_, type t)
+				: operand(std::move(operand_)),
+				  type_(t)
 		{}
+
+	public:
+		static instruction_operand make_immediate(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::immediate);
+		}
+
+		static instruction_operand make_reg(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::reg);
+		}
+
+		static instruction_operand make_label(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::label);
+		}
+
+		static instruction_operand make_proc(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::procedure);
+		}
+
+		static instruction_operand make_indirect(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::indirection);
+		}
 
 		instruction_operand(instruction_operand&& other) noexcept
 			: operand(std::move(other.operand)),
-			  indirection(other.indirection),
-			  label(other.label)
+			  type_(other.type_)
 		{}
 
 		instruction_operand& operator=(instruction_operand&& other) noexcept
 		{
 			operand = std::move(other.operand);
-			indirection = other.indirection;
-			label = other.label;
+			type_ = other.type_;
 
 			return *this;
 		}
 
-		[[nodiscard]] bool is_label() const
+		[[nodiscard]] arch::operand_type arch_type() const
 		{
-			return label;
-		}
+			auto regname2optype = [](const auto& name) -> arch::operand_type
+			{
+				if (name == "ar") return arch::operand_type::reg_ar;
+				if (name == "st") return arch::operand_type::reg_st;
+				if (name == "dt") return arch::operand_type::reg_dt;
 
-		[[nodiscard]] bool is_reg() const
-		{
-			return operand.type == token_type::register_name;
+				return arch::operand_type::reg_rx;
+			};
+
+			if (is_reg())
+				return regname2optype(operand.to_string());
+			else if (has_indirection())
+				return arch::operand_type::imm_indirect;
+			else
+				return arch::operand_type::imm;
 		}
 
 		[[nodiscard]] std::string reg_name() const
@@ -97,14 +138,35 @@ namespace ccomp::ast
 			return operand.to_string();
 		}
 
-		[[nodiscard]] bool is_imm() const
+		[[nodiscard]] bool is_immediate() const
 		{
-			return operand.type == token_type::numerical || operand.type == token_type::identifier;
+			return type_ == type::immediate;
+		}
+
+		[[nodiscard]] bool is_reg() const
+		{
+			return type_ == type::reg;
+		}
+
+		[[nodiscard]] bool has_indirection() const
+		{
+			return type_ == type::indirection;
+		}
+
+		[[nodiscard]] bool is_label() const
+		{
+			return type_ == type::label;
+		}
+
+		[[nodiscard]] bool is_procedure() const
+		{
+			return type_ == type::procedure;
 		}
 
 		token operand;
-        bool indirection;
-		bool label;
+
+	private:
+		type type_;
     };
 
     struct instruction_statement : base_statement

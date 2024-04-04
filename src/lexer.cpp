@@ -75,11 +75,12 @@ namespace ccomp
 				{ '[', token_type::bracket_open },
 				{ ']', token_type::bracket_close },
 				{ '(', token_type::parenthesis_open },
-				{ ')', token_type::parenthesis_close},
-				{ '.', token_type::dot_label},
-				{ '@', token_type::at_label},
-				{ ':', token_type::colon},
-				{ ',', token_type::comma}
+				{ ')', token_type::parenthesis_close },
+				{ '.', token_type::dot_label },
+				{ '@', token_type::at_label },
+				{ '$', token_type::dollar_proc },
+				{ ':', token_type::colon },
+				{ ',', token_type::comma }
 		};
 
         token_type map_token_type(std::string_view lexeme)

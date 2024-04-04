@@ -57,7 +57,7 @@ namespace ccomp
 
 			if (operand_token.type == token_type::identifier && !symbol_defined(sym))
 			{
-				if (operand.is_label())
+				if (statement.mnemonic.to_string() == "jmp")
 					undefined_labels.insert(std::make_pair(std::move(sym), operand_token.source_location));
 				else if (statement.mnemonic.to_string() == "call")
 					undefined_procs.insert(std::make_pair(std::move(sym), operand_token.source_location));

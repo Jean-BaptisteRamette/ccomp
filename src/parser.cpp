@@ -112,6 +112,7 @@ namespace ccomp
 		while (next_any_of(token_type::identifier,
 						   token_type::register_name,
 						   token_type::at_label,
+						   token_type::dollar_proc,
 						   token_type::numerical,
 						   token_type::bracket_open))
 		{
@@ -221,26 +222,36 @@ namespace ccomp
 							token_type::identifier,
 							token_type::numerical,
 							token_type::at_label,
+							token_type::dollar_proc,
 							token_type::bracket_open);
 
-		// Is the operand a jump label ?
-		if (token.type == token_type::at_label)
+		switch (token.type)
 		{
-			auto label = expect(token_type::identifier);
-			return ast::instruction_operand(std::move(label), false, true);
+			case token_type::register_name:
+				return ast::instruction_operand::make_reg(std::move(token));
+
+			case token_type::at_label:
+			{
+				auto label = expect(token_type::identifier);
+				return ast::instruction_operand::make_label(std::move(label));
+			}
+
+			case token_type::dollar_proc:
+			{
+				auto proc = expect(token_type::identifier);
+				return ast::instruction_operand::make_proc(std::move(proc));
+			}
+
+			case token_type::bracket_open:
+			{
+				auto inner_token = expect(token_type::identifier,
+										  token_type::numerical);
+				expect(token_type::bracket_close);
+				return ast::instruction_operand::make_indirect(std::move(inner_token));
+			}
+
+			default:
+				return ast::instruction_operand::make_immediate(std::move(token));
 		}
-
-		// Is there an indirection ?
-		if (token.type == token_type::bracket_open)
-		{
-			auto inner_token = expect(token_type::identifier,
-									  token_type::numerical);
-
-			expect(token_type::bracket_close);
-
-			return ast::instruction_operand(std::move(inner_token), true);
-		}
-
-		return ast::instruction_operand(std::move(token));
 	}
 }

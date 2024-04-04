@@ -31,19 +31,19 @@ namespace ccomp::arch
 		reg_dt,
 
 		//
-		// general 8-bit registers
+		// general 8-bit register
 		//
 		reg_rx,
 
 		//
 		// immediate 8-bit value
 		//
-		imm8,
+		imm,
 
 		//
 		// indirect value (has to be immediate)
 		//
-		imm8_indirect
+		imm_indirect
 	};
 
 	[[nodiscard]] constexpr bool imm_matches_format(imm v, imm_format width)
@@ -68,7 +68,7 @@ namespace ccomp::arch
 	constexpr auto MAX_OPERANDS = 3;
 
 	constexpr auto MASK_ADD_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
-	constexpr auto MASK_ADD_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_ADD_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
 	constexpr auto MASK_SUB_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_SUBA_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_OR_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
@@ -80,24 +80,27 @@ namespace ccomp::arch
 	constexpr auto MASK_SHL_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_RDUMP_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_RLOAD_R8 = make_operands_mask({ operand_type::reg_rx });
-	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
 	constexpr auto MASK_MOV_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_MOV_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
 	constexpr auto MASK_ADD_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
 	constexpr auto MASK_MOV_DT_R8 = make_operands_mask({ operand_type::reg_dt, operand_type::reg_rx });
 	constexpr auto MASK_MOV_ST_R8 = make_operands_mask({ operand_type::reg_st, operand_type::reg_rx });
 	constexpr auto MASK_MOV_R8_DT = make_operands_mask({ operand_type::reg_rx, operand_type::reg_dt });
-	constexpr auto MASK_DRAW_R8_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::imm8 });
-	constexpr auto MASK_RAND_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_DRAW_R8_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_RAND_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
 	constexpr auto MASK_BCD_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_WKEY_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_SKE_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_SKNE_R8 = make_operands_mask({ operand_type::reg_rx });
-	constexpr auto MASK_SE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
-	constexpr auto MASK_SNE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_SE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_SNE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
 	constexpr auto MASK_SE_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_SNE_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_INC_R8 = make_operands_mask({ operand_type::reg_rx });
+	constexpr auto MASK_JMP_I12 = make_operands_mask({ operand_type::imm });
+	constexpr auto MASK_JMP_INDIRECT_I12 = make_operands_mask({ operand_type::imm_indirect });
+	constexpr auto MASK_CALL_I12 = make_operands_mask({ operand_type::imm });
 
 
 	opcode _00E0();
@@ -137,10 +140,10 @@ namespace ccomp::arch
 	opcode _FX55(reg rx);
 	opcode _FX65(reg rx);
 
-	opcode _1NNN(/* TODO */);
-	opcode _2NNN(/* TODO */);
-	opcode _BNNN(/* TODO */);
-	opcode _ANNN(/* TODO */);
+	opcode _1NNN(imm imm12);
+	opcode _2NNN(imm imm12);
+	opcode _BNNN(imm imm12);
+	opcode _ANNN(imm imm12);
 
 	opcode _DXYN(reg rx, reg ry, imm imm4);
 

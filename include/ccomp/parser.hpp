@@ -33,7 +33,7 @@ namespace ccomp
 		{
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
 				: assembler_error(
-					"Parser got token \"{}\" but expected a token of type {} while parsing at {}.",
+					"Parser got token \"{}\" but expected a token of arch_type {} while parsing at {}.",
 					unexpected_.to_string(),
 					ccomp::to_string(expected_types_),
 					ccomp::to_string(unexpected_.source_location))

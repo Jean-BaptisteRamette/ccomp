@@ -15,17 +15,17 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "    jmp @exit");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::undefined_symbols);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_undefined_procedure_call_throws)
 	{
 		auto lex = lexer(".main:                \n"
-						 "		call undefined  \n");
+						 "		call $undefined  \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::undefined_symbols);
 	}
 
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "    raw(val)      \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::undefined_symbols);
 	}
 
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".exit:         \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
 
@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "    ret          \n"
 						 "endp tmp         \n"
 						 ".main:           \n"
-						 "    call tmp     \n");
+						 "    call $tmp     \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
 
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".main:          \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::already_defined_symbol);
 	}
 
@@ -87,10 +87,10 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "    ret          \n"
 						 "endp tmp         \n"
 						 ".main:           \n"
-						 "    call tmp     \n");
+						 "    call $tmp     \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::already_defined_symbol);
 	}
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".main:     \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::already_defined_symbol);
 	}
 
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".done:         \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
 
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".main:     \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	{
 		auto lex = lexer(".not_main:");
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), assembler_error);
 	}
 
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "                   \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
 
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "                   \n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::undefined_symbols);
 	}
 
@@ -209,14 +209,14 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 "endp fb\n"
 						 "\n"
 						 "proc fa\n"
-						 "    call fb\n"
+						 "    call $fb\n"
 						 "    ret\n"
 						 "endp fa\n"
 						 "\n"
 						 ".main:\n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	BOOST_AUTO_TEST_CASE(inter_procedure_call_to_yet_undefined)
 	{
 		auto lex = lexer("proc fa\n"
-						 "    call fb\n"
+						 "    call $fb\n"
 						 "    ret\n"
 						 "endp fa\n"
 						 "\n"
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".main:\n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 
 		BOOST_CHECK_NO_THROW(ast.generate());
 	}
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	BOOST_AUTO_TEST_CASE(inter_procedure_call_to_never_defined)
 	{
 		auto lex = lexer("proc fa\n"
-						 "    call fb\n"
+						 "    call $fb\n"
 						 "    ret\n"
 						 "endp fa\n"
 						 "\n"
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 						 ".main:\n");
 
 		auto p = parser(lex.enumerate_tokens());
-		const auto ast = p.make_tree();
+		auto ast = p.make_tree();
 
 		BOOST_CHECK_THROW(ast.generate(), sanitize_exception::undefined_symbols);
 	}
