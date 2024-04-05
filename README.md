@@ -82,7 +82,9 @@ or r1, r2   ;; sets r1 to r1 OR r2
 and r1, r2  ;; sets r1 to r1 AND r2
 xor r1, r2  ;; sets r1 to r1 xor r2
 shr r1      ;; stores MSB of r1 to rf then shifts r1 to the right by 1
+shr r1, r2  ;; same as above but r2 is moved into r1 first
 shl r1      ;; stores LSB of r1 to rf then shifts r1 to the left by 1
+shl r1, r2  ;; same as above but r2 is moved into r1 first
 ```
 > Note: registers in this example can be changed to any other general purpose register
 
@@ -92,7 +94,7 @@ You are quite probably going to need to jump or conditionally execute different 
 ```asm
 jmp [0x32]      ;; jumps to the address (r0 + 0x32)
 jmp 0x32        ;; jumps to the address 0x32
-jmp .my_label   ;; jumps to label
+jmp @my_label   ;; jumps to label
 ```
 
 #### Conditional jumps
@@ -106,8 +108,8 @@ sne r0, 35     ;; skips next instruction if r0 != 35
 This means you can write conditional jumps this way
 ```asm
 se r2, 0xCC
-jmp .case_not_equal
-jmp .case_equal
+jmp @case_not_equal
+jmp @case_equal
 ```
 However, this happens to be trickier with `>` and `<` comparisons, as there is only one existing jump instruction. For example, in x86, you would do something like this...
 ```asm
@@ -120,7 +122,7 @@ ja case_above    ;; jump to label if cx > 0xCC
 mov r0, 0xCC         ;; move immediate in temporary register (now cloberred)
 suba r0, r2          ;; compare r0 to r2 by subtracting (r0 = r2 - r0), (vf = r2 > r0)
 se rf, 0             ;; if rf == 1 then r2 > r0
-jmp .case_above      ;; jump to label if rf == 1
+jmp @case_above      ;; jump to label if rf == 1
 ...
 ```
 #### Labels
@@ -145,7 +147,7 @@ proc my_proc
 endp my_proc
 
 .main:
-	call my_proc
+	call $my_proc
 	sne r0, 0
 ```
 
@@ -246,44 +248,46 @@ bcd re  ;; stores BCD representation of re register with the MSB at address I
 
 Reference for the instructions mnemonics and what machine code they produce once assembled
 
-|    mnemonics    |  opcodes   |
-|:---------------:|:----------:|
-|   add rX, rY    |    8XY4    |
-|   add rX, NN    |    7XNN    |
-|   sub rX, rY    |    8XY5    |
-|   suba rX, rY   |    8XY7    |
-|    or rX, rY    |    8XY1    |
-|   and rX, rY    |    8XY2    |
-|   xor rX, rY    |    8XY3    |
-|     shr rX      |    8XYE    |
-|     shl rX      |    8XY6    |
-|    rdump rX     |    FX55    |
-|    rload rX     |    FX65    |
-|   mov rX, NN    |    6XNN    |
-|   mov rX, rY    |    8XY0    |
-|   swp rX, rD    | micro-code |
-|   mov ar, NNN   |    ANNN    |
-|   mov ar, rX    |    FX29    |
-|   add ar, rX    |    FX1E    |
-|   mov dt, rX    |    FX15    |
-|   mov st, rX    |    FX18    |
-| draw rX, rY, N  |    DXYN    |
-|       cls       |    00E0    |
-|   rand rX, NN   |    CXNN    |
-|     bcd rX      |    FX33    |
-|     wkey rX     |    FX0A    |
-|     ske rX      |    EX9E    |
-|     skne rX     |    EXA1    |
-|       ret       |    00EE    |
-|     jmp NNN     |    1NNN    |
-|   jmp .label    |    1NNN    |
-| call subroutine |    2NNN    |
-|    jmp [NNN]    |    BNNN    |
-|    se rX, NN    |    3XNN    |
-|   sne rX, NN    |    4XNN    |
-|    se rX, rY    |    5XY0    |
-|   sne rX, rY    |    9XY0    |
-|   mov rX, dt    |    FX07    |
+|    mnemonics     |  opcodes   |
+|:----------------:|:----------:|
+|    mov rX, NN    |    6XNN    |
+|    mov rX, rY    |    8XY0    |
+|   mov ar, NNN    |    ANNN    |
+|    mov ar, rX    |    FX29    |
+|    mov dt, rX    |    FX15    |
+|    mov st, rX    |    FX18    |
+|    mov rX, dt    |    FX07    |
+|    swp rX, rD    | micro-code |
+|     jmp NNN      |    1NNN    |
+|    jmp @label    |    1NNN    |
+|    jmp [NNN]     |    BNNN    |
+| call $subroutine |    2NNN    |
+|       ret        |    00EE    |
+|    se rX, NN     |    3XNN    |
+|    sne rX, NN    |    4XNN    |
+|    se rX, rY     |    5XY0    |
+|    sne rX, rY    |    9XY0    |
+|    add rX, rY    |    8XY4    |
+|    add rX, NN    |    7XNN    |
+|    add ar, rX    |    FX1E    |
+|    sub rX, rY    |    8XY5    |
+|   suba rX, rY    |    8XY7    |
+|    or rX, rY     |    8XY1    |
+|    and rX, rY    |    8XY2    |
+|    xor rX, rY    |    8XY3    |
+|      shr rX      |    8XYE    |
+|      shl rX      |    8XY6    |
+|    shr rX, rY    |    8XYE    |
+|    shl rX, rY    |    8XY6    |
+|     rdump rX     |    FX55    |
+|     rload rX     |    FX65    |
+|   rand rX, NN    |    CXNN    |
+|      bcd rX      |    FX33    |
+|     wkey rX      |    FX0A    |
+|      ske rX      |    EX9E    |
+|     skne rX      |    EXA1    |
+|  draw rX, rY, N  |    DXYN    |
+|       cls        |    00E0    |
 
 > Note: `swp rX, rD` is a chip8-asm extension generating the appropriate code needed to swap 2 registers.
 
