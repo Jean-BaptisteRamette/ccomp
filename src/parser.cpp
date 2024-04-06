@@ -88,12 +88,25 @@ namespace ccomp
 		auto identifier = expect(token_type::identifier);
 		expect(token_type::bracket_open);
 
-		std::vector<uint8_t> digits;
+		arch::sprite sprite {};
 
 		do
 		{
-			auto token = expect(token_type::numerical);
-			digits.push_back(token.to_integer());
+			const auto token = expect(token_type::numerical);
+			const auto value = token.to_integer();
+
+			if (sprite.row_count >= arch::MAX_SPRITE_ROWS)
+				throw assembler_error("Sprite \"{}\" has too much pixels ({} > {})",
+									  identifier.to_string(),
+									  sprite.row_count,
+									  arch::MAX_SPRITE_ROWS);
+
+
+			if (!arch::imm_matches_format(value, arch::imm8))
+				throw assembler_error("Sprite digits must be less than 255");
+
+			sprite.data[sprite.row_count] = value;
+			++sprite.row_count;
 		}
 		while (advance_if(token_type::comma));
 
@@ -101,7 +114,7 @@ namespace ccomp
 
 		return std::make_unique<ast::sprite_statement>(
 						std::move(identifier),
-						std::move(digits)
+						sprite
 					);
 	}
 
@@ -140,7 +153,7 @@ namespace ccomp
 		auto parse_inner_statement = [&]() -> ast::statement
 		{
 			if (no_more_tokens())
-				throw assembler_error("Found unexpected EOF before function end.");
+				throw assembler_error("Found unexpected EOF before function end while parsing procedure.");
 
 			switch (token_it->type)
 			{
@@ -223,6 +236,7 @@ namespace ccomp
 							token_type::numerical,
 							token_type::at_label,
 							token_type::dollar_proc,
+							token_type::hash_sprite,
 							token_type::bracket_open);
 
 		switch (token.type)
@@ -240,6 +254,12 @@ namespace ccomp
 			{
 				auto proc = expect(token_type::identifier);
 				return ast::instruction_operand::make_proc(std::move(proc));
+			}
+
+			case token_type::hash_sprite:
+			{
+				auto sprite = expect(token_type::identifier);
+				return ast::instruction_operand::make_sprite(std::move(sprite));
 			}
 
 			case token_type::bracket_open:

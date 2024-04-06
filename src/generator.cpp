@@ -1,3 +1,4 @@
+#include <span>
 #include <ccomp/generator.hpp>
 #include <ccomp/arch.hpp>
 
@@ -36,7 +37,16 @@ namespace ccomp
 	void generator::post_visit()
 	{
 		//
-		// Apply jmp/call that could not be encoded directly
+		// Add sprites to the end of the code
+		//
+		for (auto& [name, sprite] : sprites)
+		{
+			register_symbol_addr(name);
+			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
+		}
+
+		//
+		// Apply jmp/call patches that could not be encoded directly
 		//
 		for (const auto& [addr, sym] : patches)
 			binary[addr / sizeof(arch::opcode)] |= sym_addresses[sym];
@@ -58,22 +68,14 @@ namespace ccomp
 		binary.push_back((this->*encoder)(instruction.operands));
 	}
 
-	void generator::visit(const ast::define_statement& statement)
+	void generator::visit(const ast::define_statement& define)
 	{
-		const auto sym = statement.identifier.to_string();
-		const auto val = statement.value.to_integer();
-
-		constants[sym] = val;
+		register_constant(define.identifier.to_string(), define.value.to_integer());
 	}
 
-	void generator::visit(const ast::sprite_statement&)
+	void generator::visit(const ast::sprite_statement& sprite_statement)
 	{
-
-	}
-
-	void generator::visit(const ast::raw_statement& statement)
-	{
-		binary.push_back(operand2imm(statement.opcode));
+		register_sprite(sprite_statement.identifier.to_string(), sprite_statement.sprite);
 	}
 
 	void generator::visit(const ast::label_statement& label)
@@ -81,10 +83,31 @@ namespace ccomp
 		register_symbol_addr(label.identifier.to_string());
 	}
 
-	void generator::register_symbol_addr(std::string&& symbol)
+	void generator::visit(const ast::raw_statement& statement)
+	{
+		binary.push_back(operand2imm(statement.opcode));
+	}
+
+	void generator::register_constant(std::string &&symbol, arch::imm value)
+	{
+		if (constants.contains(symbol))
+			throw assembler_error("Generator found an already defined constant \"{}\", this should have been caught by the sanitizer.", symbol);
+
+		constants[std::move(symbol)] = value;
+	}
+
+	void generator::register_sprite(std::string&& symbol, const arch::sprite& sprite)
+	{
+		if (sprites.contains(symbol))
+			throw assembler_error("Generator found an already defined sprite \"{}\", this should have been caught by the sanitizer.", symbol);
+
+		sprites[std::move(symbol)] = sprite;
+	}
+
+	void generator::register_symbol_addr(std::string symbol)
 	{
 		if (sym_addresses.contains(symbol))
-			throw assembler_error("Generator found an already existing symbol {}, this should have been caught by the sanitizer.", symbol);
+			throw assembler_error("Generator found an already existing symbol \"{}\", this should have been caught by the sanitizer.", symbol);
 
 		sym_addresses[std::move(symbol)] = binary.size();
 	}
@@ -99,12 +122,19 @@ namespace ccomp
 
 	arch::imm generator::operand2imm(const token& token, arch::imm_format imm_width) const
 	{
-		arch::imm imm;
+		arch::imm imm = 0;
 
 		if (token.type == token_type::numerical)
 			imm = token.to_integer();
 		else
-		 	imm = constants.at(token.to_string());
+		{
+			const auto identifier = token.to_string();
+
+			if (constants.contains(identifier))
+				imm = constants.at(identifier);
+			else if (sprites.contains(identifier))
+				imm = sprites.at(identifier).row_count;
+		}
 
 		if (!arch::imm_matches_format(imm, imm_width))
 			throw generator_exception::invalid_immediate_format(imm, imm_width);
@@ -246,9 +276,20 @@ namespace ccomp
 			case arch::MASK_MOV_R8_R8: return arch::_8XY0(operand2reg(operands[0]), operand2reg(operands[1]));
 			case arch::MASK_MOV_R8_I8: return arch::_6XNN(operand2reg(operands[0]), operand2imm(operands[1]));
 			case arch::MASK_MOV_R8_DT: return arch::_FX07(operand2reg(operands[0]));
-			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(operands[0]));
 			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(operands[0]));
 			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(operands[0]));
+			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(operands[0]));
+
+			case arch::MASK_MOV_AR_I12:
+			{
+				if (operands[1].is_sprite())
+				{
+					register_patch_addr(operands[1].operand.to_string());
+					return arch::_ANNN(0);
+				}
+				else
+					return arch::_ANNN(operand2imm(operands[1], arch::imm12));
+			}
 
 			default:
 				throw generator_exception::invalid_operand_type();

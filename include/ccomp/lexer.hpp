@@ -39,6 +39,7 @@ namespace ccomp
 		dot_label,
 		at_label,
 		dollar_proc,
+		hash_sprite,
 		comma
     };
 

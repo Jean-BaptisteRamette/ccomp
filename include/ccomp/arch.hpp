@@ -2,8 +2,7 @@
 #define CCOMP_ARCH_HPP
 
 
-#include <unordered_map>
-#include <string_view>
+#include <array>
 
 
 namespace ccomp::arch
@@ -46,6 +45,14 @@ namespace ccomp::arch
 		imm_indirect
 	};
 
+	constexpr auto MAX_SPRITE_ROWS = 15;
+
+	struct sprite
+	{
+		std::array<uint8_t, MAX_SPRITE_ROWS> data;
+		uint8_t row_count;
+	};
+
 	[[nodiscard]] constexpr bool imm_matches_format(imm v, imm_format width)
 	{
 		return v < (1 << width);
@@ -83,6 +90,7 @@ namespace ccomp::arch
 	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
 	constexpr auto MASK_MOV_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_MOV_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
+	constexpr auto MASK_MOV_AR_I12 = make_operands_mask({ operand_type::reg_ar, operand_type::imm });
 	constexpr auto MASK_ADD_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
 	constexpr auto MASK_MOV_DT_R8 = make_operands_mask({ operand_type::reg_dt, operand_type::reg_rx });
 	constexpr auto MASK_MOV_ST_R8 = make_operands_mask({ operand_type::reg_st, operand_type::reg_rx });

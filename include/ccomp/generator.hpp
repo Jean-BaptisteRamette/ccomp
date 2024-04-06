@@ -31,7 +31,9 @@ namespace ccomp
 		void visit(const ast::label_statement&) override;
 
 	private:
-		void register_symbol_addr(std::string&& symbol);
+		void register_constant(std::string&& symbol, arch::imm value);
+		void register_sprite(std::string&& symbol, const arch::sprite& sprite);
+		void register_symbol_addr(std::string symbol);
 		void register_patch_addr(std::string&& symbol);
 
 		[[nodiscard]] arch::opcode encode_add(const std::vector<ast::instruction_operand>& operands);
@@ -77,9 +79,10 @@ namespace ccomp
 		};
 
 		std::vector<arch::opcode> binary;
-		std::unordered_map<std::string, arch::imm> constants;
-		std::unordered_map<std::string, arch::addr> sym_addresses;
 		std::vector<addr_patch> patches;
+		std::unordered_map<std::string, arch::addr> sym_addresses;
+		std::unordered_map<std::string, arch::imm> constants;
+		std::unordered_map<std::string, arch::sprite> sprites;
 
 		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&);
 

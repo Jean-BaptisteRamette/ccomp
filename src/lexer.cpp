@@ -79,6 +79,7 @@ namespace ccomp
 				{ '.', token_type::dot_label },
 				{ '@', token_type::at_label },
 				{ '$', token_type::dollar_proc },
+				{ '#', token_type::hash_sprite },
 				{ ':', token_type::colon },
 				{ ',', token_type::comma }
 		};

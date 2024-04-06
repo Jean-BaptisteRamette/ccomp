@@ -68,6 +68,7 @@ namespace ccomp::ast
 			indirection,
 			label,
 			procedure,
+			sprite
 		};
 
 		explicit instruction_operand(token operand_, type t)
@@ -94,6 +95,11 @@ namespace ccomp::ast
 		static instruction_operand make_proc(token operand_)
 		{
 			return instruction_operand(std::move(operand_), type::procedure);
+		}
+
+		static instruction_operand make_sprite(token operand_)
+		{
+			return instruction_operand(std::move(operand_), type::sprite);
 		}
 
 		static instruction_operand make_indirect(token operand_)
@@ -130,17 +136,15 @@ namespace ccomp::ast
 			else if (has_indirection())
 				return arch::operand_type::imm_indirect;
 			else
+				//
+				// label address, call address, sprite address
+				//
 				return arch::operand_type::imm;
 		}
 
 		[[nodiscard]] std::string reg_name() const
 		{
 			return operand.to_string();
-		}
-
-		[[nodiscard]] bool is_immediate() const
-		{
-			return type_ == type::immediate;
 		}
 
 		[[nodiscard]] bool is_reg() const
@@ -161,6 +165,11 @@ namespace ccomp::ast
 		[[nodiscard]] bool is_procedure() const
 		{
 			return type_ == type::procedure;
+		}
+
+		[[nodiscard]] bool is_sprite() const
+		{
+			return type_ == type::sprite;
 		}
 
 		token operand;
@@ -207,10 +216,10 @@ namespace ccomp::ast
 
 	struct sprite_statement : base_statement
 	{
-		sprite_statement(token identifier_, std::vector<uint8_t> digits_)
+		sprite_statement(token identifier_, const arch::sprite& sprite_)
 			: base_statement(),
 			  identifier(std::move(identifier_)),
-			  digits(std::move(digits_))
+			  sprite(sprite_)
 		{}
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
@@ -219,7 +228,7 @@ namespace ccomp::ast
 		[[nodiscard]] size_t source_line_end() const override { return identifier.source_location.line; }
 
 		const token identifier;
-		const std::vector<uint8_t> digits;
+		const arch::sprite sprite;
 	};
 
     struct raw_statement : base_statement
