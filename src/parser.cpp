@@ -125,6 +125,7 @@ namespace ccomp
 		while (next_any_of(token_type::identifier,
 						   token_type::register_name,
 						   token_type::at_label,
+						   token_type::hash_sprite,
 						   token_type::dollar_proc,
 						   token_type::numerical,
 						   token_type::bracket_open))

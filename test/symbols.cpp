@@ -254,4 +254,32 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 		);
 	}
 
+	BOOST_AUTO_TEST_CASE(check_sprite_already_defined)
+	{
+		BOOST_CHECK_THROW(
+			details::try_assemble("sprite my_sprite1 [0xA, 0xB, 0xC, 0xD]\n"
+			                      "sprite my_sprite1 [0xA, 0xB, 0xC, 0xD]\n"
+			                      ".main:            \n"),
+			sanitize_exception::already_defined_symbol
+		);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_undefined_sprite)
+	{
+		BOOST_CHECK_THROW(
+			details::try_assemble(".main:                        \n"
+			                      "    draw r0, r0, #my_sprite   \n"),
+			sanitize_exception::undefined_symbols
+		);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_sprite_is_global)
+	{
+		BOOST_CHECK_THROW(
+			details::try_assemble(".main:                \n"
+			                      "    sprite s [0xA]    \n"),
+			assembler_error
+		);
+	}
+
 BOOST_AUTO_TEST_SUITE_END()

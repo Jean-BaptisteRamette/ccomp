@@ -124,7 +124,7 @@ namespace ccomp
 	{
 		if (curr_scope_level >= scopes.size())
 			throw assembler_error(
-						"Could not register symbol \"{}\" because we exceeded the maximum amount of scopes.",
+						"Invalid scope level for symbol \"{}\".",
 						symbol);
 
 		if (symbol_defined(symbol))

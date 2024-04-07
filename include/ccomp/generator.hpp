@@ -84,6 +84,8 @@ namespace ccomp
 		std::unordered_map<std::string, arch::imm> constants;
 		std::unordered_map<std::string, arch::sprite> sprites;
 
+		std::string current_proc_name;
+
 		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&);
 
 		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {

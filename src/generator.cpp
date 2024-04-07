@@ -55,6 +55,13 @@ namespace ccomp
 	void generator::visit(const ast::procedure_statement& procedure)
 	{
 		register_symbol_addr(procedure.name_beg.to_string());
+
+		current_proc_name = procedure.name_beg.to_string();
+
+		for (const auto& inner : procedure.inner_statements)
+			inner->accept(*this);
+
+		current_proc_name = "";
 	}
 
 	void generator::visit(const ast::instruction_statement& instruction)
@@ -80,19 +87,23 @@ namespace ccomp
 
 	void generator::visit(const ast::label_statement& label)
 	{
-		register_symbol_addr(label.identifier.to_string());
+		register_symbol_addr(current_proc_name + "." + label.identifier.to_string());
+
+		for (const auto& inner : label.inner_statements)
+			inner->accept(*this);
 	}
 
 	void generator::visit(const ast::raw_statement& statement)
 	{
-		binary.push_back(operand2imm(statement.opcode));
+		binary.push_back(operand2imm(statement.opcode, arch::imm16));
 	}
 
 	void generator::register_constant(std::string &&symbol, arch::imm value)
 	{
-		if (constants.contains(symbol))
-			throw assembler_error("Generator found an already defined constant \"{}\", this should have been caught by the sanitizer.", symbol);
-
+		//
+		// The sanitizer has already made sure it is not the same scope,
+		// so we can safely overwrite the previous definition
+		//
 		constants[std::move(symbol)] = value;
 	}
 
@@ -379,7 +390,7 @@ namespace ccomp
 				if (operands[0].is_label())
 				{
 					// jmp @label
-					register_patch_addr(operands[0].operand.to_string());
+					register_patch_addr(current_proc_name + "." + operands[0].operand.to_string());
 
 					return arch::_1NNN(0);
 				}

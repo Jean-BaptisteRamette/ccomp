@@ -17,7 +17,8 @@ namespace ccomp::arch
 	{
 		imm4  =  4,
 		imm8  =  8,
-		imm12 = 12
+		imm12 = 12,
+		imm16 = 16
 	};
 
 	enum class operand_type
