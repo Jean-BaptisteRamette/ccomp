@@ -76,4 +76,10 @@ BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
 		}
 	}
 
+	BOOST_AUTO_TEST_CASE(check_zero)
+	{
+		auto lex = lexer("0,0,0");
+		BOOST_CHECK_NO_THROW(lex.enumerate_tokens());
+	}
+
 BOOST_AUTO_TEST_SUITE_END()

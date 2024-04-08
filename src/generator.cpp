@@ -1,27 +1,42 @@
 #include <span>
+#include <set>
 #include <ccomp/generator.hpp>
 #include <ccomp/arch.hpp>
 
 
 namespace ccomp
 {
+	[[nodiscard]]
 	arch::reg operand2reg(const ast::instruction_operand& operand)
 	{
 		return operand.reg_name()[1] - '0';
 	}
 
-	uint16_t make_operands_mask(const std::vector<ast::instruction_operand>& operands)
+	[[nodiscard]]
+	uint16_t make_operands_mask(const ast::instruction_statement& instruction)
 	{
+		if (instruction.operands.size() > arch::MAX_OPERANDS)
+			throw assembler_error("Instruction \"{}\" at {} has {} operands "
+								  "but CHIP-8 instructions can have up to {} operands.",
+								  instruction.operands.size(),
+								  arch::MAX_OPERANDS);
+
 		uint16_t mask = 0;
 		uint16_t shift = 0;
 
-		for (const auto& operand : operands)
+		for (const auto& operand : instruction.operands)
 		{
 			mask |= (static_cast<uint8_t>(operand.arch_type()) << shift);
-			shift += 3;
+			shift += arch::BITSHIFT_OP_MASK;
 		}
 
 		return mask;
+	}
+
+	[[nodiscard]]
+	bool check_operands_count()
+	{
+		return false;
 	}
 
 	std::vector<arch::opcode> generator::generate(const ast::abstract_tree& ast)
@@ -66,13 +81,10 @@ namespace ccomp
 
 	void generator::visit(const ast::instruction_statement& instruction)
 	{
-		if (instruction.operands.size() > arch::MAX_OPERANDS)
-			throw generator_exception::too_many_operands(instruction);
-
 		const auto mnemonic = instruction.mnemonic.to_string();
 		auto encoder = mnemonic_encoders.at(mnemonic);
 
-		binary.push_back((this->*encoder)(instruction.operands));
+		binary.push_back((this->*encoder)(instruction));
 	}
 
 	void generator::visit(const ast::define_statement& define)
@@ -158,239 +170,279 @@ namespace ccomp
 		return operand2imm(operand.operand, imm);
 	}
 
-	arch::opcode generator::encode_add(const std::vector<ast::instruction_operand>& operands)
+	void ensure_operands_count(const ast::instruction_statement& inst, std::initializer_list<int> expected_counts)
 	{
-		switch (make_operands_mask(operands))
+		if (!std::ranges::contains(expected_counts, inst.operands.size()))
+			throw generator_exception::invalid_operands_count(inst, expected_counts);
+	}
+
+	arch::opcode generator::encode_add(const ast::instruction_statement& add)
+	{
+		ensure_operands_count(add, { 2 });
+
+		switch (make_operands_mask(add))
 		{
 			case arch::MASK_ADD_R8_R8:
 				return arch::_8XY4(
-						operand2reg(operands[0]),
-						operand2reg(operands[1]));
+						operand2reg(add.operands[0]),
+						operand2reg(add.operands[1]));
 
 			case arch::MASK_ADD_R8_I8:
 				return arch::_7XNN(
-						operand2reg(operands[0]),
-						operand2imm(operands[1]));
+						operand2reg(add.operands[0]),
+						operand2imm(add.operands[1]));
 
 			case arch::MASK_ADD_AR_R8:
-				return arch::_FX1E(operand2reg(operands[0]));
+				return arch::_FX1E(operand2reg(add.operands[0]));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(add);
 		}
 	}
 
-	arch::opcode generator::encode_sub(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_sub(const ast::instruction_statement& sub)
 	{
-		if (make_operands_mask(operands) == arch::MASK_SUB_R8_R8)
+		ensure_operands_count(sub, { 2 });
+
+		if (make_operands_mask(sub) == arch::MASK_SUB_R8_R8)
 			return arch::_8XY5(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]));
+					operand2reg(sub.operands[0]),
+					operand2reg(sub.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(sub);
 	}
 
-	arch::opcode generator::encode_suba(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_suba(const ast::instruction_statement& suba)
 	{
-		if (make_operands_mask(operands) == arch::MASK_SUBA_R8_R8)
+		ensure_operands_count(suba, { 2 });
+
+		if (make_operands_mask(suba) == arch::MASK_SUBA_R8_R8)
 			return arch::_8XY7(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]));
+					operand2reg(suba.operands[0]),
+					operand2reg(suba.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(suba);
 	}
 
-	arch::opcode generator::encode_or(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_or(const ast::instruction_statement& or_)
 	{
-		if (make_operands_mask(operands) == arch::MASK_OR_R8_R8)
+		ensure_operands_count(or_, { 2 });
+
+		if (make_operands_mask(or_) == arch::MASK_OR_R8_R8)
 			return arch::_8XY1(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]));
+					operand2reg(or_.operands[0]),
+					operand2reg(or_.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(or_);
 	}
 
-	arch::opcode generator::encode_and(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_and(const ast::instruction_statement& and_)
 	{
-		if (make_operands_mask(operands) == arch::MASK_AND_R8_R8)
+		ensure_operands_count(and_, { 2 });
+
+		if (make_operands_mask(and_) == arch::MASK_AND_R8_R8)
 			return arch::_8XY2(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]));
+					operand2reg(and_.operands[0]),
+					operand2reg(and_.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(and_);
 	}
 
-	arch::opcode generator::encode_xor(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_xor(const ast::instruction_statement& xor_)
 	{
-		if (make_operands_mask(operands) == arch::MASK_XOR_R8_R8)
+		ensure_operands_count(xor_, { 2 });
+
+		if (make_operands_mask(xor_) == arch::MASK_XOR_R8_R8)
 			return arch::_8XY3(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]));
+					operand2reg(xor_.operands[0]),
+					operand2reg(xor_.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(xor_);
 	}
 
-	arch::opcode generator::encode_shr(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_shr(const ast::instruction_statement& shr)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(shr, { 1, 2 });
+
+		switch (make_operands_mask(shr))
 		{
 			case arch::MASK_SHR_R8:
-				return arch::_8X06(operand2reg(operands[0]));
+				return arch::_8X06(operand2reg(shr.operands[0]));
 
 			case arch::MASK_SHR_R8_R8:
 				return arch::_8XY6(
-						operand2reg(operands[0]),
-						operand2reg(operands[1]));
+						operand2reg(shr.operands[0]),
+						operand2reg(shr.operands[1]));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(shr);
 		}
 	}
 
-	arch::opcode generator::encode_shl(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_shl(const ast::instruction_statement& shl)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(shl, { 1, 2 });
+
+		switch (make_operands_mask(shl))
 		{
 			case arch::MASK_SHL_R8:
-				return arch::_8X0E(operand2reg(operands[0]));
+				return arch::_8X0E(operand2reg(shl.operands[0]));
 
 			case arch::MASK_SHL_R8_R8:
 				return arch::_8XYE(
-						operand2reg(operands[0]),
-						operand2reg(operands[1]));
+						operand2reg(shl.operands[0]),
+						operand2reg(shl.operands[1]));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(shl);
 		}
 	}
 
-	arch::opcode generator::encode_rdump(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_rdump(const ast::instruction_statement& rdump)
 	{
-		if (make_operands_mask(operands) == arch::MASK_RDUMP_R8)
-			return arch::_FX55(operand2reg(operands[0]));
+		ensure_operands_count(rdump, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(rdump) == arch::MASK_RDUMP_R8)
+			return arch::_FX55(operand2reg(rdump.operands[0]));
+
+		throw generator_exception::invalid_operand_type(rdump);
 	}
 
-	arch::opcode generator::encode_rload(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_rload(const ast::instruction_statement& rload)
 	{
-		if (make_operands_mask(operands) == arch::MASK_RLOAD_R8)
-			return arch::_FX65(operand2reg(operands[0]));
+		ensure_operands_count(rload, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(rload) == arch::MASK_RLOAD_R8)
+			return arch::_FX65(operand2reg(rload.operands[0]));
+
+		throw generator_exception::invalid_operand_type(rload);
 	}
 
-	arch::opcode generator::encode_mov(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_mov(const ast::instruction_statement& mov)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(mov, { 2 });
+
+		switch (make_operands_mask(mov))
 		{
-			case arch::MASK_MOV_R8_R8: return arch::_8XY0(operand2reg(operands[0]), operand2reg(operands[1]));
-			case arch::MASK_MOV_R8_I8: return arch::_6XNN(operand2reg(operands[0]), operand2imm(operands[1]));
-			case arch::MASK_MOV_R8_DT: return arch::_FX07(operand2reg(operands[0]));
-			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(operands[0]));
-			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(operands[0]));
-			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(operands[0]));
+			case arch::MASK_MOV_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
+			case arch::MASK_MOV_R8_I8: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
+			case arch::MASK_MOV_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
+			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(mov.operands[0]));
+			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(mov.operands[0]));
+			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(mov.operands[0]));
 
 			case arch::MASK_MOV_AR_I12:
 			{
-				if (operands[1].is_sprite())
+				if (mov.operands[1].is_sprite())
 				{
-					register_patch_addr(operands[1].operand.to_string());
+					register_patch_addr(mov.operands[1].operand.to_string());
 					return arch::_ANNN(0);
 				}
 				else
-					return arch::_ANNN(operand2imm(operands[1], arch::imm12));
+					return arch::_ANNN(operand2imm(mov.operands[1], arch::imm12));
 			}
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(mov);
 		}
 	}
 
-	arch::opcode generator::encode_swp(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_draw(const ast::instruction_statement& draw)
 	{
-		// TODO
-		throw generator_exception::invalid_operand_type();
-	}
+		ensure_operands_count(draw, { 3 });
 
-	arch::opcode generator::encode_draw(const std::vector<ast::instruction_operand>& operands)
-	{
-		if (make_operands_mask(operands) == arch::MASK_DRAW_R8_R8_I8)
+		if (make_operands_mask(draw) == arch::MASK_DRAW_R8_R8_I8)
 			return arch::_DXYN(
-					operand2reg(operands[0]),
-					operand2reg(operands[1]),
-					operand2imm(operands[2], arch::imm4));
+					operand2reg(draw.operands[0]),
+					operand2reg(draw.operands[1]),
+					operand2imm(draw.operands[2], arch::imm4));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(draw);
 	}
 
-	arch::opcode generator::encode_cls(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_cls(const ast::instruction_statement& cls)
 	{
-		if (!operands.empty())
-			throw generator_exception::invalid_operand_type();
+		ensure_operands_count(cls, { 0 });
+
+		if (!cls.operands.empty())
+			throw generator_exception::invalid_operand_type(cls);
 
 		return arch::_00E0();
 	}
 
-	arch::opcode generator::encode_rand(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_rand(const ast::instruction_statement& rand)
 	{
-		if (make_operands_mask(operands) == arch::MASK_RAND_R8_I8)
+		ensure_operands_count(rand, { 2 });
+
+		if (make_operands_mask(rand) == arch::MASK_RAND_R8_I8)
 			return arch::_CXNN(
-					operand2reg(operands[0]),
-					operand2imm(operands[1]));
+					operand2reg(rand.operands[0]),
+					operand2imm(rand.operands[1]));
 
-		throw generator_exception::invalid_operand_type();
+		throw generator_exception::invalid_operand_type(rand);
 	}
 
-	arch::opcode generator::encode_bcd(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_bcd(const ast::instruction_statement& bcd)
 	{
-		if (make_operands_mask(operands) == arch::MASK_BCD_R8)
-			return arch::_FX33(operand2reg(operands[0]));
+		ensure_operands_count(bcd, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(bcd) == arch::MASK_BCD_R8)
+			return arch::_FX33(operand2reg(bcd.operands[0]));
+
+		throw generator_exception::invalid_operand_type(bcd);
 	}
 
-	arch::opcode generator::encode_wkey(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_wkey(const ast::instruction_statement& wkey)
 	{
-		if (make_operands_mask(operands) == arch::MASK_WKEY_R8)
-			return arch::_FX0A(operand2reg(operands[0]));
+		ensure_operands_count(wkey, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(wkey) == arch::MASK_WKEY_R8)
+			return arch::_FX0A(operand2reg(wkey.operands[0]));
+
+		throw generator_exception::invalid_operand_type(wkey);
 	}
 
-	arch::opcode generator::encode_ske(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_ske(const ast::instruction_statement& ske)
 	{
-		if (make_operands_mask(operands) == arch::MASK_SKE_R8)
-			return arch::_EX9E(operand2reg(operands[0]));
+		ensure_operands_count(ske, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(ske) == arch::MASK_SKE_R8)
+			return arch::_EX9E(operand2reg(ske.operands[0]));
+
+		throw generator_exception::invalid_operand_type(ske);
 	}
 
-	arch::opcode generator::encode_skne(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_skne(const ast::instruction_statement& skne)
 	{
-		if (make_operands_mask(operands) == arch::MASK_SKNE_R8)
-			return arch::_EXA1(operand2reg(operands[0]));
+		ensure_operands_count(skne, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(skne) == arch::MASK_SKNE_R8)
+			return arch::_EXA1(operand2reg(skne.operands[0]));
+
+		throw generator_exception::invalid_operand_type(skne);
 	}
 
-	arch::opcode generator::encode_ret(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_ret(const ast::instruction_statement& ret)
 	{
-		if (!operands.empty())
-			throw generator_exception::invalid_operand_type();
+		ensure_operands_count(ret, { 0 });
+
+		if (!ret.operands.empty())
+			throw generator_exception::invalid_operand_type(ret);
 
 		return arch::_00EE();
 	}
 
-	arch::opcode generator::encode_jmp(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_jmp(const ast::instruction_statement& jmp)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(jmp, { 1 });
+
+		switch (make_operands_mask(jmp))
 		{
 			case arch::MASK_JMP_I12:
-				if (operands[0].is_label())
+				if (jmp.operands[0].is_label())
 				{
 					// jmp @label
-					register_patch_addr(current_proc_name + "." + operands[0].operand.to_string());
+					register_patch_addr(current_proc_name + "." + jmp.operands[0].operand.to_string());
 
 					return arch::_1NNN(0);
 				}
@@ -398,26 +450,28 @@ namespace ccomp
 					// define where 0xBEEF
 					// jmp where
 					// jmp 0xBEEF
-					return arch::_1NNN(operand2imm(operands[0], arch::imm12));
+					return arch::_1NNN(operand2imm(jmp.operands[0], arch::imm12));
 
 			// jmp [offset]
 			case arch::MASK_JMP_INDIRECT_I12:
-				return arch::_BNNN(operand2imm(operands[0], arch::imm12));
+				return arch::_BNNN(operand2imm(jmp.operands[0], arch::imm12));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(jmp);
 		}
 	}
 
-	arch::opcode generator::encode_call(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_call(const ast::instruction_statement& call)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(call, { 1 });
+
+		switch (make_operands_mask(call))
 		{
 			case arch::MASK_CALL_I12:
-				if (operands[0].is_procedure())
+				if (call.operands[0].is_procedure())
 				{
 					// call $function
-					register_patch_addr(operands[0].operand.to_string());
+					register_patch_addr(call.operands[0].operand.to_string());
 
 					return arch::_2NNN(0);
 				}
@@ -425,57 +479,62 @@ namespace ccomp
 					// define my_addr 0xBEEF
 					// call my_addr
 					// call 0xBEEF
-					return arch::_2NNN(operand2imm(operands[0], arch::imm12));
+					return arch::_2NNN(operand2imm(call.operands[0], arch::imm12));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(call);
 		}
 	}
 
-	arch::opcode generator::encode_se(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_se(const ast::instruction_statement& se)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(se, { 2 });
+
+		switch (make_operands_mask(se))
 		{
 			case arch::MASK_SE_R8_R8:
 				return arch::_5XY0(
-						operand2reg(operands[0]),
-						operand2reg(operands[1]));
+						operand2reg(se.operands[0]),
+						operand2reg(se.operands[1]));
 
 			case arch::MASK_SE_R8_I8:
 				return arch::_3XNN(
-						operand2reg(operands[0]),
-						operand2imm(operands[1]));
+						operand2reg(se.operands[0]),
+						operand2imm(se.operands[1]));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(se);
 		}
-
 	}
 
-	arch::opcode generator::encode_sne(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_sne(const ast::instruction_statement& sne)
 	{
-		switch (make_operands_mask(operands))
+		ensure_operands_count(sne, { 2 });
+
+		switch (make_operands_mask(sne))
 		{
 			case arch::MASK_SNE_R8_R8:
 				return arch::_9XY0(
-						operand2reg(operands[0]),
-						operand2reg(operands[1]));
+						operand2reg(sne.operands[0]),
+						operand2reg(sne.operands[1]));
 
 			case arch::MASK_SNE_R8_I8:
 				return arch::_4XNN(
-						operand2reg(operands[0]),
-						operand2imm(operands[1]));
+						operand2reg(sne.operands[0]),
+						operand2imm(sne.operands[1]));
 
 			default:
-				throw generator_exception::invalid_operand_type();
+				throw generator_exception::invalid_operand_type(sne);
 		}
 	}
 
-	arch::opcode generator::encode_inc(const std::vector<ast::instruction_operand>& operands)
+	arch::opcode generator::encode_inc(const ast::instruction_statement& inc)
 	{
-		if (make_operands_mask(operands) == arch::MASK_INC_R8)
-			return arch::_7XNN(operand2reg(operands[0]), 1);
+		ensure_operands_count(inc, { 1 });
 
-		throw generator_exception::invalid_operand_type();
+		if (make_operands_mask(inc) == arch::MASK_INC_R8)
+			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
+
+		throw generator_exception::invalid_operand_type(inc);
 	}
 }

@@ -46,6 +46,8 @@ namespace ccomp::arch
 		imm_indirect
 	};
 
+	constexpr auto BITSHIFT_OP_MASK = std::bit_width(static_cast<uint8_t>(operand_type::imm_indirect));
+
 	constexpr auto MAX_SPRITE_ROWS = 15;
 
 	struct sprite
@@ -67,10 +69,15 @@ namespace ccomp::arch
 		for (operand_type op : operand_types)
 		{
 			mask |= (static_cast<uint8_t>(op) << shift);
-			shift += 3;
+			shift += BITSHIFT_OP_MASK;
 		}
 
 		return mask;
+	}
+
+	[[nodiscard]] constexpr uint8_t operands_count(uint16_t operand_mask)
+	{
+		return std::bit_width(operand_mask) / BITSHIFT_OP_MASK;
 	}
 
 	constexpr auto MAX_OPERANDS = 3;

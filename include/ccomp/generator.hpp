@@ -36,31 +36,31 @@ namespace ccomp
 		void register_symbol_addr(std::string symbol);
 		void register_patch_addr(std::string&& symbol);
 
-		[[nodiscard]] arch::opcode encode_add(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_sub(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_suba(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_or(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_and(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_xor(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_shr(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_shl(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_rdump(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_rload(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_mov(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_swp(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_draw(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_cls(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_rand(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_bcd(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_wkey(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_ske(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_skne(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_ret(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_jmp(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_call(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_se(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_sne(const std::vector<ast::instruction_operand>& operands);
-		[[nodiscard]] arch::opcode encode_inc(const std::vector<ast::instruction_operand>& operands);
+		// TODO: swp
+		[[nodiscard]] arch::opcode encode_add(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_sub(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_suba(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_or(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_and(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_xor(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_shr(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_shl(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_rdump(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_rload(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_mov(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_draw(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_cls(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_rand(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_bcd(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_wkey(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_ske(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_skne(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_ret(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_jmp(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_call(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_se(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_sne(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_inc(const ast::instruction_statement&);
 
 		void post_visit();
 
@@ -86,7 +86,7 @@ namespace ccomp
 
 		std::string current_proc_name;
 
-		typedef arch::opcode(generator::*encoder)(const std::vector<ast::instruction_operand>&);
+		typedef arch::opcode(generator::*encoder)(const ast::instruction_statement&);
 
 		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {
 				{ "add", &generator::encode_add },
@@ -100,7 +100,6 @@ namespace ccomp
 				{ "rdump", &generator::encode_rdump },
 				{ "rload", &generator::encode_rload },
 				{ "mov", &generator::encode_mov },
-				{ "swp", &generator::encode_swp },
 				{ "draw", &generator::encode_draw },
 				{ "cls", &generator::encode_cls },
 				{ "rand", &generator::encode_rand },
@@ -121,19 +120,39 @@ namespace ccomp
 	{
 		struct invalid_operand_type : assembler_error
 		{
-			invalid_operand_type()
-				: assembler_error("Invalid operands types for instruction.")
+			explicit invalid_operand_type(const ast::instruction_statement& inst)
+				: assembler_error("Invalid operand type for instruction \"{}\" at {}.",
+								  inst.mnemonic.to_string(),
+								  to_string(inst.mnemonic.source_location))
 			{}
 		};
 
-		struct too_many_operands : assembler_error
+		[[nodiscard]]
+		inline std::string to_string(std::initializer_list<int> list)
 		{
-			explicit too_many_operands(const ast::instruction_statement& statement)
-				: assembler_error("CHIP-8 instructions can have a maximum of {} operands per instruction.\n"
-								  "Constraint violated for instruction \"{}\" at {}.",
-								  arch::MAX_OPERANDS,
-								  statement.mnemonic.to_string(),
-								  to_string(statement.mnemonic.source_location))
+			std::string joined;
+
+			for (const auto val : list)
+			{
+				if (!joined.empty())
+					joined += ", ";
+
+				joined += std::to_string(val);
+			}
+
+			return '(' + joined + ')';
+		}
+
+		struct invalid_operands_count : assembler_error
+		{
+			explicit invalid_operands_count(const ast::instruction_statement& inst,
+											std::initializer_list<int> expected_counts)
+				: assembler_error("Invalid operands count for instruction \"{}\" at {}.\n"
+								  "Expected operands count to be among {} but {} operands were provided",
+								  inst.mnemonic.to_string(),
+								  to_string(inst.mnemonic.source_location),
+								  to_string(expected_counts),
+								  inst.operands.size())
 			{}
 		};
 

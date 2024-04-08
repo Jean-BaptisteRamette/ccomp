@@ -227,13 +227,8 @@ namespace ccomp
                 case 'b': return 2;
 
                 default:
-					break;
+					return 10;
             }
-
-			if (std::isdigit(peek_chr()) || std::isspace(peek_chr()))
-				return 10;
-
-			throw lexer_exception::invalid_digit_for_base(peek_chr(), 10, cursor);
         }();
 
 		std::string numeric_lexeme;
