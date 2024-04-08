@@ -15,10 +15,10 @@ namespace ccomp::arch
 
 	enum imm_format
 	{
-		imm4  =  4,
-		imm8  =  8,
-		imm12 = 12,
-		imm16 = 16
+		fmt_imm4  =  4,
+		fmt_imm8  =  8,
+		fmt_imm12 = 12,
+		fmt_imm16 = 16
 	};
 
 	enum class operand_type
@@ -38,15 +38,20 @@ namespace ccomp::arch
 		//
 		// immediate 8-bit value
 		//
-		imm,
+		imm8,
 
 		//
-		// indirect value (has to be immediate)
+		// operands of type: [addr] -> (r0 + addr)
 		//
-		imm_indirect
+		address_indirect,
+
+		//
+		// address type for jmp labels, procedures and sprites
+		//
+		address
 	};
 
-	constexpr auto BITSHIFT_OP_MASK = std::bit_width(static_cast<uint8_t>(operand_type::imm_indirect));
+	constexpr auto BITSHIFT_OP_MASK = std::bit_width(static_cast<uint8_t>(operand_type::address_indirect));
 
 	constexpr auto MAX_SPRITE_ROWS = 15;
 
@@ -83,7 +88,7 @@ namespace ccomp::arch
 	constexpr auto MAX_OPERANDS = 3;
 
 	constexpr auto MASK_ADD_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
-	constexpr auto MASK_ADD_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_ADD_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
 	constexpr auto MASK_SUB_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_SUBA_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_OR_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
@@ -95,28 +100,28 @@ namespace ccomp::arch
 	constexpr auto MASK_SHL_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_RDUMP_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_RLOAD_R8 = make_operands_mask({ operand_type::reg_rx });
-	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_MOV_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
 	constexpr auto MASK_MOV_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_MOV_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
-	constexpr auto MASK_MOV_AR_I12 = make_operands_mask({ operand_type::reg_ar, operand_type::imm });
+	constexpr auto MASK_MOV_AR_I12 = make_operands_mask({ operand_type::reg_ar, operand_type::address });
 	constexpr auto MASK_ADD_AR_R8 = make_operands_mask({ operand_type::reg_ar, operand_type::reg_rx });
 	constexpr auto MASK_MOV_DT_R8 = make_operands_mask({ operand_type::reg_dt, operand_type::reg_rx });
 	constexpr auto MASK_MOV_ST_R8 = make_operands_mask({ operand_type::reg_st, operand_type::reg_rx });
 	constexpr auto MASK_MOV_R8_DT = make_operands_mask({ operand_type::reg_rx, operand_type::reg_dt });
-	constexpr auto MASK_DRAW_R8_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::imm });
-	constexpr auto MASK_RAND_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_DRAW_R8_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_RAND_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
 	constexpr auto MASK_BCD_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_WKEY_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_SKE_R8 = make_operands_mask({ operand_type::reg_rx });
 	constexpr auto MASK_SKNE_R8 = make_operands_mask({ operand_type::reg_rx });
-	constexpr auto MASK_SE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
-	constexpr auto MASK_SNE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm });
+	constexpr auto MASK_SE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_SNE_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::imm8 });
 	constexpr auto MASK_SE_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_SNE_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_INC_R8 = make_operands_mask({ operand_type::reg_rx });
-	constexpr auto MASK_JMP_I12 = make_operands_mask({ operand_type::imm });
-	constexpr auto MASK_JMP_INDIRECT_I12 = make_operands_mask({ operand_type::imm_indirect });
-	constexpr auto MASK_CALL_I12 = make_operands_mask({ operand_type::imm });
+	constexpr auto MASK_JMP_I12 = make_operands_mask({ operand_type::address });
+	constexpr auto MASK_JMP_INDIRECT_I12 = make_operands_mask({ operand_type::address_indirect });
+	constexpr auto MASK_CALL_I12 = make_operands_mask({ operand_type::address });
 
 
 	opcode _00E0();

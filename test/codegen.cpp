@@ -70,6 +70,50 @@ BOOST_AUTO_TEST_SUITE(code_generation)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n shl 1, 2, 3, 4"), assembler_error);
 	}
 
+	BOOST_AUTO_TEST_CASE(check_address_operands)
+	{
+		//
+		// User should be able to mov into AR (I) register a sprite/label/function address
+		//
+		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, @main"));
+		BOOST_CHECK_NO_THROW(
+			details::try_codegen("sprite s [0xA, 0xA]  \n"
+								 ".main:               \n"
+								 "    mov ar, #s       \n")
+		);
+
+		BOOST_CHECK_NO_THROW(
+			details::try_codegen("proc f          \n"
+			                     "    ret         \n"
+			                     "endp f          \n"
+			                     "                \n"
+			                     ".main:          \n"
+			                     "    mov ar, $f  \n")
+		);
+
+		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n jmp @main"));
+
+		BOOST_CHECK_NO_THROW(
+			details::try_codegen("proc f      \n"
+			                     "    ret     \n"
+			                     "endp f      \n"
+			                     "            \n"
+			                     ".main:      \n"
+			                     "    call $f \n")
+		);
+
+		BOOST_CHECK_THROW(
+			details::try_codegen(".main:\n "
+			                     "    call @main"),
+			generator_exception::invalid_operand_type
+		);
+
+		// If the user wants to do this, he must use the raw() statement
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 0x0000"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x0000"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0"), generator_exception::invalid_operand_type);
+	}
+
 	BOOST_AUTO_TEST_CASE(check_invalid_operand_type)
 	{
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, @main"), generator_exception::invalid_operand_type);

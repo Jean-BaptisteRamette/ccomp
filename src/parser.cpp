@@ -102,7 +102,7 @@ namespace ccomp
 									  arch::MAX_SPRITE_ROWS);
 
 
-			if (!arch::imm_matches_format(value, arch::imm8))
+			if (!arch::imm_matches_format(value, arch::fmt_imm8))
 				throw assembler_error("Sprite digits must be less than 255");
 
 			sprite.data[sprite.row_count] = value;

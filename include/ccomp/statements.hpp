@@ -134,12 +134,11 @@ namespace ccomp::ast
 			if (is_reg())
 				return regname2optype(operand.to_string());
 			else if (has_indirection())
-				return arch::operand_type::imm_indirect;
+				return arch::operand_type::address_indirect;
+			else if (is_label() || is_procedure() || is_sprite())
+				return arch::operand_type::address;
 			else
-				//
-				// label address, call address, sprite address
-				//
-				return arch::operand_type::imm;
+				return arch::operand_type::imm8;
 		}
 
 		[[nodiscard]] std::string reg_name() const

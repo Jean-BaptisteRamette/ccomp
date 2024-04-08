@@ -65,10 +65,10 @@ namespace ccomp
 		void post_visit();
 
 		[[nodiscard]] arch::imm operand2imm(const token& token,
-											arch::imm_format imm_width = arch::imm_format::imm8) const;
+											arch::imm_format imm_width = arch::imm_format::fmt_imm8) const;
 
 		[[nodiscard]] arch::imm operand2imm(const ast::instruction_operand& operand,
-											arch::imm_format type = arch::imm_format::imm8) const;
+											arch::imm_format type = arch::imm_format::fmt_imm8) const;
 
 	private:
 

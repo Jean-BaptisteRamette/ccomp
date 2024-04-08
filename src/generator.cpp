@@ -33,10 +33,10 @@ namespace ccomp
 		return mask;
 	}
 
-	[[nodiscard]]
-	bool check_operands_count()
+	void ensure_operands_count(const ast::instruction_statement& inst, std::initializer_list<int> expected_counts)
 	{
-		return false;
+		if (!std::ranges::contains(expected_counts, inst.operands.size()))
+			throw generator_exception::invalid_operands_count(inst, expected_counts);
 	}
 
 	std::vector<arch::opcode> generator::generate(const ast::abstract_tree& ast)
@@ -107,7 +107,7 @@ namespace ccomp
 
 	void generator::visit(const ast::raw_statement& statement)
 	{
-		binary.push_back(operand2imm(statement.opcode, arch::imm16));
+		binary.push_back(operand2imm(statement.opcode, arch::fmt_imm16));
 	}
 
 	void generator::register_constant(std::string &&symbol, arch::imm value)
@@ -168,12 +168,6 @@ namespace ccomp
 	arch::imm generator::operand2imm(const ast::instruction_operand& operand, arch::imm_format imm) const
 	{
 		return operand2imm(operand.operand, imm);
-	}
-
-	void ensure_operands_count(const ast::instruction_statement& inst, std::initializer_list<int> expected_counts)
-	{
-		if (!std::ranges::contains(expected_counts, inst.operands.size()))
-			throw generator_exception::invalid_operands_count(inst, expected_counts);
 	}
 
 	arch::opcode generator::encode_add(const ast::instruction_statement& add)
@@ -333,13 +327,8 @@ namespace ccomp
 
 			case arch::MASK_MOV_AR_I12:
 			{
-				if (mov.operands[1].is_sprite())
-				{
-					register_patch_addr(mov.operands[1].operand.to_string());
-					return arch::_ANNN(0);
-				}
-				else
-					return arch::_ANNN(operand2imm(mov.operands[1], arch::imm12));
+				register_patch_addr(mov.operands[1].operand.to_string());
+				return arch::_ANNN(0);
 			}
 
 			default:
@@ -355,7 +344,7 @@ namespace ccomp
 			return arch::_DXYN(
 					operand2reg(draw.operands[0]),
 					operand2reg(draw.operands[1]),
-					operand2imm(draw.operands[2], arch::imm4));
+					operand2imm(draw.operands[2], arch::fmt_imm4));
 
 		throw generator_exception::invalid_operand_type(draw);
 	}
@@ -446,15 +435,10 @@ namespace ccomp
 
 					return arch::_1NNN(0);
 				}
-				else
-					// define where 0xBEEF
-					// jmp where
-					// jmp 0xBEEF
-					return arch::_1NNN(operand2imm(jmp.operands[0], arch::imm12));
 
 			// jmp [offset]
 			case arch::MASK_JMP_INDIRECT_I12:
-				return arch::_BNNN(operand2imm(jmp.operands[0], arch::imm12));
+				return arch::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
 
 			default:
 				throw generator_exception::invalid_operand_type(jmp);
@@ -475,15 +459,12 @@ namespace ccomp
 
 					return arch::_2NNN(0);
 				}
-				else
-					// define my_addr 0xBEEF
-					// call my_addr
-					// call 0xBEEF
-					return arch::_2NNN(operand2imm(call.operands[0], arch::imm12));
 
 			default:
-				throw generator_exception::invalid_operand_type(call);
+				break;
 		}
+
+		throw generator_exception::invalid_operand_type(call);
 	}
 
 	arch::opcode generator::encode_se(const ast::instruction_statement& se)
