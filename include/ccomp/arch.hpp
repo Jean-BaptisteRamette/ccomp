@@ -123,51 +123,58 @@ namespace ccomp::arch
 	constexpr auto MASK_JMP_INDIRECT_I12 = make_operands_mask({ operand_type::address_indirect });
 	constexpr auto MASK_CALL_I12 = make_operands_mask({ operand_type::address });
 
+#define ENCODE_dXYN(id, rx, ry, N) ((id << 12u) | (rx << 8u) | (ry << 4u) | N)
+#define ENCODE_dXNN(id, rx, NN)    ((id << 12u) | (rx << 8u) | NN)
+#define ENCODE_dNNN(id, NNN)       ((id << 12u) | NNN)
 
-	opcode _00E0();
-	opcode _00EE();
+#define EXPAND(x) x
+#define GET_OVERLOAD(_1, _2, _3, _4, OVERLOAD, ...) OVERLOAD
+#define ENCODE(...) EXPAND(GET_OVERLOAD(__VA_ARGS__, ENCODE_dXYN, ENCODE_dXNN, ENCODE_dNNN)(__VA_ARGS__))
 
-	opcode _5XY0(reg rx, reg ry);
-	opcode _8XY0(reg rx, reg ry);
-	opcode _8XY1(reg rx, reg ry);
-	opcode _8XY2(reg rx, reg ry);
-	opcode _8XY3(reg rx, reg ry);
-	opcode _8XY4(reg rx, reg ry);
-	opcode _8XY5(reg rx, reg ry);
-	opcode _8XY7(reg rx, reg ry);
-	opcode _9XY0(reg rx, reg ry);
+	constexpr opcode _00E0() { return 0x00E0; }
+	constexpr opcode _00EE() { return 0x00EE; }
 
-	opcode _8XY6(reg rx, reg ry);
-	opcode _8XYE(reg rx, reg ry);
+	constexpr opcode _5XY0(reg rx, reg ry) { return ENCODE(0x5, rx, ry, 0x0); }
+	constexpr opcode _8XY0(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0); }
+	constexpr opcode _8XY1(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x1); }
+	constexpr opcode _8XY2(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x2); }
+	constexpr opcode _8XY3(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x3); }
+	constexpr opcode _8XY4(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x4); }
+	constexpr opcode _8XY5(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x5); }
+	constexpr opcode _8XY7(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x7); }
+	constexpr opcode _9XY0(reg rx, reg ry) { return ENCODE(0x9, rx, ry, 0x0); }
 
-	opcode _8X06(reg rx);
-	opcode _8X0E(reg rx);
+	constexpr opcode _8XY6(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x06); }
+	constexpr opcode _8XYE(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0E); }
 
-	opcode _3XNN(reg reg_index, imm imm8);
-	opcode _4XNN(reg reg_index, imm imm8);
-	opcode _6XNN(reg reg_index, imm imm8);
-	opcode _7XNN(reg reg_index, imm imm8);
-	opcode _CXNN(reg reg_index, imm imm8);
+	constexpr opcode _8X06(reg rx) { return ENCODE(0x8, rx, 0x06); }
+	constexpr opcode _8X0E(reg rx) { return ENCODE(0x8, rx, 0x0E); }
 
-	opcode _EX9E(reg rx);
-	opcode _EXA1(reg rx);
-	opcode _FX07(reg rx);
-	opcode _FX0A(reg rx);
-	opcode _FX29(reg rx);
-	opcode _FX15(reg rx);
-	opcode _FX18(reg rx);
-	opcode _FX1E(reg rx);
-	opcode _FX33(reg rx);
-	opcode _FX55(reg rx);
-	opcode _FX65(reg rx);
+	constexpr opcode _3XNN(reg rx, imm imm8) { return ENCODE(0x3, rx, imm8); }
+	constexpr opcode _4XNN(reg rx, imm imm8) { return ENCODE(0x4, rx, imm8); }
+	constexpr opcode _6XNN(reg rx, imm imm8) { return ENCODE(0x6, rx, imm8); }
+	constexpr opcode _7XNN(reg rx, imm imm8) { return ENCODE(0x7, rx, imm8); }
+	constexpr opcode _CXNN(reg rx, imm imm8) { return ENCODE(0xC, rx, imm8); }
 
-	opcode _1NNN(imm imm12);
-	opcode _2NNN(imm imm12);
-	opcode _BNNN(imm imm12);
-	opcode _ANNN(imm imm12);
 
-	opcode _DXYN(reg rx, reg ry, imm imm4);
+	constexpr opcode _EX9E(reg rx) { return ENCODE(0xE, rx, 0x9E); }
+	constexpr opcode _EXA1(reg rx) { return ENCODE(0xE, rx, 0xA1); }
+	constexpr opcode _FX07(reg rx) { return ENCODE(0xF, rx, 0x07); }
+	constexpr opcode _FX0A(reg rx) { return ENCODE(0xF, rx, 0x0A); }
+	constexpr opcode _FX29(reg rx) { return ENCODE(0xF, rx, 0x29); }
+	constexpr opcode _FX15(reg rx) { return ENCODE(0xF, rx, 0x15); }
+	constexpr opcode _FX18(reg rx) { return ENCODE(0xF, rx, 0x18); }
+	constexpr opcode _FX1E(reg rx) { return ENCODE(0xF, rx, 0x1E); }
+	constexpr opcode _FX33(reg rx) { return ENCODE(0xF, rx, 0x33); }
+	constexpr opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
+	constexpr opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }
 
+	constexpr opcode _1NNN(arch::imm imm12) { return ENCODE(0x1, imm12); }
+	constexpr opcode _2NNN(arch::imm imm12) { return ENCODE(0x2, imm12); }
+	constexpr opcode _BNNN(arch::imm imm12) { return ENCODE(0xB, imm12); }
+	constexpr opcode _ANNN(arch::imm imm12) { return ENCODE(0xA, imm12); }
+
+	constexpr opcode _DXYN(reg rx, reg ry, imm imm4) { return ENCODE(0xD, rx, ry, imm4); }
 }
 
 #endif //CCOMP_ARCH_HPP

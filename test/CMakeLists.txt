@@ -17,6 +17,7 @@ add_executable(Boost_Tests_run
         lexer_numeric.cpp
         parser_statements.cpp
         symbols.cpp
+        instructions.cpp
         codegen.cpp
         ${INCLUDES}
         ${SOURCES})

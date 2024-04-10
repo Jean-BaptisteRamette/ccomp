@@ -1,12 +1,11 @@
 #include <boost/test/unit_test.hpp>
 #include <ccomp/lexer.hpp>
 #include <ccomp/parser.hpp>
-#include <ccomp/generator.hpp>
 
 
-using namespace ccomp;
+BOOST_AUTO_TEST_SUITE(machine_code_generation)
 
-BOOST_AUTO_TEST_SUITE(code_generation)
+	using namespace ccomp;
 
 	namespace details
 	{
@@ -19,156 +18,91 @@ BOOST_AUTO_TEST_SUITE(code_generation)
 
 			return ast.generate();
 		}
+
+		arch::opcode opcode(std::string&& instruction_str)
+		{
+			std::string program = ".main: " + instruction_str;
+			auto lex = lexer(std::move(program));
+			auto par = parser(lex.enumerate_tokens());
+			auto ast = par.make_tree();
+
+			return ast.generate()[0];
+		}
 	}
 
-	BOOST_AUTO_TEST_CASE(check_invalid_immediate_format)
-	{
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 0x1000"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x1000"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp [0x1000]"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0x1000"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n se r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n add r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rand r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r1, 0x10"), generator_exception::invalid_immediate_format);
-	}
+#define BOOST_RANGE_EQUAL(Rng1, Rng2) BOOST_CHECK_EQUAL_COLLECTIONS(Rng1.begin(), Rng1.end(), Rng2.begin(), Rng2.end());
 
-	BOOST_AUTO_TEST_CASE(check_invalid_operands_count)
-	{
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, r1, r2"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 1, 2"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, r1, r2"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov dt, r1, r2"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r1, dt, 0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp @main, @main"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp [100], [100]"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n ret 0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n se r1, 0, 0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne r1, 0, 0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n add r1, r2, 1"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sub r1"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n or"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n and 1"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n xor"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rdump"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rload"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rand 0"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n bcd"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n wkey"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n ske"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n skne"), generator_exception::invalid_operands_count);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n cls 0"), generator_exception::invalid_operands_count);
-
-		// > 3 operands
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, 1, 2"), assembler_error);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shr 1, 2, 3, 4"), assembler_error);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shl 1, 2, 3, 4"), assembler_error);
-	}
-
-	BOOST_AUTO_TEST_CASE(check_address_operands)
-	{
-		//
-		// User should be able to mov into AR (I) register a sprite/label/function address
-		//
-		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, @main"));
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen("sprite s [0xA, 0xA]  \n"
-								 ".main:               \n"
-								 "    mov ar, #s       \n")
-		);
-
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen("proc f          \n"
-			                     "    ret         \n"
-			                     "endp f          \n"
-			                     "                \n"
-			                     ".main:          \n"
-			                     "    mov ar, $f  \n")
-		);
-
-		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n jmp @main"));
-
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen("proc f      \n"
-			                     "    ret     \n"
-			                     "endp f      \n"
-			                     "            \n"
-			                     ".main:      \n"
-			                     "    call $f \n")
-		);
-
-		BOOST_CHECK_THROW(
-			details::try_codegen(".main:\n "
-			                     "    call @main"),
-			generator_exception::invalid_operand_type
-		);
-
-		// If the user wants to do this, he must use the raw() statement
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 0x0000"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x0000"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0"), generator_exception::invalid_operand_type);
-	}
-
-	BOOST_AUTO_TEST_CASE(check_invalid_operand_type)
-	{
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, @main"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov dt, ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r1, ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp r0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call r0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n se 0, 0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne 0, 0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n se 0, r0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne 0, r0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n add 0, r2"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n add 0, 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sub 0, r1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n sub r1, 0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n or  r0, 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n and r0, 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n xor r0, 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shr 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shl 2"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rdump 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rload 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n rand 1, 0"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n bcd 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n wkey 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n ske 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n skne 1"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, r0"), generator_exception::invalid_operand_type);
-	}
 
 	BOOST_AUTO_TEST_CASE(check_raw_statements)
 	{
 		const auto code = details::try_codegen(".main:                     \n"
-										       "    define opcode 0xFF'FF  \n"
-										       "    raw(0x0000)            \n"
-										       "    raw(1)                 \n"
-										       "    raw(opcode)            \n"
-										       "    raw(opcode)            \n");
+		                                       "    define opcode 0xFF'FF  \n"
+		                                       "    raw(0x0000)            \n"
+		                                       "    raw(1)                 \n"
+		                                       "    raw(opcode)            \n"
+		                                       "    raw(opcode)            \n");
 
-		const auto expected_code = std::vector<arch::opcode>({
+		const auto expected_code = {
 			0x0000,
 			0x0001,
 			0xFF'FF,
 			0xFF'FF
-		});
+		};
 
-		BOOST_CHECK_EQUAL_COLLECTIONS(
-				code.begin(),
-				code.end(),
-				expected_code.begin(),
-				expected_code.end()
-		);
+		BOOST_RANGE_EQUAL(code, expected_code);
 	}
+
+	BOOST_AUTO_TEST_CASE(check_per_instruction_opcodes)
+	{
+		BOOST_CHECK_EQUAL(details::opcode("mov ra, 0x69"), 0x6A69);
+		BOOST_CHECK_EQUAL(details::opcode("mov ra, rb"),   0x8AB0);
+		BOOST_CHECK_EQUAL(details::opcode("mov dt, re"),   0xFE15);
+		BOOST_CHECK_EQUAL(details::opcode("mov st, re"),   0xFE18);
+		BOOST_CHECK_EQUAL(details::opcode("mov r4, dt"),   0xF407);
+
+		BOOST_CHECK_EQUAL(details::opcode("ret"), 0x00EE);
+		BOOST_CHECK_EQUAL(details::opcode("cls"), 0x00E0);
+
+		BOOST_CHECK_EQUAL(details::opcode("se r7, r8"),  0x5780);
+		BOOST_CHECK_EQUAL(details::opcode("sne r7, r8"), 0x9780);
+
+		BOOST_CHECK_EQUAL(details::opcode("add rf, rf"),   0x8FF4);
+		BOOST_CHECK_EQUAL(details::opcode("add rf, 0x22"), 0x7F22);
+		BOOST_CHECK_EQUAL(details::opcode("add ar, rd"),   0xFD1E);
+
+		BOOST_CHECK_EQUAL(details::opcode("sub r1, r2"),  0x8125);
+		BOOST_CHECK_EQUAL(details::opcode("suba r4, rf"), 0x84F7);
+
+		BOOST_CHECK_EQUAL(details::opcode("or  r2, r3"), 0x8231);
+		BOOST_CHECK_EQUAL(details::opcode("and r2, r3"), 0x8232);
+		BOOST_CHECK_EQUAL(details::opcode("xor r2, r3"), 0x8233);
+		BOOST_CHECK_EQUAL(details::opcode("shl r2, r3"), 0x823E);
+		BOOST_CHECK_EQUAL(details::opcode("shl r2"),     0x820E);
+		BOOST_CHECK_EQUAL(details::opcode("shr r2"),     0x8206);
+		BOOST_CHECK_EQUAL(details::opcode("shr r2, r3"), 0x8236);
+
+		BOOST_CHECK_EQUAL(details::opcode("rdump r2"), 0xF255);
+		BOOST_CHECK_EQUAL(details::opcode("rload r2"), 0xF265);
+
+		BOOST_CHECK_EQUAL(details::opcode("rand r2, 0x70"), 0xC270);
+		BOOST_CHECK_EQUAL(details::opcode("bcd r4"), 0xF433);
+
+		BOOST_CHECK_EQUAL(details::opcode("wkey r9"), 0xF90A);
+		BOOST_CHECK_EQUAL(details::opcode("ske rd"), 0xED9E);
+		BOOST_CHECK_EQUAL(details::opcode("skne rd"), 0xEDA1);
+		BOOST_CHECK_EQUAL(details::opcode("draw rd, re, 0xF"), 0xDDEF);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_address)
+	{
+
+	}
+
+	BOOST_AUTO_TEST_CASE(check_extended_instruction)
+	{
+
+	}
+
+#undef BOOST_RANGE_EQUAL
 
 BOOST_AUTO_TEST_SUITE_END()

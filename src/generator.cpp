@@ -9,7 +9,12 @@ namespace ccomp
 	[[nodiscard]]
 	arch::reg operand2reg(const ast::instruction_operand& operand)
 	{
-		return operand.reg_name()[1] - '0';
+		const char id = operand.reg_name()[1];
+
+		if (std::isdigit(id))
+			return id - '0';
+
+		return 0xA + (id - 'a');
 	}
 
 	[[nodiscard]]
@@ -187,7 +192,7 @@ namespace ccomp
 						operand2imm(add.operands[1]));
 
 			case arch::MASK_ADD_AR_R8:
-				return arch::_FX1E(operand2reg(add.operands[0]));
+				return arch::_FX1E(operand2reg(add.operands[1]));
 
 			default:
 				throw generator_exception::invalid_operand_type(add);
@@ -321,9 +326,9 @@ namespace ccomp
 			case arch::MASK_MOV_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
 			case arch::MASK_MOV_R8_I8: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
 			case arch::MASK_MOV_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
-			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(mov.operands[0]));
-			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(mov.operands[0]));
-			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(mov.operands[0]));
+			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
+			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
+			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(mov.operands[1]));
 
 			case arch::MASK_MOV_AR_I12:
 			{
