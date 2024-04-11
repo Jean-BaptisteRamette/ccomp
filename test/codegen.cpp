@@ -22,35 +22,11 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 		arch::opcode opcode(std::string&& instruction_str)
 		{
 			std::string program = ".main: " + instruction_str;
-			auto lex = lexer(std::move(program));
-			auto par = parser(lex.enumerate_tokens());
-			auto ast = par.make_tree();
-
-			return ast.generate()[0];
+			return try_codegen(std::move(program))[1];
 		}
 	}
 
-#define BOOST_RANGE_EQUAL(Rng1, Rng2) BOOST_CHECK_EQUAL_COLLECTIONS(Rng1.begin(), Rng1.end(), Rng2.begin(), Rng2.end());
-
-
-	BOOST_AUTO_TEST_CASE(check_raw_statements)
-	{
-		const auto code = details::try_codegen(".main:                     \n"
-		                                       "    define opcode 0xFF'FF  \n"
-		                                       "    raw(0x0000)            \n"
-		                                       "    raw(1)                 \n"
-		                                       "    raw(opcode)            \n"
-		                                       "    raw(opcode)            \n");
-
-		const auto expected_code = {
-			0x0000,
-			0x0001,
-			0xFF'FF,
-			0xFF'FF
-		};
-
-		BOOST_RANGE_EQUAL(code, expected_code);
-	}
+#define BOOST_CHECK_EQUAL_RANGES(Rng1, Rng2) BOOST_CHECK_EQUAL_COLLECTIONS(Rng1.begin(), Rng1.end(), Rng2.begin(), Rng2.end());
 
 	BOOST_AUTO_TEST_CASE(check_per_instruction_opcodes)
 	{
@@ -69,6 +45,7 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 		BOOST_CHECK_EQUAL(details::opcode("add rf, rf"),   0x8FF4);
 		BOOST_CHECK_EQUAL(details::opcode("add rf, 0x22"), 0x7F22);
 		BOOST_CHECK_EQUAL(details::opcode("add ar, rd"),   0xFD1E);
+		BOOST_CHECK_EQUAL(details::opcode("inc rd"),       0x7D01);
 
 		BOOST_CHECK_EQUAL(details::opcode("sub r1, r2"),  0x8125);
 		BOOST_CHECK_EQUAL(details::opcode("suba r4, rf"), 0x84F7);
@@ -91,14 +68,120 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 		BOOST_CHECK_EQUAL(details::opcode("ske rd"), 0xED9E);
 		BOOST_CHECK_EQUAL(details::opcode("skne rd"), 0xEDA1);
 		BOOST_CHECK_EQUAL(details::opcode("draw rd, re, 0xF"), 0xDDEF);
+
+		BOOST_CHECK_EQUAL(details::opcode("jmp [0xFFF]"), 0xBFFF);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_raw_statements)
+	{
+		const auto code = details::try_codegen(".main:                     \n"
+											   "    define opcode 0xFF'FF  \n"
+											   "    raw(0x0000)            \n"
+											   "    raw(1)                 \n"
+											   "    raw(opcode)            \n"
+											   "    raw(opcode)            \n");
+
+		const auto expected_code = {
+				0x0000,
+				0x0001,
+				0xFF'FF,
+				0xFF'FF
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_address)
 	{
+		const auto code = details::try_codegen("proc a            \n"   // 0x06
+											   "    xor r0, r0    \n"   // 0x06
+											   "    xor r0, r0    \n"   // 0x08
+											   "    xor r0, r0    \n"   // 0x0A
+											   "    xor r0, r0    \n"   // 0x0C
+											   "    xor r0, r0    \n"   // 0x0E
+											   "    xor r0, r0    \n"   // 0x10
+											   "    xor r0, r0    \n"   // 0x12
+											   "    xor r0, r0    \n"   // 0x14
+											   "    xor r0, r0    \n"   // 0x16
+											   "    xor r0, r0    \n"   // 0x18
+											   "    xor r0, r0    \n"   // 0x1A
+											   "    xor r0, r0    \n"   // 0x1C
+											   "    xor r0, r0    \n"   // 0x1E
+											   "    call $b       \n"   // 0x20
+											   "    ret           \n"   // 0x22
+											   "endp a            \n"
+											   "                  \n"
+											   "proc b            \n"   // 0x24
+											   "    xor r1, r1    \n"   // 0x24
+											   "    xor r1, r1    \n"   // 0x26
+											   "    xor r1, r1    \n"   // 0x28
+											   "    xor r1, r1    \n"   // 0x2A
+											   "    xor r1, r1    \n"   // 0x2C
+											   "    xor r1, r1    \n"   // 0x2E
+											   "    xor r1, r1    \n"   // 0x30
+											   "    xor r1, r1    \n"   // 0x32
+											   "    xor r1, r1    \n"   // 0x34
+											   "    xor r1, r1    \n"   // 0x36
+											   "    xor r1, r1    \n"   // 0x38
+											   "    xor r1, r1    \n"   // 0x3A
+											   "    xor r1, r1    \n"   // 0x3C
+											   "    call $a       \n"   // 0x3E
+											   "    jmp @done     \n"   // 0x40
+											   ".done:            \n"
+											   "    ret           \n"   // 0x42
+											   "endp b            \n"
+											   "                  \n"
+											   "                  \n"
+											   ".main:            \n"   // 0x00
+											   "    call $a       \n"   // 0x00
+											   "    call $b       \n"   // 0x02
+											   "    jmp @main     \n"); // 0x04
 
+		const auto expected_code = {
+				0x2006,
+				0x2024,
+				0x1000,
+
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+				0x8003,
+
+				0x2024,
+				0x00EE,
+
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+				0x8113,
+
+				0x2006,
+				0x1042,
+				0x00EE
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
-	BOOST_AUTO_TEST_CASE(check_extended_instruction)
+	BOOST_AUTO_TEST_CASE(check_pseudo_instructions)
 	{
 
 	}

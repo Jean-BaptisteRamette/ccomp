@@ -69,7 +69,7 @@ namespace ccomp
 		// Apply jmp/call patches that could not be encoded directly
 		//
 		for (const auto& [addr, sym] : patches)
-			binary[addr / sizeof(arch::opcode)] |= sym_addresses[sym];
+			binary[addr] |= sym_addresses[sym];
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
@@ -137,7 +137,7 @@ namespace ccomp
 		if (sym_addresses.contains(symbol))
 			throw assembler_error("Generator found an already existing symbol \"{}\", this should have been caught by the sanitizer.", symbol);
 
-		sym_addresses[std::move(symbol)] = binary.size();
+		sym_addresses[std::move(symbol)] = binary.size() * sizeof(arch::opcode);
 	}
 
 	void generator::register_patch_addr(std::string&& symbol)
