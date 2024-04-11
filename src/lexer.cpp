@@ -21,28 +21,6 @@ namespace ccomp
 				{ "endp",   token_type::keyword_proc_end   }
 		};
 
-        const lexeme_set general_regs_names = {
-				"ar",
-				"dt",
-				"st",
-            	"r0",
-            	"r1",
-            	"r2",
-            	"r3",
-            	"r4",
-            	"r5",
-            	"r6",
-            	"r7",
-            	"r8",
-            	"r9",
-            	"ra",
-            	"rb",
-            	"rc",
-            	"rd",
-            	"re",
-            	"rf"
-        };
-
         const lexeme_set instructions = {
             	"add",
             	"sub",
@@ -84,9 +62,23 @@ namespace ccomp
 				{ ',', token_type::comma }
 		};
 
+		bool is_lexeme_reg(std::string_view lexeme)
+		{
+			if (lexeme == "ar" || lexeme == "dt" || lexeme == "st")
+				return true;
+
+			if (lexeme.empty() || lexeme.size() > 2)
+				return false;
+
+			// r + hex digit
+			return lexeme[0] == 'r' &&
+			     ((lexeme[1] >= '0' && lexeme[1] <= '9') ||
+				  (lexeme[1] >= 'a' && lexeme[1] <= 'f'));
+		}
+
         token_type map_token_type(std::string_view lexeme)
         {
-            if (general_regs_names.contains(lexeme))
+            if (is_lexeme_reg(lexeme))
                 return token_type::register_name;
 
             if (instructions.contains(lexeme))
