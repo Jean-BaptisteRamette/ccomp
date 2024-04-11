@@ -189,17 +189,17 @@ namespace ccomp
 
 		switch (make_operands_mask(add))
 		{
-			case arch::MASK_ADD_R8_R8:
+			case arch::MASK_R8_R8:
 				return arch::_8XY4(
 						operand2reg(add.operands[0]),
 						operand2reg(add.operands[1]));
 
-			case arch::MASK_ADD_R8_I8:
+			case arch::MASK_R8_I8:
 				return arch::_7XNN(
 						operand2reg(add.operands[0]),
 						operand2imm(add.operands[1]));
 
-			case arch::MASK_ADD_AR_R8:
+			case arch::MASK_AR_R8:
 				return arch::_FX1E(operand2reg(add.operands[1]));
 
 			default:
@@ -211,7 +211,7 @@ namespace ccomp
 	{
 		ensure_operands_count(sub, { 2 });
 
-		if (make_operands_mask(sub) == arch::MASK_SUB_R8_R8)
+		if (make_operands_mask(sub) == arch::MASK_R8_R8)
 			return arch::_8XY5(
 					operand2reg(sub.operands[0]),
 					operand2reg(sub.operands[1]));
@@ -223,7 +223,7 @@ namespace ccomp
 	{
 		ensure_operands_count(suba, { 2 });
 
-		if (make_operands_mask(suba) == arch::MASK_SUBA_R8_R8)
+		if (make_operands_mask(suba) == arch::MASK_R8_R8)
 			return arch::_8XY7(
 					operand2reg(suba.operands[0]),
 					operand2reg(suba.operands[1]));
@@ -235,7 +235,7 @@ namespace ccomp
 	{
 		ensure_operands_count(or_, { 2 });
 
-		if (make_operands_mask(or_) == arch::MASK_OR_R8_R8)
+		if (make_operands_mask(or_) == arch::MASK_R8_R8)
 			return arch::_8XY1(
 					operand2reg(or_.operands[0]),
 					operand2reg(or_.operands[1]));
@@ -247,7 +247,7 @@ namespace ccomp
 	{
 		ensure_operands_count(and_, { 2 });
 
-		if (make_operands_mask(and_) == arch::MASK_AND_R8_R8)
+		if (make_operands_mask(and_) == arch::MASK_R8_R8)
 			return arch::_8XY2(
 					operand2reg(and_.operands[0]),
 					operand2reg(and_.operands[1]));
@@ -259,7 +259,7 @@ namespace ccomp
 	{
 		ensure_operands_count(xor_, { 2 });
 
-		if (make_operands_mask(xor_) == arch::MASK_XOR_R8_R8)
+		if (make_operands_mask(xor_) == arch::MASK_R8_R8)
 			return arch::_8XY3(
 					operand2reg(xor_.operands[0]),
 					operand2reg(xor_.operands[1]));
@@ -273,10 +273,10 @@ namespace ccomp
 
 		switch (make_operands_mask(shr))
 		{
-			case arch::MASK_SHR_R8:
+			case arch::MASK_R8:
 				return arch::_8X06(operand2reg(shr.operands[0]));
 
-			case arch::MASK_SHR_R8_R8:
+			case arch::MASK_R8_R8:
 				return arch::_8XY6(
 						operand2reg(shr.operands[0]),
 						operand2reg(shr.operands[1]));
@@ -292,10 +292,10 @@ namespace ccomp
 
 		switch (make_operands_mask(shl))
 		{
-			case arch::MASK_SHL_R8:
+			case arch::MASK_R8:
 				return arch::_8X0E(operand2reg(shl.operands[0]));
 
-			case arch::MASK_SHL_R8_R8:
+			case arch::MASK_R8_R8:
 				return arch::_8XYE(
 						operand2reg(shl.operands[0]),
 						operand2reg(shl.operands[1]));
@@ -309,7 +309,7 @@ namespace ccomp
 	{
 		ensure_operands_count(rdump, { 1 });
 
-		if (make_operands_mask(rdump) == arch::MASK_RDUMP_R8)
+		if (make_operands_mask(rdump) == arch::MASK_R8)
 			return arch::_FX55(operand2reg(rdump.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rdump);
@@ -319,7 +319,7 @@ namespace ccomp
 	{
 		ensure_operands_count(rload, { 1 });
 
-		if (make_operands_mask(rload) == arch::MASK_RLOAD_R8)
+		if (make_operands_mask(rload) == arch::MASK_R8)
 			return arch::_FX65(operand2reg(rload.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rload);
@@ -331,14 +331,14 @@ namespace ccomp
 
 		switch (make_operands_mask(mov))
 		{
-			case arch::MASK_MOV_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
-			case arch::MASK_MOV_R8_I8: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
-			case arch::MASK_MOV_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
-			case arch::MASK_MOV_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
-			case arch::MASK_MOV_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
-			case arch::MASK_MOV_AR_R8: return arch::_FX29(operand2reg(mov.operands[1]));
+			case arch::MASK_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
+			case arch::MASK_R8_I8: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
+			case arch::MASK_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
+			case arch::MASK_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
+			case arch::MASK_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
+			case arch::MASK_AR_R8: return arch::_FX29(operand2reg(mov.operands[1]));
 
-			case arch::MASK_MOV_AR_I12:
+			case arch::MASK_AR_I12:
 			{
 				register_patch_location(mov.operands[1].operand.to_string());
 				return arch::_ANNN(0);
@@ -353,7 +353,7 @@ namespace ccomp
 	{
 		ensure_operands_count(draw, { 3 });
 
-		if (make_operands_mask(draw) == arch::MASK_DRAW_R8_R8_I8)
+		if (make_operands_mask(draw) == arch::MASK_R8_R8_I8)
 			return arch::_DXYN(
 					operand2reg(draw.operands[0]),
 					operand2reg(draw.operands[1]),
@@ -376,7 +376,7 @@ namespace ccomp
 	{
 		ensure_operands_count(rand, { 2 });
 
-		if (make_operands_mask(rand) == arch::MASK_RAND_R8_I8)
+		if (make_operands_mask(rand) == arch::MASK_R8_I8)
 			return arch::_CXNN(
 					operand2reg(rand.operands[0]),
 					operand2imm(rand.operands[1]));
@@ -388,7 +388,7 @@ namespace ccomp
 	{
 		ensure_operands_count(bcd, { 1 });
 
-		if (make_operands_mask(bcd) == arch::MASK_BCD_R8)
+		if (make_operands_mask(bcd) == arch::MASK_R8)
 			return arch::_FX33(operand2reg(bcd.operands[0]));
 
 		throw generator_exception::invalid_operand_type(bcd);
@@ -398,7 +398,7 @@ namespace ccomp
 	{
 		ensure_operands_count(wkey, { 1 });
 
-		if (make_operands_mask(wkey) == arch::MASK_WKEY_R8)
+		if (make_operands_mask(wkey) == arch::MASK_R8)
 			return arch::_FX0A(operand2reg(wkey.operands[0]));
 
 		throw generator_exception::invalid_operand_type(wkey);
@@ -408,7 +408,7 @@ namespace ccomp
 	{
 		ensure_operands_count(ske, { 1 });
 
-		if (make_operands_mask(ske) == arch::MASK_SKE_R8)
+		if (make_operands_mask(ske) == arch::MASK_R8)
 			return arch::_EX9E(operand2reg(ske.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ske);
@@ -418,7 +418,7 @@ namespace ccomp
 	{
 		ensure_operands_count(skne, { 1 });
 
-		if (make_operands_mask(skne) == arch::MASK_SKNE_R8)
+		if (make_operands_mask(skne) == arch::MASK_R8)
 			return arch::_EXA1(operand2reg(skne.operands[0]));
 
 		throw generator_exception::invalid_operand_type(skne);
@@ -440,7 +440,7 @@ namespace ccomp
 
 		switch (make_operands_mask(jmp))
 		{
-			case arch::MASK_JMP_I12:
+			case arch::MASK_I12:
 				if (jmp.operands[0].is_label())
 				{
 					// jmp @label
@@ -450,7 +450,7 @@ namespace ccomp
 				}
 
 			// jmp [offset]
-			case arch::MASK_JMP_INDIRECT_I12:
+			case arch::MASK_INDIRECT_I12:
 				return arch::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
 
 			default:
@@ -464,7 +464,7 @@ namespace ccomp
 
 		switch (make_operands_mask(call))
 		{
-			case arch::MASK_CALL_I12:
+			case arch::MASK_I12:
 				if (call.operands[0].is_procedure())
 				{
 					// call $function
@@ -486,12 +486,12 @@ namespace ccomp
 
 		switch (make_operands_mask(se))
 		{
-			case arch::MASK_SE_R8_R8:
+			case arch::MASK_R8_R8:
 				return arch::_5XY0(
 						operand2reg(se.operands[0]),
 						operand2reg(se.operands[1]));
 
-			case arch::MASK_SE_R8_I8:
+			case arch::MASK_R8_I8:
 				return arch::_3XNN(
 						operand2reg(se.operands[0]),
 						operand2imm(se.operands[1]));
@@ -507,12 +507,12 @@ namespace ccomp
 
 		switch (make_operands_mask(sne))
 		{
-			case arch::MASK_SNE_R8_R8:
+			case arch::MASK_R8_R8:
 				return arch::_9XY0(
 						operand2reg(sne.operands[0]),
 						operand2reg(sne.operands[1]));
 
-			case arch::MASK_SNE_R8_I8:
+			case arch::MASK_R8_I8:
 				return arch::_4XNN(
 						operand2reg(sne.operands[0]),
 						operand2imm(sne.operands[1]));
@@ -526,7 +526,7 @@ namespace ccomp
 	{
 		ensure_operands_count(inc, { 1 });
 
-		if (make_operands_mask(inc) == arch::MASK_INC_R8)
+		if (make_operands_mask(inc) == arch::MASK_R8)
 			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
 
 		throw generator_exception::invalid_operand_type(inc);
@@ -536,7 +536,7 @@ namespace ccomp
 	{
 		ensure_operands_count(swp, { 2 });
 
-		if (make_operands_mask(swp) == arch::MASK_SWP_R8_R8)
+		if (make_operands_mask(swp) == arch::MASK_R8_R8)
 		{
 			std::vector<arch::opcode> opcodes;
 

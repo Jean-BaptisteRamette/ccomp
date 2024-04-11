@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 		arch::opcode opcode(std::string&& instruction_str)
 		{
 			std::string program = ".main: " + instruction_str;
-			return try_codegen(std::move(program))[1];
+			return try_codegen(std::move(program))[0];
 		}
 	}
 
@@ -185,7 +185,6 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 	{
 		const auto code = details::try_codegen(".main:\n swp r0, r1");
 		const auto expected_code = { 0x8013, 0x8103, 0x8013 };
-
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 

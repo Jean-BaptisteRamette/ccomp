@@ -23,10 +23,7 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 	BOOST_AUTO_TEST_CASE(check_invalid_immediate_format)
 	{
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, 0x100"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 0x1000"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x1000"), generator_exception::invalid_immediate_format);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp [0x1000]"), generator_exception::invalid_immediate_format);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0x1000"), generator_exception::invalid_immediate_format);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n se r0, 0x100"), generator_exception::invalid_immediate_format);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne r0, 0x100"), generator_exception::invalid_immediate_format);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n add r0, 0x100"), generator_exception::invalid_immediate_format);
@@ -118,6 +115,7 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, @main"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, ar"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov dt, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r1, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp r0"), generator_exception::invalid_operand_type);
