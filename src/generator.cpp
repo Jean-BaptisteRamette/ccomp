@@ -1,10 +1,20 @@
 #include <span>
+
 #include <chasm/generator.hpp>
+#include <chasm/options.hpp>
 #include <chasm/arch.hpp>
+#include <chasm/log.hpp>
 
 
 namespace chasm
 {
+	void warn_super_instruction(const ast::instruction_statement& instruction)
+	{
+		log::warn("Instruction {} at {} is a SuperCHIP-8 instruction but flag \"super\" was not provided.",
+				  instruction.mnemonic.to_string(),
+				  to_string(instruction.mnemonic.source_location));
+	}
+
 	[[nodiscard]]
 	arch::reg operand2reg(const ast::instruction_operand& operand)
 	{
@@ -96,6 +106,14 @@ namespace chasm
 		{
 			auto encoder = pseudo_mnemonic_encoders.at(mnemonic);
 			binary.append_range((this->*encoder)(instruction));
+		}
+		else if (super_mnemonic_encoders.contains(mnemonic))
+		{
+			if (!options::has_flag("super"))
+				warn_super_instruction(instruction);
+
+			auto encoder = super_mnemonic_encoders.at(mnemonic);
+			binary.push_back((this->*encoder)(instruction));
 		}
 	}
 
@@ -353,10 +371,16 @@ namespace chasm
 		ensure_operands_count(draw, { 3 });
 
 		if (make_operands_mask(draw) == arch::MASK_R8_R8_I8)
-			return arch::_DXYN(
-					operand2reg(draw.operands[0]),
-					operand2reg(draw.operands[1]),
-					operand2imm(draw.operands[2], arch::fmt_imm4));
+		{
+			const auto regX = operand2reg(draw.operands[0]);
+			const auto regY = operand2reg(draw.operands[1]);
+			const auto imm4 = operand2imm(draw.operands[2], arch::fmt_imm4);
+
+			if (imm4 == 0 && !options::has_flag("super"))
+				warn_super_instruction(draw);
+
+			return arch::_DXYN(regX, regY, imm4);
+		}
 
 		throw generator_exception::invalid_operand_type(draw);
 	}
@@ -364,11 +388,7 @@ namespace chasm
 	arch::opcode generator::encode_cls(const ast::instruction_statement& cls)
 	{
 		ensure_operands_count(cls, { 0 });
-
-		if (!cls.operands.empty())
-			throw generator_exception::invalid_operand_type(cls);
-
-		return arch::_00E0();
+		return 0x00E0;
 	}
 
 	arch::opcode generator::encode_rand(const ast::instruction_statement& rand)
@@ -426,11 +446,7 @@ namespace chasm
 	arch::opcode generator::encode_ret(const ast::instruction_statement& ret)
 	{
 		ensure_operands_count(ret, { 0 });
-
-		if (!ret.operands.empty())
-			throw generator_exception::invalid_operand_type(ret);
-
-		return arch::_00EE();
+		return 0x00EE;
 	}
 
 	arch::opcode generator::encode_jmp(const ast::instruction_statement& jmp)
@@ -529,6 +545,46 @@ namespace chasm
 			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
 
 		throw generator_exception::invalid_operand_type(inc);
+	}
+
+	arch::opcode generator::encode_exit(const ast::instruction_statement& exit)
+	{
+		ensure_operands_count(exit, { 0 });
+		return 0x00FD;
+	}
+
+	arch::opcode generator::encode_scrd(const ast::instruction_statement& scrd)
+	{
+		ensure_operands_count(scrd, { 1 });
+
+		if (make_operands_mask(scrd) == arch::MASK_I8)
+			return arch::_00CN(operand2imm(scrd.operands[0], arch::fmt_imm4));
+
+		throw generator_exception::invalid_operand_type(scrd);
+	}
+
+	arch::opcode generator::encode_scrl(const ast::instruction_statement& scrl)
+	{
+		ensure_operands_count(scrl, { 0 });
+		return 0x00FC;
+	}
+
+	arch::opcode generator::encode_scrr(const ast::instruction_statement& scrr)
+	{
+		ensure_operands_count(scrr, { 0 });
+		return 0x00FB;
+	}
+
+	arch::opcode generator::encode_high(const ast::instruction_statement& high)
+	{
+		ensure_operands_count(high, { 0 });
+		return 0x00FF;
+	}
+
+	arch::opcode generator::encode_low(const ast::instruction_statement& low)
+	{
+		ensure_operands_count(low, { 0 });
+		return 0x00FE;
 	}
 
 	std::vector<arch::opcode> generator::encode_swp(const ast::instruction_statement& swp)

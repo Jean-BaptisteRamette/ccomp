@@ -1,8 +1,9 @@
 #include <vector>
 
-#include <chasm/command_line.hpp>
+#include <chasm/options.hpp>
 #include <chasm/parser.hpp>
 #include <chasm/lexer.hpp>
+#include <chasm/arch.hpp>
 #include <chasm/log.hpp>
 
 
@@ -14,28 +15,44 @@ std::string program_buffer(const std::filesystem::path& path)
 	std::ifstream is(path);
 
 	if (!is)
-		throw std::runtime_error("Could not open source file " + path.string());
+		throw std::runtime_error("Could not open source file " + path.string() + " for reading");
 
 	return { std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>() };
 }
 
+void write_to_file(const std::filesystem::path& file, const std::vector<chasm::arch::opcode>& binary)
+{
+	std::ofstream os(file, std::ios::binary);
+
+	if (!os)
+		throw std::runtime_error("Could not open file " + file.string() + " for writing");
+
+	const auto size = binary.size() * sizeof(chasm::arch::opcode);
+
+	if (size > chasm::arch::MAX_PROGRAM_SIZE)
+		chasm::log::warn("CHIP-8 programs are generally up to {} bytes but input file assembled to {} bytes.",
+						 chasm::arch::MAX_PROGRAM_SIZE,
+						 size);
+
+	os.write(reinterpret_cast<const char*>(binary.data()), static_cast<std::streamsize>(size));
+}
 
 int main(int argc, char** argv)
 {
-    chasm::command_line::register_args(argc, argv);
+	chasm::options::parse(argc, argv);
 
-    if (!chasm::command_line::has_flag("-in"))
+    if (!chasm::options::has_option("in"))
     {
         chasm::log::error("No input file");
         return EXIT_FAILURE;
     }
 
-    const auto input_file = chasm::command_line::get_flag("-in");
-    const auto output_file = chasm::command_line::get_flag_or("-out", "out.c8c");
+    const auto ifile = chasm::options::option("in");
+    const auto ofile = chasm::options::option_or("out", "out.c8c");
 
 	try
 	{
-		auto lexer = chasm::lexer(program_buffer(input_file));
+		auto lexer  = chasm::lexer(program_buffer(ifile));
 		auto tokens = lexer.enumerate_tokens();
 
 		if (tokens.empty())
@@ -48,8 +65,9 @@ int main(int argc, char** argv)
 
 		auto ast = parser.make_tree();
 		const auto binary = ast.generate();
-
-	} catch (std::runtime_error& error)
+		write_to_file(ofile, binary);
+	}
+	catch (std::runtime_error& error)
 	{
 		chasm::log::error(error.what());
 		return EXIT_FAILURE;

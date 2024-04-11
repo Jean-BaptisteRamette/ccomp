@@ -61,6 +61,13 @@ namespace chasm
 		[[nodiscard]] arch::opcode encode_sne(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_inc(const ast::instruction_statement&);
 
+		[[nodiscard]] arch::opcode encode_exit(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_scrd(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_scrl(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_scrr(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_high(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_low(const ast::instruction_statement&);
+
 		[[nodiscard]] std::vector<arch::opcode> encode_swp(const ast::instruction_statement&);
 
 		void post_visit();
@@ -114,8 +121,18 @@ namespace chasm
 				{ "call", &generator::encode_call },
 				{ "se", &generator::encode_se },
 				{ "sne", &generator::encode_sne },
-				{ "inc", &generator::encode_inc },
+				{ "inc", &generator::encode_inc }
 		};
+
+		const std::unordered_map<std::string_view, encoder> super_mnemonic_encoders = {
+				{ "exit", &generator::encode_exit },
+				{ "scrd", &generator::encode_scrd },
+				{ "scrl", &generator::encode_scrl },
+				{ "scrr", &generator::encode_scrr },
+				{ "high", &generator::encode_high },
+				{ "low", &generator::encode_low },
+		};
+
 
 		const std::unordered_map<std::string_view, pseudo_encoder> pseudo_mnemonic_encoders = {
 				{ "swp", &generator::encode_swp }

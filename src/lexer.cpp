@@ -46,7 +46,15 @@ namespace chasm
             	"jmp",
             	"call",
 				"se",
-				"sne"
+				"sne",
+
+				// SuperChip-48 instructions
+				"exit",
+				"scrd",
+				"scrl",
+				"scrr",
+				"high",
+				"low"
         };
 
 		const std::unordered_map<char, token_type> special_characters = {

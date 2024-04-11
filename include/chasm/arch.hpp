@@ -53,6 +53,7 @@ namespace chasm::arch
 
 	constexpr auto BITSHIFT_OP_MASK = std::bit_width(static_cast<uint8_t>(operand_type::address_indirect));
 
+	constexpr size_type MAX_PROGRAM_SIZE = 0x1000 - 0x200;
 	constexpr auto MAX_SPRITE_ROWS = 15;
 
 	struct sprite
@@ -96,6 +97,7 @@ namespace chasm::arch
 	constexpr auto MASK_ST_R8    = make_operands_mask({ operand_type::reg_st, operand_type::reg_rx });
 	constexpr auto MASK_R8_DT    = make_operands_mask({ operand_type::reg_rx, operand_type::reg_dt });
 	constexpr auto MASK_R8_R8_I8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::imm8 });
+	constexpr auto MASK_I8       = make_operands_mask({ operand_type::imm8 });
 	constexpr auto MASK_I12      = make_operands_mask({ operand_type::address });
 	constexpr auto MASK_INDIRECT_I12 = make_operands_mask({ operand_type::address_indirect });
 
@@ -107,8 +109,7 @@ namespace chasm::arch
 #define GET_OVERLOAD(_1, _2, _3, _4, OVERLOAD, ...) OVERLOAD
 #define ENCODE(...) EXPAND(GET_OVERLOAD(__VA_ARGS__, ENCODE_dXYN, ENCODE_dXNN, ENCODE_dNNN)(__VA_ARGS__))
 
-	constexpr opcode _00E0() { return 0x00E0; }
-	constexpr opcode _00EE() { return 0x00EE; }
+	constexpr opcode _00CN(imm imm4) { return ENCODE(0, 0xC, imm4); }
 
 	constexpr opcode _5XY0(reg rx, reg ry) { return ENCODE(0x5, rx, ry, 0x0); }
 	constexpr opcode _8XY0(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0); }
