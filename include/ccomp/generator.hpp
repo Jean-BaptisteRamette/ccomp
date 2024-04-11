@@ -34,9 +34,8 @@ namespace ccomp
 		void register_constant(std::string&& symbol, arch::imm value);
 		void register_sprite(std::string&& symbol, const arch::sprite& sprite);
 		void register_symbol_addr(std::string symbol);
-		void register_patch_addr(std::string&& symbol);
+		void register_patch_location(std::string&& symbol);
 
-		// TODO: swp
 		[[nodiscard]] arch::opcode encode_add(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_sub(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_suba(const ast::instruction_statement&);
@@ -62,6 +61,8 @@ namespace ccomp
 		[[nodiscard]] arch::opcode encode_sne(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_inc(const ast::instruction_statement&);
 
+		[[nodiscard]] std::vector<arch::opcode> encode_swp(const ast::instruction_statement&);
+
 		void post_visit();
 
 		[[nodiscard]] arch::imm operand2imm(const token& token,
@@ -72,14 +73,14 @@ namespace ccomp
 
 	private:
 
-		struct addr_patch
+		struct address_patch
 		{
-			arch::addr addr;
+			size_t location;
 			std::string sym;
 		};
 
 		std::vector<arch::opcode> binary;
-		std::vector<addr_patch> patches;
+		std::vector<address_patch> patches;
 		std::unordered_map<std::string, arch::addr> sym_addresses;
 		std::unordered_map<std::string, arch::imm> constants;
 		std::unordered_map<std::string, arch::sprite> sprites;
@@ -87,6 +88,7 @@ namespace ccomp
 		std::string current_proc_name;
 
 		typedef arch::opcode(generator::*encoder)(const ast::instruction_statement&);
+		typedef std::vector<arch::opcode>(generator::*pseudo_encoder)(const ast::instruction_statement&);
 
 		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {
 				{ "add", &generator::encode_add },
@@ -113,6 +115,10 @@ namespace ccomp
 				{ "se", &generator::encode_se },
 				{ "sne", &generator::encode_sne },
 				{ "inc", &generator::encode_inc },
+		};
+
+		const std::unordered_map<std::string_view, pseudo_encoder> pseudo_mnemonic_encoders = {
+				{ "swp", &generator::encode_swp }
 		};
 	};
 

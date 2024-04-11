@@ -181,9 +181,12 @@ BOOST_AUTO_TEST_SUITE(machine_code_generation)
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
-	BOOST_AUTO_TEST_CASE(check_pseudo_instructions)
+	BOOST_AUTO_TEST_CASE(check_pseudo_instruction_swap)
 	{
+		const auto code = details::try_codegen(".main:\n swp r0, r1");
+		const auto expected_code = { 0x8013, 0x8103, 0x8013 };
 
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
 #undef BOOST_RANGE_EQUAL

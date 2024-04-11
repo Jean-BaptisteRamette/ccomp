@@ -248,46 +248,46 @@ bcd re  ;; stores BCD representation of re register with the MSB at address I
 
 Reference for the instructions mnemonics and what machine code they produce once assembled
 
-|    mnemonics     |  opcodes   |
-|:----------------:|:----------:|
-|    mov rX, NN    |    6XNN    |
-|    mov rX, rY    |    8XY0    |
-|   mov ar, NNN    |    ANNN    |
-|    mov ar, rX    |    FX29    |
-|    mov dt, rX    |    FX15    |
-|    mov st, rX    |    FX18    |
-|    mov rX, dt    |    FX07    |
-|    swp rX, rD    | micro-code |
-|     jmp NNN      |    1NNN    |
-|    jmp @label    |    1NNN    |
-|    jmp [NNN]     |    BNNN    |
-| call $subroutine |    2NNN    |
-|       ret        |    00EE    |
-|    se rX, NN     |    3XNN    |
-|    sne rX, NN    |    4XNN    |
-|    se rX, rY     |    5XY0    |
-|    sne rX, rY    |    9XY0    |
-|    add rX, rY    |    8XY4    |
-|    add rX, NN    |    7XNN    |
-|    add ar, rX    |    FX1E    |
-|    sub rX, rY    |    8XY5    |
-|   suba rX, rY    |    8XY7    |
-|    or rX, rY     |    8XY1    |
-|    and rX, rY    |    8XY2    |
-|    xor rX, rY    |    8XY3    |
-|      shr rX      |    8XYE    |
-|      shl rX      |    8XY6    |
-|    shr rX, rY    |    8XYE    |
-|    shl rX, rY    |    8XY6    |
-|     rdump rX     |    FX55    |
-|     rload rX     |    FX65    |
-|   rand rX, NN    |    CXNN    |
-|      bcd rX      |    FX33    |
-|     wkey rX      |    FX0A    |
-|      ske rX      |    EX9E    |
-|     skne rX      |    EXA1    |
-|  draw rX, rY, N  |    DXYN    |
-|       cls        |    00E0    |
+|    mnemonics     |      opcodes       |
+|:----------------:|:------------------:|
+|    mov rX, NN    |        6XNN        |
+|    mov rX, rY    |        8XY0        |
+|   mov ar, NNN    |        ANNN        |
+|    mov ar, rX    |        FX29        |
+|    mov dt, rX    |        FX15        |
+|    mov st, rX    |        FX18        |
+|    mov rX, dt    |        FX07        |
+|    swp rX, rD    | pseudo-instruction |
+|     jmp NNN      |        1NNN        |
+|    jmp @label    |        1NNN        |
+|    jmp [NNN]     |        BNNN        |
+| call $subroutine |        2NNN        |
+|       ret        |        00EE        |
+|    se rX, NN     |        3XNN        |
+|    sne rX, NN    |        4XNN        |
+|    se rX, rY     |        5XY0        |
+|    sne rX, rY    |        9XY0        |
+|    add rX, rY    |        8XY4        |
+|    add rX, NN    |        7XNN        |
+|    add ar, rX    |        FX1E        |
+|    sub rX, rY    |        8XY5        |
+|   suba rX, rY    |        8XY7        |
+|    or rX, rY     |        8XY1        |
+|    and rX, rY    |        8XY2        |
+|    xor rX, rY    |        8XY3        |
+|      shr rX      |        8XYE        |
+|      shl rX      |        8XY6        |
+|    shr rX, rY    |        8XYE        |
+|    shl rX, rY    |        8XY6        |
+|     rdump rX     |        FX55        |
+|     rload rX     |        FX65        |
+|   rand rX, NN    |        CXNN        |
+|      bcd rX      |        FX33        |
+|     wkey rX      |        FX0A        |
+|      ske rX      |        EX9E        |
+|     skne rX      |        EXA1        |
+|  draw rX, rY, N  |        DXYN        |
+|       cls        |        00E0        |
 
 > Note: `swp rX, rD` is a chip8-asm extension generating the appropriate code needed to swap 2 registers.
 

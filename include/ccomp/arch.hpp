@@ -122,6 +122,7 @@ namespace ccomp::arch
 	constexpr auto MASK_JMP_I12 = make_operands_mask({ operand_type::address });
 	constexpr auto MASK_JMP_INDIRECT_I12 = make_operands_mask({ operand_type::address_indirect });
 	constexpr auto MASK_CALL_I12 = make_operands_mask({ operand_type::address });
+	constexpr auto MASK_SWP_R8_R8 = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx});
 
 #define ENCODE_dXYN(id, rx, ry, N) ((id << 12u) | (rx << 8u) | (ry << 4u) | N)
 #define ENCODE_dXNN(id, rx, NN)    ((id << 12u) | (rx << 8u) | NN)

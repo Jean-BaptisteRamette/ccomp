@@ -68,8 +68,8 @@ namespace ccomp
 		//
 		// Apply jmp/call patches that could not be encoded directly
 		//
-		for (const auto& [addr, sym] : patches)
-			binary[addr] |= sym_addresses[sym];
+		for (const auto& [location, sym] : patches)
+			binary[location] |= sym_addresses[sym];
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
@@ -87,9 +87,17 @@ namespace ccomp
 	void generator::visit(const ast::instruction_statement& instruction)
 	{
 		const auto mnemonic = instruction.mnemonic.to_string();
-		auto encoder = mnemonic_encoders.at(mnemonic);
 
-		binary.push_back((this->*encoder)(instruction));
+		if (mnemonic_encoders.contains(mnemonic))
+		{
+			auto encoder = mnemonic_encoders.at(mnemonic);
+			binary.push_back((this->*encoder)(instruction));
+		}
+		else if (pseudo_mnemonic_encoders.contains(mnemonic))
+		{
+			auto encoder = pseudo_mnemonic_encoders.at(mnemonic);
+			binary.append_range((this->*encoder)(instruction));
+		}
 	}
 
 	void generator::visit(const ast::define_statement& define)
@@ -140,10 +148,10 @@ namespace ccomp
 		sym_addresses[std::move(symbol)] = binary.size() * sizeof(arch::opcode);
 	}
 
-	void generator::register_patch_addr(std::string&& symbol)
+	void generator::register_patch_location(std::string&& symbol)
 	{
 		patches.push_back({
-			.addr = static_cast<arch::addr>(binary.size()),
+			.location = static_cast<arch::addr>(binary.size()),
 			.sym = std::move(symbol)
 		});
 	}
@@ -332,7 +340,7 @@ namespace ccomp
 
 			case arch::MASK_MOV_AR_I12:
 			{
-				register_patch_addr(mov.operands[1].operand.to_string());
+				register_patch_location(mov.operands[1].operand.to_string());
 				return arch::_ANNN(0);
 			}
 
@@ -436,7 +444,7 @@ namespace ccomp
 				if (jmp.operands[0].is_label())
 				{
 					// jmp @label
-					register_patch_addr(current_proc_name + "." + jmp.operands[0].operand.to_string());
+					register_patch_location(current_proc_name + "." + jmp.operands[0].operand.to_string());
 
 					return arch::_1NNN(0);
 				}
@@ -460,7 +468,7 @@ namespace ccomp
 				if (call.operands[0].is_procedure())
 				{
 					// call $function
-					register_patch_addr(call.operands[0].operand.to_string());
+					register_patch_location(call.operands[0].operand.to_string());
 
 					return arch::_2NNN(0);
 				}
@@ -522,5 +530,31 @@ namespace ccomp
 			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
 
 		throw generator_exception::invalid_operand_type(inc);
+	}
+
+	std::vector<arch::opcode> generator::encode_swp(const ast::instruction_statement& swp)
+	{
+		ensure_operands_count(swp, { 2 });
+
+		if (make_operands_mask(swp) == arch::MASK_SWP_R8_R8)
+		{
+			std::vector<arch::opcode> opcodes;
+
+			// We can use the xor swapping trick to avoid clobbering a temporary register
+			//
+			// xor rX, rY
+			// xor rY, rX
+			// xor rX, rY
+			const auto rX = operand2reg(swp.operands[0]);
+			const auto rY = operand2reg(swp.operands[1]);
+
+			opcodes.push_back(arch::_8XY3(rX, rY));
+			opcodes.push_back(arch::_8XY3(rY, rX));
+			opcodes.push_back(arch::_8XY3(rX, rY));
+
+			return opcodes;
+		}
+
+		throw generator_exception::invalid_operand_type(swp);
 	}
 }
