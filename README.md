@@ -1,22 +1,28 @@
 # chip8-asm
-### _Custom assembly language for the chip-8 virtual machine_
+### _Custom assembly language for the chip-8 and SuperChip-48 virtual machines_
 
-This project is a work-in-progress and is not usable yet !
+This project is an assembler generating code according to the CHIP-8 ISA.
+It allows programmer to write code easily, and can be used as a way to test their emulators.
 
 ## Summary
-- I. Features
-- II. What does it look like ?
-- III. Language specifications
-- IV. Instruction reference
+- [I. Features](#i---features)
+- [II. What does it look like ?](#ii---example-program)
+- [III. Command line options](#iii---command-line-options)
+- [IV. Language specifications](#iv---language-specifications)
+- [V. Instruction reference](#v---mnemonics-and-opcodes-mapping)
 
 ## I - Features
 
 - Nice and intuitive syntax for easy writing
-- Full ISA is supported
+- Full ISA support
+- Support for SuperCHIP-48 extensions
+- Scoped symbols
 - Constant declarations
 - Multiple numerical bases supported
-- Syntactic sugar and custom instructions
-- Inline opcodes support
+- Syntactic sugar and pseudo-instructions
+- Inline opcodes support for unsafe code
+- Bitshift instructions support both single/two operand(s)
+- Easily modifiable syntax through source code
 
 
 ## II - Example program
@@ -26,20 +32,24 @@ This project is a work-in-progress and is not usable yet !
     ;; TODO
 ```
 
-## III - Language Specifications
+## III - Command line options
 
-1. Comments
-2. Numeric literals
-3. Registers
-4. Arithmetical and logical operations
-5. Control flow
-6. Procedures
-7. Constants
-8. General purpose register manipulation
-9. Special purpose register manipulation
-10. Inline opcodes
-11. I/O
-12. Others
+
+
+## IV - Language Specifications
+
+1. [Comments](#1-comments)
+2. [Numeric literals](#2-numeric-literals)
+3. [Registers](#3-registers)
+4. [Arithmetical and logical operations](#4-arithmetical-and-logical-operations)
+5. [Control flow](#5-control-flow)
+6. [Procedures](#6-procedures)
+7. [Constants](#7-constants)
+8. [General purpose register manipulation](#8-general-purpose-registers-manipulation)
+9. [Special purpose register manipulation](#9-special-purpose-registers-manipulation)
+10. [Inline opcodes](#10-inline-opcodes)
+11. [I/O](#11-io)
+12. [Others](#12-others)
 
 ### 1. Comments
 Use the `;;` characters to write comments
@@ -93,7 +103,6 @@ You are quite probably going to need to jump or conditionally execute different 
 #### Unconditional jumps
 ```asm
 jmp [0x32]      ;; jumps to the address (r0 + 0x32)
-jmp 0x32        ;; jumps to the address 0x32
 jmp @my_label   ;; jumps to label
 ```
 
@@ -211,11 +220,12 @@ mov rb, dt    ;; sets rb to dt
 chip8-asm allows the programmer to put inline raw opcodes in the source file using the raw keyword:
 
 ```asm  
-define OPCODE 0x00E0  
-  
 .label:  
+    define OPCODE 0x00E0  
     raw(OPCODE)  ;; clear the screen  
 ```
+
+This is particularly useful if you want to generate code that is not allowed by the assembler
 
 ### 11. I/O
 
@@ -244,7 +254,7 @@ Binary-coded-decimal
 bcd re  ;; stores BCD representation of re register with the MSB at address I  
 ```  
 
-## IV - Mnemonics and opcodes mapping
+## V - Mnemonics and opcodes mapping
 
 Reference for the instructions mnemonics and what machine code they produce once assembled
 
@@ -258,7 +268,6 @@ Reference for the instructions mnemonics and what machine code they produce once
 |    mov st, rX    |        FX18        |
 |    mov rX, dt    |        FX07        |
 |    swp rX, rD    | pseudo-instruction |
-|     jmp NNN      |        1NNN        |
 |    jmp @label    |        1NNN        |
 |    jmp [NNN]     |        BNNN        |
 | call $subroutine |        2NNN        |
