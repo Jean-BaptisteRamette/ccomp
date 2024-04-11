@@ -1,7 +1,7 @@
-#include <ccomp/command_line.hpp>
+#include <chasm/command_line.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
     std::span<char*> command_line::args;
 
@@ -47,4 +47,3 @@ namespace ccomp
     }
 
 }
-

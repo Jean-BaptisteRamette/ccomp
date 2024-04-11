@@ -1,8 +1,8 @@
-#ifndef CCOMP_VISITOR_HPP
-#define CCOMP_VISITOR_HPP
+#ifndef CHASM_VISITOR_HPP
+#define CHASM_VISITOR_HPP
 
 
-namespace ccomp::ast
+namespace chasm::ast
 {
 	struct procedure_statement;
 	struct instruction_statement;
@@ -23,4 +23,4 @@ namespace ccomp::ast
 }
 
 
-#endif //CCOMP_VISITOR_HPP
+#endif //chasm_VISITOR_HPP

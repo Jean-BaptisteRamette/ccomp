@@ -6,7 +6,7 @@ find_package(Boost 1.8.0 REQUIRED COMPONENTS unit_test_framework)
 set(CCOMP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include/)
 set(CCOMP_SOURCE_DIR ${PROJECT_SOURCE_DIR}/src/)
 
-file(GLOB INCLUDES ${CCOMP_INCLUDE_DIR}/ccomp/*.hpp)
+file(GLOB INCLUDES ${CCOMP_INCLUDE_DIR}/chasm/*.hpp)
 file(GLOB SOURCES ${CCOMP_SOURCE_DIR}/*.cpp)
 
 list(REMOVE_ITEM SOURCES ${CCOMP_SOURCE_DIR}/main.cpp)

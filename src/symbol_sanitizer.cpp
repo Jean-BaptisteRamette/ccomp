@@ -1,9 +1,9 @@
-#include <ccomp/symbol_sanitizer.hpp>
-#include <ccomp/statements.hpp>
+#include <chasm/symbol_sanitizer.hpp>
+#include <chasm/statements.hpp>
 #include <format>
 
 
-namespace ccomp
+namespace chasm
 {
 	void symbol_sanitizer::traverse(const ast::abstract_tree& ast)
 	{

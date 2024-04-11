@@ -1,11 +1,11 @@
-#ifndef CCOMP_SOURCE_LOCATION_HPP
-#define CCOMP_SOURCE_LOCATION_HPP
+#ifndef CHASM_SOURCE_LOCATION_HPP
+#define CHASM_SOURCE_LOCATION_HPP
 
 #include <string>
 #include <format>
 
 
-namespace ccomp
+namespace chasm
 {
 	struct source_location
 	{
@@ -38,4 +38,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_SOURCE_LOCATION_HPP
+#endif //CHASM_SOURCE_LOCATION_HPP

@@ -1,11 +1,11 @@
 #include <boost/test/unit_test.hpp>
-#include <ccomp/lexer.hpp>
-#include <ccomp/parser.hpp>
+#include <chasm/lexer.hpp>
+#include <chasm/parser.hpp>
 
 
 BOOST_AUTO_TEST_SUITE(machine_code_generation)
 
-	using namespace ccomp;
+	using namespace chasm;
 
 	namespace details
 	{

@@ -1,12 +1,12 @@
 #include <boost/test/unit_test.hpp>
-#include <ccomp/lexer.hpp>
-#include <ccomp/parser.hpp>
-#include <ccomp/generator.hpp>
+#include <chasm/lexer.hpp>
+#include <chasm/parser.hpp>
+#include <chasm/generator.hpp>
 
 
 BOOST_AUTO_TEST_SUITE(instruction_operands)
 
-	using namespace ccomp;
+	using namespace chasm;
 
 	namespace details
 	{

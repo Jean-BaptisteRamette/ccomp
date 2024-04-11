@@ -1,9 +1,9 @@
-#include <ccomp/arch.hpp>
-#include <ccomp/parser.hpp>
-#include <ccomp/log.hpp>
+#include <chasm/arch.hpp>
+#include <chasm/parser.hpp>
+#include <chasm/log.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
 
     parser::parser(std::vector<token> &&tokens_list)

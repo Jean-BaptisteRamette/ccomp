@@ -1,9 +1,9 @@
-#include <ccomp/ast.hpp>
-#include <ccomp/symbol_sanitizer.hpp>
-#include <ccomp/generator.hpp>
+#include <chasm/ast.hpp>
+#include <chasm/symbol_sanitizer.hpp>
+#include <chasm/generator.hpp>
 
 
-namespace ccomp::ast
+namespace chasm::ast
 {
 	abstract_tree::abstract_tree(std::vector<ast::statement> &&branches)
 		: statements(std::move(branches))

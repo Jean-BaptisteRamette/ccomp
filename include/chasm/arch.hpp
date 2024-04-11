@@ -1,11 +1,11 @@
-#ifndef CCOMP_ARCH_HPP
-#define CCOMP_ARCH_HPP
+#ifndef CHASM_ARCH_HPP
+#define CHASM_ARCH_HPP
 
 
 #include <array>
 
 
-namespace ccomp::arch
+namespace chasm::arch
 {
 	using size_type = uint16_t;
 	using opcode = size_type;
@@ -153,4 +153,4 @@ namespace ccomp::arch
 	constexpr opcode _DXYN(reg rx, reg ry, imm imm4) { return ENCODE(0xD, rx, ry, imm4); }
 }
 
-#endif //CCOMP_ARCH_HPP
+#endif //CHASM_ARCH_HPP

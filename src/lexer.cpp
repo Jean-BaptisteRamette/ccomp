@@ -2,11 +2,11 @@
 #include <unordered_map>
 #include <fstream>
 
-#include <ccomp/lexer.hpp>
-#include <ccomp/log.hpp>
+#include <chasm/lexer.hpp>
+#include <chasm/log.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
     namespace
     {

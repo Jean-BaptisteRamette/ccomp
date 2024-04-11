@@ -1,4 +1,4 @@
-# chip8-asm
+# chasm
 ### _Custom assembly language for the chip-8 and SuperChip-48 virtual machines_
 
 This project is an assembler generating code according to the CHIP-8 ISA.
@@ -34,7 +34,7 @@ It allows programmer to write code easily, and can be used as a way to test thei
 
 ## III - Command line options
 
-
+TODO
 
 ## IV - Language Specifications
 
@@ -58,7 +58,7 @@ Use the `;;` characters to write comments
 ;; this text will be ignored !
 ```
 ### 2. Numeric literals
-There are multiple ways to write literals in chip8-asm, as all usual bases are supported:
+There are multiple ways to write literals in chasm, as all usual bases are supported:
 ```c++
 255                ;; decimal
 0b11111111         ;; binary
@@ -74,7 +74,7 @@ You can also use ascii to represent integral values
 
 ### 3. Registers
 
-The chip-8 has 16 registers, one byte each. In chip8-asm, they are named from `r0` to `rf`. However, please be careful when using the `rf` register, as it is used by some instruction as an indicator.
+The chip-8 has 16 registers, one byte each. In chasm, they are named from `r0` to `rf`. However, please be careful when using the `rf` register, as it is used by some instruction as an indicator.
 
 ### 4. Arithmetical and logical operations
 The chip-8 only defines addition and subtraction instructions, as well as the regular bitwise operations
@@ -142,10 +142,10 @@ To define code location to which the processor can jump, you need to define labe
 .label_name:
 	...code...	
 ``` 
-There is a reserved label name called `.main`, which is your program entry-point, and that any chip8-asm program must define
+There is a reserved label name called `.main`, which is your program entry-point, and that any chasm program must define
 
 ### 6. Procedures
-chip8-asm allows the programmer to define procedures
+chasm allows the programmer to define procedures
 
 ```asm
 proc my_proc 
@@ -217,7 +217,7 @@ mov rb, dt    ;; sets rb to dt
 
 ### 10. Inline opcodes
 
-chip8-asm allows the programmer to put inline raw opcodes in the source file using the raw keyword:
+chasm allows the programmer to put inline raw opcodes in the source file using the raw keyword:
 
 ```asm  
 .label:  
@@ -298,7 +298,7 @@ Reference for the instructions mnemonics and what machine code they produce once
 |  draw rX, rY, N  |        DXYN        |
 |       cls        |        00E0        |
 
-> Note: `swp rX, rD` is a chip8-asm extension generating the appropriate code needed to swap 2 registers.
+> Note: `swp rX, rD` is a chasm extension generating the appropriate code needed to swap 2 registers.
 
 
 

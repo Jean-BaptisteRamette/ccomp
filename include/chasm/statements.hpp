@@ -1,12 +1,12 @@
-#ifndef CCOMP_STATEMENTS_HPP
-#define CCOMP_STATEMENTS_HPP
+#ifndef CHASM_STATEMENTS_HPP
+#define CHASM_STATEMENTS_HPP
 
-#include <ccomp/ast_visitor.hpp>
-#include <ccomp/lexer.hpp>
+#include <chasm/ast_visitor.hpp>
+#include <chasm/lexer.hpp>
 #include <vector>
 
 
-namespace ccomp::ast
+namespace chasm::ast
 {
 	enum class statement_priority
 	{
@@ -265,4 +265,4 @@ namespace ccomp::ast
 	};
 }
 
-#endif //CCOMP_STATEMENTS_HPP
+#endif //CHASM_STATEMENTS_HPP

@@ -1,10 +1,9 @@
 #include <span>
-#include <set>
-#include <ccomp/generator.hpp>
-#include <ccomp/arch.hpp>
+#include <chasm/generator.hpp>
+#include <chasm/arch.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
 	[[nodiscard]]
 	arch::reg operand2reg(const ast::instruction_operand& operand)

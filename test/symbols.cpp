@@ -1,10 +1,10 @@
 #include <boost/test/unit_test.hpp>
-#include <ccomp/lexer.hpp>
-#include <ccomp/parser.hpp>
-#include <ccomp/symbol_sanitizer.hpp>
+#include <chasm/lexer.hpp>
+#include <chasm/parser.hpp>
+#include <chasm/symbol_sanitizer.hpp>
 
 
-using namespace ccomp;
+using namespace chasm;
 
 
 BOOST_AUTO_TEST_SUITE(symbol_sanitizer)

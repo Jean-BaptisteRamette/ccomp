@@ -1,13 +1,12 @@
-#ifndef CCOMP_COMMAND_LINE_HPP
-#define CCOMP_COMMAND_LINE_HPP
+#ifndef CHASM_COMMAND_LINE_HPP
+#define CHASM_COMMAND_LINE_HPP
 
 
 #include <string_view>
 #include <span>
 
 
-
-namespace ccomp
+namespace chasm
 {
     class command_line
     {
@@ -25,4 +24,4 @@ namespace ccomp
     };
 }
 
-#endif //CCOMP_COMMAND_LINE_HPP
+#endif //CHASM_COMMAND_LINE_HPP

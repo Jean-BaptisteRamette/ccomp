@@ -1,7 +1,7 @@
-#include <ccomp/stream.hpp>
+#include <chasm/stream.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
     stream::stream(std::string&& src_stream)
 		: buffer(std::move(src_stream)),

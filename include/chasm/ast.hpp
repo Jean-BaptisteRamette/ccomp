@@ -1,14 +1,14 @@
-#ifndef CCOMP_AST_HPP
-#define CCOMP_AST_HPP
+#ifndef CHASM_AST_HPP
+#define CHASM_AST_HPP
 
 
 #include <vector>
 
-#include <ccomp/ast_visitor.hpp>
-#include <ccomp/statements.hpp>
+#include <chasm/ast_visitor.hpp>
+#include <chasm/statements.hpp>
 
 
-namespace ccomp::ast
+namespace chasm::ast
 {
     class abstract_tree
     {
@@ -27,4 +27,4 @@ namespace ccomp::ast
 }
 
 
-#endif //CCOMP_AST_HPP
+#endif //CHASM_AST_HPP

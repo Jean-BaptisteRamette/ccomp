@@ -1,5 +1,5 @@
-#ifndef CCOMP_SYMBOL_SANITIZER_HPP
-#define CCOMP_SYMBOL_SANITIZER_HPP
+#ifndef CHASM_SYMBOL_SANITIZER_HPP
+#define CHASM_SYMBOL_SANITIZER_HPP
 
 
 #include <unordered_map>
@@ -8,13 +8,13 @@
 #include <string>
 #include <array>
 
-#include <ccomp/assembler_error.hpp>
-#include <ccomp/source_location.hpp>
-#include <ccomp/ast_visitor.hpp>
-#include <ccomp/ast.hpp>
+#include <chasm/assembler_error.hpp>
+#include <chasm/source_location.hpp>
+#include <chasm/ast_visitor.hpp>
+#include <chasm/ast.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
 	using symbol_set = std::unordered_map<std::string, source_location>;
 
@@ -66,7 +66,7 @@ namespace ccomp
 			std::string joined;
 
 			for (const auto& [sym, loc] : symbols)
-				joined += std::format("\t --- \"{}\" at {}\n", sym, ccomp::to_string(loc));
+				joined += std::format("\t --- \"{}\" at {}\n", sym, chasm::to_string(loc));
 
 			return joined;
 		}
@@ -77,7 +77,7 @@ namespace ccomp
 				: assembler_error(
 						"Sanitizer found an undefined symbol: \"{}\" at {}.",
 						symbol,
-						ccomp::to_string(where))
+						chasm::to_string(where))
 			{}
 
 			explicit undefined_symbols(const symbol_set& symbols)
@@ -93,11 +93,11 @@ namespace ccomp
 				: assembler_error(
 					"Sanitizer found an already defined symbol \"{}\" at {}.",
 					symbol,
-					ccomp::to_string(where))
+					chasm::to_string(where))
 			{}
 		};
 	}
 }
 
 
-#endif //CCOMP_SYMBOL_SANITIZER_HPP
+#endif //CHASM_SYMBOL_SANITIZER_HPP

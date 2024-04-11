@@ -1,5 +1,5 @@
-#ifndef CCOMP_LOG_HPP
-#define CCOMP_LOG_HPP
+#ifndef CHASM_LOG_HPP
+#define CHASM_LOG_HPP
 
 
 #include <format>
@@ -7,7 +7,7 @@
 #include <string_view>
 
 
-namespace ccomp::log
+namespace chasm::log
 {
     template<typename ...Args>
     void info(std::string_view fmt, Args&& ... args)
@@ -24,9 +24,9 @@ namespace ccomp::log
     template<typename ...Args>
     void error(std::string_view fmt, Args&& ... args)
     {
-        std::cout << "[ERROR] " << std::vformat(fmt, std::make_format_args(args...)) << '\n';
+        std::cerr << "[ERROR] " << std::vformat(fmt, std::make_format_args(args...)) << '\n';
     }
 }
 
 
-#endif // !CCOMP_LOG_HPP
+#endif //CHASM_LOG_HPP

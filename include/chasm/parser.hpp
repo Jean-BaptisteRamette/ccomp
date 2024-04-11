@@ -1,5 +1,5 @@
-#ifndef CCOMP_PARSER_HPP
-#define CCOMP_PARSER_HPP
+#ifndef CHASM_PARSER_HPP
+#define CHASM_PARSER_HPP
 
 
 #include <unordered_set>
@@ -8,12 +8,12 @@
 #include <vector>
 #include <format>
 
-#include <ccomp/assembler_error.hpp>
-#include <ccomp/lexer.hpp>
-#include <ccomp/ast.hpp>
+#include <chasm/assembler_error.hpp>
+#include <chasm/lexer.hpp>
+#include <chasm/ast.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
 	namespace parser_exception
 	{
@@ -35,8 +35,8 @@ namespace ccomp
 				: assembler_error(
 					"Parser got token \"{}\" but expected a token of arch_type {} while parsing at {}.",
 					unexpected_.to_string(),
-					ccomp::to_string(expected_types_),
-					ccomp::to_string(unexpected_.source_location))
+					chasm::to_string(expected_types_),
+					chasm::to_string(unexpected_.source_location))
 			{}
 		};
 
@@ -46,7 +46,7 @@ namespace ccomp
 				: assembler_error(
 					"Unexpected token {} while parsing at {}.",
 					unexpected_.to_string(),
-					ccomp::to_string(unexpected_.source_location))
+					chasm::to_string(unexpected_.source_location))
 			{}
 		};
 	}
@@ -123,4 +123,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_PARSER_HPP
+#endif //CHASM_PARSER_HPP

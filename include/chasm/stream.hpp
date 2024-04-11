@@ -1,5 +1,5 @@
-#ifndef CCOMP_STREAM_INTERFACE_HPP
-#define CCOMP_STREAM_INTERFACE_HPP
+#ifndef CHASM_STREAM_INTERFACE_HPP
+#define CHASM_STREAM_INTERFACE_HPP
 
 
 #include <string_view>
@@ -7,7 +7,7 @@
 #include <fstream>
 
 
-namespace ccomp
+namespace chasm
 {
     class stream
     {
@@ -26,4 +26,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_STREAM_INTERFACE_HPP
+#endif //CHASM_STREAM_INTERFACE_HPP

@@ -1,8 +1,8 @@
 #include <boost/test/unit_test.hpp>
-#include <ccomp/parser.hpp>
-#include <ccomp/lexer.hpp>
+#include <chasm/parser.hpp>
+#include <chasm/lexer.hpp>
 
-using namespace ccomp;
+using namespace chasm;
 
 BOOST_AUTO_TEST_SUITE(parser_nodes)
 
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				"   cls                                                \n"
 		);
 
-		auto parser = ccomp::parser(lex.enumerate_tokens());
+		auto parser = chasm::parser(lex.enumerate_tokens());
 
 		ast::abstract_tree tree = parser.make_tree();
 

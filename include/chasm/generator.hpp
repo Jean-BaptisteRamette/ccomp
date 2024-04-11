@@ -1,15 +1,15 @@
-#ifndef CCOMP_GENERATOR_HPP
-#define CCOMP_GENERATOR_HPP
+#ifndef CHASM_GENERATOR_HPP
+#define CHASM_GENERATOR_HPP
 
 #include <unordered_map>
 
-#include <ccomp/assembler_error.hpp>
-#include <ccomp/ast_visitor.hpp>
-#include <ccomp/arch.hpp>
-#include <ccomp/ast.hpp>
+#include <chasm/assembler_error.hpp>
+#include <chasm/ast_visitor.hpp>
+#include <chasm/arch.hpp>
+#include <chasm/ast.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
 	class generator final : public ast::base_visitor
 	{
@@ -174,4 +174,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_GENERATOR_HPP
+#endif //CHASM_GENERATOR_HPP

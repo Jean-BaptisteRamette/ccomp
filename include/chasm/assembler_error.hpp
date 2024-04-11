@@ -1,12 +1,12 @@
-#ifndef CCOMP_ASSEMBLER_ERROR_HPP
-#define CCOMP_ASSEMBLER_ERROR_HPP
+#ifndef CHASM_ASSEMBLER_ERROR_HPP
+#define CHASM_ASSEMBLER_ERROR_HPP
 
 #include <string_view>
 #include <stdexcept>
 #include <format>
 
 
-namespace ccomp
+namespace chasm
 {
 	struct assembler_error : std::runtime_error
 	{
@@ -22,4 +22,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_ASSEMBLER_ERROR_HPP
+#endif //CHASM_ASSEMBLER_ERROR_HPP

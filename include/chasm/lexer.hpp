@@ -1,5 +1,5 @@
-#ifndef CCOMP_LEXER_HPP
-#define CCOMP_LEXER_HPP
+#ifndef CHASM_LEXER_HPP
+#define CHASM_LEXER_HPP
 
 
 #include <string_view>
@@ -9,13 +9,13 @@
 #include <vector>
 #include <format>
 
-#include <ccomp/assembler_error.hpp>
-#include <ccomp/source_location.hpp>
-#include <ccomp/stream.hpp>
-#include <ccomp/arch.hpp>
+#include <chasm/assembler_error.hpp>
+#include <chasm/source_location.hpp>
+#include <chasm/stream.hpp>
+#include <chasm/arch.hpp>
 
 
-namespace ccomp
+namespace chasm
 {
     enum class token_type
     {
@@ -95,7 +95,7 @@ namespace ccomp
         [[nodiscard]] std::string     read_alpha_lexeme();
 
     private:
-        ccomp::stream istream;
+        chasm::stream istream;
         source_location cursor;
     };
 
@@ -109,7 +109,7 @@ namespace ccomp
 						"Invalid digit \"{}\" for numeric base {} at {}.",
 						digit,
 						base,
-						ccomp::to_string(source_loc))
+						chasm::to_string(source_loc))
             {}
         };
 
@@ -119,7 +119,7 @@ namespace ccomp
 				: assembler_error(
 						"Numeric constant \"{}\" at {} is too large for a 16-bit value.",
 						numeric_lexeme,
-						ccomp::to_string(source_loc))
+						chasm::to_string(source_loc))
 			{}
 		};
 
@@ -129,7 +129,7 @@ namespace ccomp
                 : assembler_error(
 						"Character \"{}\" cannot match any token at {}.",
 						c,
-						ccomp::to_string(source_loc))
+						chasm::to_string(source_loc))
             {}
         };
     }
@@ -189,7 +189,7 @@ namespace ccomp
 			if (!joined.empty())
 				joined += ", ";
 
-			joined += ccomp::to_string(type);
+			joined += chasm::to_string(type);
 		}
 
 		return '(' + joined + ')';
@@ -197,4 +197,4 @@ namespace ccomp
 }
 
 
-#endif //CCOMP_LEXER_HPP
+#endif //CHASM_LEXER_HPP

@@ -1,7 +1,7 @@
 #include <boost/test/unit_test.hpp>
-#include <ccomp/lexer.hpp>
+#include <chasm/lexer.hpp>
 
-using namespace ccomp;
+using namespace chasm;
 
 
 BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
