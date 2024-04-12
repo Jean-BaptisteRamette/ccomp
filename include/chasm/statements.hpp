@@ -138,7 +138,7 @@ namespace chasm::ast
 			else if (is_label() || is_procedure() || is_sprite())
 				return arch::operand_type::address;
 			else
-				return arch::operand_type::imm8;
+				return arch::operand_type::immediate;
 		}
 
 		[[nodiscard]] std::string reg_name() const

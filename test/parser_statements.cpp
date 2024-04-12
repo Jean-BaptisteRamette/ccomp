@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				"	add r1,   val                                      \n"
 				"	sub r1,   r1                                       \n"
 				"   mov ar, #my_sprite1                                 \n"
-				".exit:                                                \n"
+				".done:                                                \n"
 				"   raw(0000)                                          \n"
 				"   xor r0, r0                                         \n"
 				"   shr r0                                             \n"

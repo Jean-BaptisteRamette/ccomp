@@ -53,6 +53,12 @@ namespace chasm
 			throw generator_exception::invalid_operands_count(inst, expected_counts);
 	}
 
+	void ensure_operands_count(const ast::instruction_statement& inst, int expected_count)
+	{
+		if (inst.operands.size() != expected_count)
+			throw generator_exception::invalid_operands_count(inst, { expected_count });
+	}
+
 	std::vector<arch::opcode> generator::generate(const ast::abstract_tree& ast)
 	{
 		for (const auto& branch : ast.branches())
@@ -75,11 +81,15 @@ namespace chasm
 			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
 		}
 
+#ifdef UNIT_TESTS_ON
+		const auto base_addr = 0;
+#else
+		const auto base_addr = options::arg<arch::addr>("relocate");
+#endif
+
 		//
 		// Apply jmp/call patches that could not be encoded directly
 		//
-		const auto base_addr = options::arg<arch::addr>("relocate");
-
 		for (const auto& [location, sym] : patches)
 		{
 			const uintptr_t relocated = base_addr + sym_addresses[sym];
@@ -216,7 +226,7 @@ namespace chasm
 
 	arch::opcode generator::encode_add(const ast::instruction_statement& add)
 	{
-		ensure_operands_count(add, { 2 });
+		ensure_operands_count(add, 2);
 
 		switch (make_operands_mask(add))
 		{
@@ -225,7 +235,7 @@ namespace chasm
 						operand2reg(add.operands[0]),
 						operand2reg(add.operands[1]));
 
-			case arch::MASK_R8_I8:
+			case arch::MASK_R8_IMM:
 				return arch::_7XNN(
 						operand2reg(add.operands[0]),
 						operand2imm(add.operands[1]));
@@ -240,7 +250,7 @@ namespace chasm
 
 	arch::opcode generator::encode_sub(const ast::instruction_statement& sub)
 	{
-		ensure_operands_count(sub, { 2 });
+		ensure_operands_count(sub, 2);
 
 		if (make_operands_mask(sub) == arch::MASK_R8_R8)
 			return arch::_8XY5(
@@ -252,7 +262,7 @@ namespace chasm
 
 	arch::opcode generator::encode_suba(const ast::instruction_statement& suba)
 	{
-		ensure_operands_count(suba, { 2 });
+		ensure_operands_count(suba, 2);
 
 		if (make_operands_mask(suba) == arch::MASK_R8_R8)
 			return arch::_8XY7(
@@ -264,7 +274,7 @@ namespace chasm
 
 	arch::opcode generator::encode_or(const ast::instruction_statement& or_)
 	{
-		ensure_operands_count(or_, { 2 });
+		ensure_operands_count(or_, 2);
 
 		if (make_operands_mask(or_) == arch::MASK_R8_R8)
 			return arch::_8XY1(
@@ -276,7 +286,7 @@ namespace chasm
 
 	arch::opcode generator::encode_and(const ast::instruction_statement& and_)
 	{
-		ensure_operands_count(and_, { 2 });
+		ensure_operands_count(and_, 2);
 
 		if (make_operands_mask(and_) == arch::MASK_R8_R8)
 			return arch::_8XY2(
@@ -288,7 +298,7 @@ namespace chasm
 
 	arch::opcode generator::encode_xor(const ast::instruction_statement& xor_)
 	{
-		ensure_operands_count(xor_, { 2 });
+		ensure_operands_count(xor_, 2);
 
 		if (make_operands_mask(xor_) == arch::MASK_R8_R8)
 			return arch::_8XY3(
@@ -338,7 +348,7 @@ namespace chasm
 
 	arch::opcode generator::encode_rdump(const ast::instruction_statement& rdump)
 	{
-		ensure_operands_count(rdump, { 1 });
+		ensure_operands_count(rdump, 1);
 
 		if (make_operands_mask(rdump) == arch::MASK_R8)
 			return arch::_FX55(operand2reg(rdump.operands[0]));
@@ -348,7 +358,7 @@ namespace chasm
 
 	arch::opcode generator::encode_rload(const ast::instruction_statement& rload)
 	{
-		ensure_operands_count(rload, { 1 });
+		ensure_operands_count(rload, 1);
 
 		if (make_operands_mask(rload) == arch::MASK_R8)
 			return arch::_FX65(operand2reg(rload.operands[0]));
@@ -358,18 +368,19 @@ namespace chasm
 
 	arch::opcode generator::encode_mov(const ast::instruction_statement& mov)
 	{
-		ensure_operands_count(mov, { 2 });
+		ensure_operands_count(mov, 2);
 
 		switch (make_operands_mask(mov))
 		{
 			case arch::MASK_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
-			case arch::MASK_R8_I8: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
+			case arch::MASK_R8_IMM: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
 			case arch::MASK_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
 			case arch::MASK_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
 			case arch::MASK_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
 			case arch::MASK_AR_R8: return arch::_FX29(operand2reg(mov.operands[1]));
+			case arch::MASK_AR_IMM: return arch::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
 
-			case arch::MASK_AR_I12:
+			case arch::MASK_AR_ADDR:
 			{
 				register_patch_location(mov.operands[1].operand.to_string());
 				return arch::_ANNN(0);
@@ -382,9 +393,9 @@ namespace chasm
 
 	arch::opcode generator::encode_draw(const ast::instruction_statement& draw)
 	{
-		ensure_operands_count(draw, { 3 });
+		ensure_operands_count(draw, 3);
 
-		if (make_operands_mask(draw) == arch::MASK_R8_R8_I8)
+		if (make_operands_mask(draw) == arch::MASK_R8_R8_IMM)
 		{
 			const auto regX = operand2reg(draw.operands[0]);
 			const auto regY = operand2reg(draw.operands[1]);
@@ -401,15 +412,15 @@ namespace chasm
 
 	arch::opcode generator::encode_cls(const ast::instruction_statement& cls)
 	{
-		ensure_operands_count(cls, { 0 });
+		ensure_operands_count(cls, 0);
 		return 0x00E0;
 	}
 
 	arch::opcode generator::encode_rand(const ast::instruction_statement& rand)
 	{
-		ensure_operands_count(rand, { 2 });
+		ensure_operands_count(rand, 2);
 
-		if (make_operands_mask(rand) == arch::MASK_R8_I8)
+		if (make_operands_mask(rand) == arch::MASK_R8_IMM)
 			return arch::_CXNN(
 					operand2reg(rand.operands[0]),
 					operand2imm(rand.operands[1]));
@@ -419,7 +430,7 @@ namespace chasm
 
 	arch::opcode generator::encode_bcd(const ast::instruction_statement& bcd)
 	{
-		ensure_operands_count(bcd, { 1 });
+		ensure_operands_count(bcd, 1);
 
 		if (make_operands_mask(bcd) == arch::MASK_R8)
 			return arch::_FX33(operand2reg(bcd.operands[0]));
@@ -429,7 +440,7 @@ namespace chasm
 
 	arch::opcode generator::encode_wkey(const ast::instruction_statement& wkey)
 	{
-		ensure_operands_count(wkey, { 1 });
+		ensure_operands_count(wkey, 1);
 
 		if (make_operands_mask(wkey) == arch::MASK_R8)
 			return arch::_FX0A(operand2reg(wkey.operands[0]));
@@ -439,7 +450,7 @@ namespace chasm
 
 	arch::opcode generator::encode_ske(const ast::instruction_statement& ske)
 	{
-		ensure_operands_count(ske, { 1 });
+		ensure_operands_count(ske, 1);
 
 		if (make_operands_mask(ske) == arch::MASK_R8)
 			return arch::_EX9E(operand2reg(ske.operands[0]));
@@ -449,7 +460,7 @@ namespace chasm
 
 	arch::opcode generator::encode_skne(const ast::instruction_statement& skne)
 	{
-		ensure_operands_count(skne, { 1 });
+		ensure_operands_count(skne, 1);
 
 		if (make_operands_mask(skne) == arch::MASK_R8)
 			return arch::_EXA1(operand2reg(skne.operands[0]));
@@ -459,17 +470,17 @@ namespace chasm
 
 	arch::opcode generator::encode_ret(const ast::instruction_statement& ret)
 	{
-		ensure_operands_count(ret, { 0 });
+		ensure_operands_count(ret, 0);
 		return 0x00EE;
 	}
 
 	arch::opcode generator::encode_jmp(const ast::instruction_statement& jmp)
 	{
-		ensure_operands_count(jmp, { 1 });
+		ensure_operands_count(jmp, 1);
 
 		switch (make_operands_mask(jmp))
 		{
-			case arch::MASK_I12:
+			case arch::MASK_ADDR:
 				if (jmp.operands[0].is_label())
 				{
 					// jmp @label
@@ -479,7 +490,7 @@ namespace chasm
 				}
 
 			// jmp [offset]
-			case arch::MASK_INDIRECT_I12:
+			case arch::MASK_ADDR_REL:
 				return arch::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
 
 			default:
@@ -489,11 +500,11 @@ namespace chasm
 
 	arch::opcode generator::encode_call(const ast::instruction_statement& call)
 	{
-		ensure_operands_count(call, { 1 });
+		ensure_operands_count(call, 1);
 
 		switch (make_operands_mask(call))
 		{
-			case arch::MASK_I12:
+			case arch::MASK_ADDR:
 				if (call.operands[0].is_procedure())
 				{
 					// call $function
@@ -511,7 +522,7 @@ namespace chasm
 
 	arch::opcode generator::encode_se(const ast::instruction_statement& se)
 	{
-		ensure_operands_count(se, { 2 });
+		ensure_operands_count(se, 2);
 
 		switch (make_operands_mask(se))
 		{
@@ -520,7 +531,7 @@ namespace chasm
 						operand2reg(se.operands[0]),
 						operand2reg(se.operands[1]));
 
-			case arch::MASK_R8_I8:
+			case arch::MASK_R8_IMM:
 				return arch::_3XNN(
 						operand2reg(se.operands[0]),
 						operand2imm(se.operands[1]));
@@ -532,7 +543,7 @@ namespace chasm
 
 	arch::opcode generator::encode_sne(const ast::instruction_statement& sne)
 	{
-		ensure_operands_count(sne, { 2 });
+		ensure_operands_count(sne, 2);
 
 		switch (make_operands_mask(sne))
 		{
@@ -541,7 +552,7 @@ namespace chasm
 						operand2reg(sne.operands[0]),
 						operand2reg(sne.operands[1]));
 
-			case arch::MASK_R8_I8:
+			case arch::MASK_R8_IMM:
 				return arch::_4XNN(
 						operand2reg(sne.operands[0]),
 						operand2imm(sne.operands[1]));
@@ -553,7 +564,7 @@ namespace chasm
 
 	arch::opcode generator::encode_inc(const ast::instruction_statement& inc)
 	{
-		ensure_operands_count(inc, { 1 });
+		ensure_operands_count(inc, 1);
 
 		if (make_operands_mask(inc) == arch::MASK_R8)
 			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
@@ -563,15 +574,15 @@ namespace chasm
 
 	arch::opcode generator::encode_exit(const ast::instruction_statement& exit)
 	{
-		ensure_operands_count(exit, { 0 });
+		ensure_operands_count(exit, 0);
 		return 0x00FD;
 	}
 
 	arch::opcode generator::encode_scrd(const ast::instruction_statement& scrd)
 	{
-		ensure_operands_count(scrd, { 1 });
+		ensure_operands_count(scrd, 1);
 
-		if (make_operands_mask(scrd) == arch::MASK_I8)
+		if (make_operands_mask(scrd) == arch::MASK_IMM)
 			return arch::_00CN(operand2imm(scrd.operands[0], arch::fmt_imm4));
 
 		throw generator_exception::invalid_operand_type(scrd);
@@ -579,31 +590,31 @@ namespace chasm
 
 	arch::opcode generator::encode_scrl(const ast::instruction_statement& scrl)
 	{
-		ensure_operands_count(scrl, { 0 });
+		ensure_operands_count(scrl, 0);
 		return 0x00FC;
 	}
 
 	arch::opcode generator::encode_scrr(const ast::instruction_statement& scrr)
 	{
-		ensure_operands_count(scrr, { 0 });
+		ensure_operands_count(scrr, 0);
 		return 0x00FB;
 	}
 
 	arch::opcode generator::encode_high(const ast::instruction_statement& high)
 	{
-		ensure_operands_count(high, { 0 });
+		ensure_operands_count(high, 0);
 		return 0x00FF;
 	}
 
 	arch::opcode generator::encode_low(const ast::instruction_statement& low)
 	{
-		ensure_operands_count(low, { 0 });
+		ensure_operands_count(low, 0);
 		return 0x00FE;
 	}
 
 	std::vector<arch::opcode> generator::encode_swp(const ast::instruction_statement& swp)
 	{
-		ensure_operands_count(swp, { 2 });
+		ensure_operands_count(swp, 2);
 
 		if (make_operands_mask(swp) == arch::MASK_R8_R8)
 		{

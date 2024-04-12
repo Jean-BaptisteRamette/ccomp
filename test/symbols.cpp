@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	{
 		BOOST_CHECK_THROW(
 			details::try_assemble(".main:         \n"
-								  "    jmp @exit  \n"),
+								  "    jmp @end   \n"),
 			sanitize_exception::undefined_symbols
 		);
 	}
@@ -51,8 +51,8 @@ BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
 	{
 		BOOST_CHECK_NO_THROW(
 			details::try_assemble(".main:         \n"
-							      "    jmp @exit  \n"
-							      ".exit:         \n");
+							      "    jmp @end   \n"
+							      ".end:          \n");
 		);
 	}
 

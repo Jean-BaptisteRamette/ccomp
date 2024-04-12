@@ -69,7 +69,8 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 	BOOST_AUTO_TEST_CASE(check_address_operands)
 	{
 		//
-		// User should be able to mov into AR (I) register a sprite/label/function address
+		// User should be able to mov into AR (I) register a sprite/label/function or any address as
+		// he may want to refer to a sprite stored in the interpreter's memory such as font characters
 		//
 		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, @main"));
 		BOOST_CHECK_NO_THROW(
@@ -85,6 +86,11 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 			                     "                \n"
 			                     ".main:          \n"
 			                     "    mov ar, $f  \n")
+		);
+
+		BOOST_CHECK_NO_THROW(
+			details::try_codegen(".main:             \n"
+								 "    mov ar, 0xFFF \n")
 		);
 
 		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n jmp @main"));
@@ -105,7 +111,6 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 		);
 
 		// If the user wants to do this, he must use the raw() statement
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 0x0000"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x0000"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0"), generator_exception::invalid_operand_type);
 	}
@@ -115,7 +120,6 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, @main"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r0, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, ar"), generator_exception::invalid_operand_type);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov ar, 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov dt, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n mov r1, ar"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp r0"), generator_exception::invalid_operand_type);
