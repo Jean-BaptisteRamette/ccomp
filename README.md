@@ -34,7 +34,23 @@ It allows programmer to write code easily, and can be used as a way to test thei
 
 ## III - Command line options
 
-TODO
+```
+Usage:
+  chasm [OPTION...]
+
+  -h, --help                    Show help message
+      --in arg                  chasm source file to assemble
+      --out arg                 The generated machine code output file path
+                                (default: out.c8c)
+      --symbols [=arg(=out.c8s)]
+                                Generate a file mapping symbols to their
+                                corresponding address
+      --relocate arg            Address in which the machine code will be
+                                loaded (default: 0)
+      --super                   Specify the target ISA to be the SUPER-CHIP
+                                and removes warning when using non CHIP-8
+                                instructions
+```
 
 ## IV - Language Specifications
 

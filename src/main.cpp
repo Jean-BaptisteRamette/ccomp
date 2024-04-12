@@ -1,11 +1,10 @@
 #include <vector>
 
-#include <chasm/options.hpp>
 #include <chasm/parser.hpp>
 #include <chasm/lexer.hpp>
 #include <chasm/arch.hpp>
 #include <chasm/log.hpp>
-
+#include <chasm/options.hpp>
 
 std::string program_buffer(const std::filesystem::path& path)
 {
@@ -39,19 +38,19 @@ void write_to_file(const std::filesystem::path& file, const std::vector<chasm::a
 
 int main(int argc, char** argv)
 {
-	chasm::options::parse(argc, argv);
-
-    if (!chasm::options::has_option("in"))
-    {
-        chasm::log::error("No input file");
-        return EXIT_FAILURE;
-    }
-
-    const auto ifile = chasm::options::option("in");
-    const auto ofile = chasm::options::option_or("out", "out.c8c");
-
 	try
 	{
+		chasm::options::parse(argc, argv);
+
+    	if (!chasm::options::has_flag("in") || chasm::options::has_flag("help"))
+    	{
+			chasm::options::help();
+    	    return EXIT_FAILURE;
+    	}
+
+		const auto ifile = chasm::options::arg<std::string>("in");
+		const auto ofile = chasm::options::arg<std::string>("out");
+
 		auto lexer  = chasm::lexer(program_buffer(ifile));
 		auto tokens = lexer.enumerate_tokens();
 
@@ -66,8 +65,17 @@ int main(int argc, char** argv)
 		auto ast = parser.make_tree();
 		const auto binary = ast.generate();
 		write_to_file(ofile, binary);
+
+		chasm::log::info("Build of file {} to {} finished", ifile, ofile);
 	}
-	catch (std::runtime_error& error)
+	catch (cxxopts::exceptions::exception& error)
+	{
+		chasm::log::error(error.what());
+		chasm::options::help();
+
+		return EXIT_FAILURE;
+	}
+	catch (std::exception& error)
 	{
 		chasm::log::error(error.what());
 		return EXIT_FAILURE;

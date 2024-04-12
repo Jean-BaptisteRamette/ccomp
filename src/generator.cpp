@@ -70,6 +70,7 @@ namespace chasm
 		//
 		for (auto& [name, sprite] : sprites)
 		{
+			// TODO: why not just sort them before hand at the end
 			register_symbol_addr(name);
 			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
 		}
@@ -77,8 +78,21 @@ namespace chasm
 		//
 		// Apply jmp/call patches that could not be encoded directly
 		//
+		const auto base_addr = options::arg<arch::addr>("relocate");
+
 		for (const auto& [location, sym] : patches)
-			binary[location] |= sym_addresses[sym];
+		{
+			const uintptr_t relocated = base_addr + sym_addresses[sym];
+
+			if (relocated > std::numeric_limits<arch::addr>::max())
+				throw assembler_error("Symbol \"{}\" relocated to {:x} is out of the chip8's memory range.\n"
+									  "Assembler cannot generate address patch at {:x}",
+									  sym,
+									  relocated,
+									  location * sizeof(arch::opcode));
+
+			binary[location] |= static_cast<arch::addr>(relocated);
+		}
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
