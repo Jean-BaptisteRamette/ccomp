@@ -10,6 +10,7 @@ It allows programmer to write code easily, and can be used as a way to test thei
 - [III. Command line options](#iii---command-line-options)
 - [IV. Language specifications](#iv---language-specifications)
 - [V. Instruction reference](#v---mnemonics-and-opcodes-mapping)
+- [VI. Contributing](#vi---contributing)
 
 ## I - Features
 
@@ -316,6 +317,23 @@ Reference for the instructions mnemonics and what machine code they produce once
 
 > Note: `swp rX, rD` is a chasm extension generating the appropriate code needed to swap 2 registers.
 
+
+## VI - Contributing
+
+Contributions are absolutely welcome !
+They can come as bug-reports, bug-fixes, features, documentation or just ideas, that I will be pleased to integrate to chasm !
+
+### 1. Bug-reports
+Please provide a minimal reproducible example of the bug, and explain it the best you can if you want it to be fixed quickly
+
+### 2. Pull-requests
+I am sure this project is suitable for beginners to write some of their first PRs and that
+there are good-first-issues here and there. If you have any question about the code base or difficulty on an issue you want
+to fix, do not hesitate to contact me.
+
+Please, state clearly what you added, and follow the already existing code style.
+
+Finally more important PRs will not be merged if they do not come with unit-tests associated.
 
 
 ## License
