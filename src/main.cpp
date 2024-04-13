@@ -6,34 +6,55 @@
 #include <chasm/log.hpp>
 #include <chasm/options.hpp>
 
-std::string program_buffer(const std::filesystem::path& path)
+namespace io
 {
-	if (path.extension() != ".c8")
-		chasm::log::warn("Input file does not have the c8 extension");
+	std::string buffer(const std::filesystem::path& path)
+	{
+		if (path.extension() != ".c8")
+			chasm::log::warn("Input file does not have the c8 extension");
 
-	std::ifstream is(path);
+		std::ifstream is(path);
 
-	if (!is)
-		throw std::runtime_error("Could not open source file " + path.string() + " for reading");
+		if (!is)
+			throw std::runtime_error("Could not open source file " + path.string() + " for reading");
 
-	return { std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>() };
-}
+		return { std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>() };
+	}
 
-void write_to_file(const std::filesystem::path& file, const std::vector<chasm::arch::opcode>& binary)
-{
-	std::ofstream os(file, std::ios::binary);
+	void emit(const std::filesystem::path& file, const std::vector<chasm::arch::opcode>& binary)
+	{
+		std::ofstream os(file, std::ios::binary);
 
-	if (!os)
-		throw std::runtime_error("Could not open file " + file.string() + " for writing");
+		if (!os)
+			throw std::runtime_error("Could not open file " + file.string() + " for writing");
 
-	const auto size = binary.size() * sizeof(chasm::arch::opcode);
+		const auto size = std::size(binary) * sizeof(chasm::arch::opcode);
 
-	if (size > chasm::arch::MAX_PROGRAM_SIZE)
-		chasm::log::warn("CHIP-8 programs are generally up to {} bytes but input file assembled to {} bytes.",
-						 chasm::arch::MAX_PROGRAM_SIZE,
-						 size);
+		if (size > chasm::arch::MAX_PROGRAM_SIZE)
+			chasm::log::warn("CHIP-8 programs are generally up to {} bytes but input file assembled to {} bytes.",
+							 chasm::arch::MAX_PROGRAM_SIZE,
+							 size);
 
-	os.write(reinterpret_cast<const char*>(binary.data()), static_cast<std::streamsize>(size));
+		os.write(reinterpret_cast<const char*>(binary.data()), static_cast<std::streamsize>(size));
+	}
+
+	void hexdump(const std::vector<chasm::arch::opcode>& binary)
+	{
+		const auto offset  = chasm::options::arg<chasm::arch::addr>("relocate");
+		const auto perline = chasm::options::arg<unsigned int>("hex");
+		const auto binsize = static_cast<chasm::arch::size_type>(std::size(binary));
+
+		for (chasm::arch::addr curr = 0; curr < binsize; curr += perline)
+		{
+			std::cout << std::format("0x{:04X}: ", offset + (curr * sizeof(chasm::arch::opcode)));
+
+			for (int j = 0; j < perline; ++j)
+				if (curr + j < binsize)
+					std::cout << std::format("{:04X} ", binary[curr + j]);
+
+			std::cout << '\n';
+		}
+	}
 }
 
 int main(int argc, char** argv)
@@ -51,7 +72,7 @@ int main(int argc, char** argv)
 		const auto ifile = chasm::options::arg<std::string>("in");
 		const auto ofile = chasm::options::arg<std::string>("out");
 
-		auto lexer  = chasm::lexer(program_buffer(ifile));
+		auto lexer  = chasm::lexer(io::buffer(ifile));
 		auto tokens = lexer.enumerate_tokens();
 
 		if (tokens.empty())
@@ -64,7 +85,11 @@ int main(int argc, char** argv)
 
 		auto ast = parser.make_tree();
 		const auto binary = ast.generate();
-		write_to_file(ofile, binary);
+
+		if (chasm::options::has_flag("hex"))
+			io::hexdump(binary);
+
+		io::emit(ofile, binary);
 
 		chasm::log::info("Build of file {} to {} finished", ifile, ofile);
 	}
