@@ -3,8 +3,10 @@
 #include <chasm/parser.hpp>
 #include <chasm/generator.hpp>
 
+#include "options_fixture.hpp"
 
-BOOST_AUTO_TEST_SUITE(instruction_operands)
+
+BOOST_FIXTURE_TEST_SUITE(instruction_operands, options_fixture)
 
 	using namespace chasm;
 

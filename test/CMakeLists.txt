@@ -13,6 +13,7 @@ list(REMOVE_ITEM SOURCES ${CCOMP_SOURCE_DIR}/main.cpp)
 
 add_executable(Boost_Tests_run
         main.cpp
+        options_fixture.hpp
         lexer_tokens.cpp
         lexer_numeric.cpp
         parser_statements.cpp

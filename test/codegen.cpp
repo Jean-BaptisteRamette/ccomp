@@ -2,8 +2,11 @@
 #include <chasm/lexer.hpp>
 #include <chasm/parser.hpp>
 
+#include "options_fixture.hpp"
 
-BOOST_AUTO_TEST_SUITE(machine_code_generation)
+
+
+BOOST_FIXTURE_TEST_SUITE(machine_code_generation, options_fixture)
 
 	using namespace chasm;
 

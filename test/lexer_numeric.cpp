@@ -1,84 +1,52 @@
 #include <boost/test/unit_test.hpp>
 #include <chasm/lexer.hpp>
 
-using namespace chasm;
-
 
 BOOST_AUTO_TEST_SUITE(lexer_numeric_constants)
+
+	namespace details
+	{
+		uint16_t try_parse_int(std::string&& program)
+		{
+			auto lex = chasm::lexer(std::move(program));
+			auto token = lex.enumerate_tokens()[0];
+
+			return std::get<uint16_t>(token.data);
+		}
+	}
 
 	BOOST_AUTO_TEST_CASE(comma_separated_digits)
 	{
 		BOOST_TEST_MESSAGE("checking comma separated digits syntax");
 
-		{
-			auto lex = lexer("0xFF'FF");
-			auto token = lex.enumerate_tokens()[0];
-			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xFFFF);
-		}
-
-		{
-			auto lex = lexer("0xF'F'F'F");
-			auto token = lex.enumerate_tokens()[0];
-			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xFFFF);
-		}
-
-		{
-			auto lex = lexer("0b1111'1111'0000'0000");
-			auto token = lex.enumerate_tokens()[0];
-			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0b1111'1111'0000'0000);
-		}
-
-		{
-			auto lex = lexer("0b1111'1111''0000'0000");
-			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::undefined_character_token);
-		}
+		BOOST_CHECK_EQUAL(details::try_parse_int("0xFF'FF"), 0xFFFF);
+		BOOST_CHECK_EQUAL(details::try_parse_int("0xF'F'F'F"), 0xFFFF);
+		BOOST_CHECK_EQUAL(details::try_parse_int("0b1111'1111'0000'0000"), 0b1111'1111'0000'0000);
+		BOOST_CHECK_THROW(details::try_parse_int("0b1111'1111''0000'0000"), chasm::lexer_exception::undefined_character_token);
 	}
 
 	BOOST_AUTO_TEST_CASE(out_of_range_value)
 	{
 		BOOST_TEST_MESSAGE("checking out of range value detection");
 
-		{
-			auto lex = lexer("65535");
-			auto token = lex.enumerate_tokens()[0];
-			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 65535);
-		}
-
-		{
-			auto lex = lexer("65536");
-			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::numeric_constant_too_large);
-		}
+		BOOST_CHECK_EQUAL(details::try_parse_int("65535"), 65535);
+		BOOST_CHECK_THROW(details::try_parse_int("65536"), chasm::lexer_exception::numeric_constant_too_large);
 	}
 
 	BOOST_AUTO_TEST_CASE(invalid_base_digit)
 	{
 		BOOST_TEST_MESSAGE("checking invalid digits for numeric base");
 
-		{
-			auto lex = lexer("0xABCD");
-			auto token = lex.enumerate_tokens()[0];
-			BOOST_CHECK_EQUAL(std::get<uint16_t>(token.data), 0xABCD);
-		}
+		BOOST_CHECK_EQUAL(details::try_parse_int("0xABCD"), 0xABCD);
+		BOOST_CHECK_THROW(details::try_parse_int("0xG"), chasm::lexer_exception::invalid_digit_for_base);
+		BOOST_CHECK_THROW(details::try_parse_int("0b1111'2000"), chasm::lexer_exception::invalid_digit_for_base);
+		BOOST_CHECK_THROW(details::try_parse_int("0o778"), chasm::lexer_exception::invalid_digit_for_base);
 
-		{
-			auto lex = lexer("0xG");
-			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
-		}
-
-		{
-			auto lex = lexer("0b1111'2000");
-			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
-		}
-
-		{
-			auto lex = lexer("0o778");
-			BOOST_CHECK_THROW(lex.enumerate_tokens(), lexer_exception::invalid_digit_for_base);
-		}
 	}
 
 	BOOST_AUTO_TEST_CASE(check_zero)
 	{
-		auto lex = lexer("0,0,0");
+		auto lex = chasm::lexer("0,0,0");
 		BOOST_CHECK_NO_THROW(lex.enumerate_tokens());
 	}
 

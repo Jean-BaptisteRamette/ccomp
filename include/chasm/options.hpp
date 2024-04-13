@@ -13,7 +13,7 @@ namespace chasm
 	class options
 	{
 	public:
-		static void parse(int argc, char** argv)
+		static void parse(int argc, const char* const* argv)
 		{
 			opts.add_options()
 					("h,help", "Show help message")

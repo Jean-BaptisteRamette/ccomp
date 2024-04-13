@@ -2,13 +2,12 @@
 #include <chasm/parser.hpp>
 #include <chasm/lexer.hpp>
 
-using namespace chasm;
 
 BOOST_AUTO_TEST_SUITE(parser_nodes)
 
 	BOOST_AUTO_TEST_CASE(my_test)
 	{
-		auto lex = lexer(
+		auto lex = chasm::lexer(
 				";; test program                                       \n"
 				"                                                      \n"
 				"sprite my_sprite1 [0xFF, 0xFF, 0xFF, 0xFF]            \n"
@@ -18,14 +17,14 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 				"                                                      \n"
 				"                                                      \n"
 				"proc my_function ;; declare and define a procedure    \n"
-				"    draw r1, r2, #my_sprite1                           \n"
+				"    draw r1, r2, #my_sprite1                          \n"
 				"    ret                                               \n"
 				"endp my_function                                      \n"
 				";; entry point label -> .main:                        \n"
 				".main:                                                \n"
 				"	add r1,   val                                      \n"
 				"	sub r1,   r1                                       \n"
-				"   mov ar, #my_sprite1                                 \n"
+				"   mov ar, #my_sprite1                                \n"
 				".done:                                                \n"
 				"   raw(0000)                                          \n"
 				"   xor r0, r0                                         \n"
@@ -34,8 +33,7 @@ BOOST_AUTO_TEST_SUITE(parser_nodes)
 		);
 
 		auto parser = chasm::parser(lex.enumerate_tokens());
-
-		ast::abstract_tree tree = parser.make_tree();
+		auto tree = parser.make_tree();
 
 		BOOST_CHECK_EQUAL(tree.branches().size(), 6);
 	}

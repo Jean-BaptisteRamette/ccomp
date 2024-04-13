@@ -111,11 +111,7 @@ namespace chasm
 			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
 		}
 
-#ifdef UNIT_TESTS_ON
-		const auto base_addr = 0;
-#else
 		const auto base_addr = options::arg<arch::addr>("relocate");
-#endif
 
 		//
 		// Apply jmp/call patches that could not be encoded directly
@@ -134,10 +130,8 @@ namespace chasm
 			binary[location] |= static_cast<arch::addr>(relocated);
 		}
 
-#ifndef UNIT_TESTS_ON
 		if (options::has_flag("symbols"))
 			generate_symbols_file(options::arg<std::string>("symbols"), sym_addresses);
-#endif
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
