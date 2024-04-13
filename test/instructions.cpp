@@ -165,12 +165,12 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 
 	BOOST_AUTO_TEST_CASE(sprites)
 	{
-		// BOOST_CHECK_NO_THROW(
+		BOOST_CHECK_NO_THROW(
 			details::try_codegen("sprite s [0xA, 0b1111'0000, 10, 0o256]  \n"
 								 "                                        \n"
 								 ".main:                                  \n"
 								 "    draw r0, r1, #s                     \n");
-		// );
+		);
 
 		//
 		// TODO: maybe we want to let the programmer take the length of the sprite

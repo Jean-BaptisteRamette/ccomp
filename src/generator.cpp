@@ -1,4 +1,6 @@
 #include <span>
+#include <fstream>
+#include <algorithm>
 
 #include <chasm/generator.hpp>
 #include <chasm/options.hpp>
@@ -8,6 +10,35 @@
 
 namespace chasm
 {
+	void generate_symbols_file(const std::filesystem::path& path,
+							   const std::unordered_map<std::string, arch::addr>& mapping)
+	{
+		std::ofstream os(path);
+
+		if (!os)
+		{
+			log::error("Could not open file \"{}\" to write symbols mapping.", path.string());
+			return;
+		}
+
+		auto sort_pred = [](const std::pair<std::string, arch::addr>& a,
+				            const std::pair<std::string, arch::addr>& b)
+		{
+			return a.second < b.second;
+		};
+
+		//
+		// Sort from lowest to highest address
+		//
+		std::vector<std::pair<std::string, arch::addr>> elems(mapping.begin(), mapping.end());
+		std::sort(elems.begin(), elems.end(), sort_pred);
+
+		for (const auto& [symbol, addr] : elems)
+			os << std::format("{:#06x} --> {}", addr, symbol) << std::endl;
+
+		log::info("{} symbols mapping written to \"{}\".", mapping.size(), path.string());
+	}
+
 	void warn_super_instruction(const ast::instruction_statement& instruction)
 	{
 		log::warn("Instruction {} at {} is a SuperCHIP-8 instruction but flag \"super\" was not provided.",
@@ -76,7 +107,6 @@ namespace chasm
 		//
 		for (auto& [name, sprite] : sprites)
 		{
-			// TODO: why not just sort them before hand at the end
 			register_symbol_addr(name);
 			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
 		}
@@ -95,7 +125,7 @@ namespace chasm
 			const uintptr_t relocated = base_addr + sym_addresses[sym];
 
 			if (relocated > std::numeric_limits<arch::addr>::max())
-				throw assembler_error("Symbol \"{}\" relocated to {:x} is out of the chip8's memory range.\n"
+				throw assembler_error("Symbol \"{}\" relocated to address {:x} which is out of the chip8's memory range.\n"
 									  "Assembler cannot generate address patch at {:x}",
 									  sym,
 									  relocated,
@@ -103,6 +133,11 @@ namespace chasm
 
 			binary[location] |= static_cast<arch::addr>(relocated);
 		}
+
+#ifndef UNIT_TESTS_ON
+		if (options::has_flag("symbols"))
+			generate_symbols_file(options::arg<std::string>("symbols"), sym_addresses);
+#endif
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
