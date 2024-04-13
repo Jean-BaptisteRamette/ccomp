@@ -395,16 +395,31 @@ namespace chasm
 	{
 		ensure_operands_count(draw, 3);
 
-		if (make_operands_mask(draw) == arch::MASK_R8_R8_IMM)
+		switch (make_operands_mask(draw))
 		{
-			const auto regX = operand2reg(draw.operands[0]);
-			const auto regY = operand2reg(draw.operands[1]);
-			const auto imm4 = operand2imm(draw.operands[2], arch::fmt_imm4);
+			case arch::MASK_R8_R8_IMM:
+			{
+				const auto regX = operand2reg(draw.operands[0]);
+				const auto regY = operand2reg(draw.operands[1]);
+				const auto imm4 = operand2imm(draw.operands[2], arch::fmt_imm4);
 
-			if (imm4 == 0 && !options::has_flag("super"))
-				warn_super_instruction(draw);
+				if (imm4 == 0 && !options::has_flag("super"))
+					warn_super_instruction(draw);
 
-			return arch::_DXYN(regX, regY, imm4);
+				return arch::_DXYN(regX, regY, imm4);
+			}
+			case arch::MASK_R8_R8_ADDR:
+			{
+				//
+				// draw r0, r1, #s  == draw r0, r1, sizeof(s)
+				//
+				const auto regX   = operand2reg(draw.operands[0]);
+				const auto regY   = operand2reg(draw.operands[1]);
+				const auto& third = draw.operands[2];
+
+				if (third.is_sprite())
+					return arch::_DXYN(regX, regY, operand2imm(third, arch::fmt_imm4));
+			}
 		}
 
 		throw generator_exception::invalid_operand_type(draw);

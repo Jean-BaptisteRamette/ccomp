@@ -97,10 +97,17 @@ namespace chasm::arch
 	constexpr auto MASK_DT_R8     = make_operands_mask({ operand_type::reg_dt, operand_type::reg_rx });
 	constexpr auto MASK_ST_R8     = make_operands_mask({ operand_type::reg_st, operand_type::reg_rx });
 	constexpr auto MASK_R8_DT     = make_operands_mask({ operand_type::reg_rx, operand_type::reg_dt });
-	constexpr auto MASK_R8_R8_IMM = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::immediate });
 	constexpr auto MASK_IMM       = make_operands_mask({ operand_type::immediate });
 	constexpr auto MASK_ADDR      = make_operands_mask({ operand_type::address });
 	constexpr auto MASK_ADDR_REL  = make_operands_mask({ operand_type::address_indirect });
+	constexpr auto MASK_R8_R8_IMM = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::immediate });
+
+	//
+	// There isn't any instruction of type (r8, r8, addr), but we use this so the draw
+	// instruction can accept a sprite as an operand. In the end, the sprite will just be converted to its size.
+	//
+	constexpr auto MASK_R8_R8_ADDR = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::address });
+
 
 #define ENCODE_dXYN(id, rx, ry, N) ((id << 12u) | (rx << 8u) | (ry << 4u) | N)
 #define ENCODE_dXNN(id, rx, NN)    ((id << 12u) | (rx << 8u) | NN)

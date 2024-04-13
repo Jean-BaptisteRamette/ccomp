@@ -69,32 +69,13 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 	BOOST_AUTO_TEST_CASE(check_address_operands)
 	{
 		//
-		// User should be able to mov into AR (I) register a sprite/label/function or any address as
-		// he may want to refer to a sprite stored in the interpreter's memory such as font characters
+		// Regular direct jump
 		//
-		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, @main"));
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen("sprite s [0xA, 0xA]  \n"
-								 ".main:               \n"
-								 "    mov ar, #s       \n")
-		);
-
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen("proc f          \n"
-			                     "    ret         \n"
-			                     "endp f          \n"
-			                     "                \n"
-			                     ".main:          \n"
-			                     "    mov ar, $f  \n")
-		);
-
-		BOOST_CHECK_NO_THROW(
-			details::try_codegen(".main:             \n"
-								 "    mov ar, 0xFFF \n")
-		);
-
 		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n jmp @main"));
 
+		//
+		// Regular function call
+		//
 		BOOST_CHECK_NO_THROW(
 			details::try_codegen("proc f      \n"
 			                     "    ret     \n"
@@ -104,15 +85,48 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 			                     "    call $f \n")
 		);
 
-		BOOST_CHECK_THROW(
-			details::try_codegen(".main:\n "
-			                     "    call @main"),
-			generator_exception::invalid_operand_type
-		);
 
 		// If the user wants to do this, he must use the raw() statement
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp 0x0000"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n call 0"), generator_exception::invalid_operand_type);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_ar_operands_ok)
+	{
+		//
+		// AR can be set to point to any immediate value/address (that is sprite/label/function)
+		//
+
+		//
+		// Immediate value
+		//
+		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, 0xFFF\n"));
+
+		//
+		// Label
+		//
+		BOOST_CHECK_NO_THROW(details::try_codegen(".main:\n mov ar, @main"));
+
+		//
+		// Sprite
+		//
+		BOOST_CHECK_NO_THROW(
+				details::try_codegen("sprite s [0xA, 0xA]  \n"
+									 ".main:               \n"
+									 "    mov ar, #s       \n")
+		);
+
+		//
+		// Function
+		//
+		BOOST_CHECK_NO_THROW(
+				details::try_codegen("proc f          \n"
+									 "    ret         \n"
+									 "endp f          \n"
+									 "                \n"
+									 ".main:          \n"
+									 "    mov ar, $f  \n")
+		);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_invalid_operand_type)
@@ -125,6 +139,7 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n jmp r0"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n call r0"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n call ar"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n call @main"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n se 0, 0"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n sne 0, 0"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n se 0, r0"), generator_exception::invalid_operand_type);
@@ -146,6 +161,26 @@ BOOST_AUTO_TEST_SUITE(instruction_operands)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n ske 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n skne 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, r0"), generator_exception::invalid_operand_type);
+	}
+
+	BOOST_AUTO_TEST_CASE(sprites)
+	{
+		// BOOST_CHECK_NO_THROW(
+			details::try_codegen("sprite s [0xA, 0b1111'0000, 10, 0o256]  \n"
+								 "                                        \n"
+								 ".main:                                  \n"
+								 "    draw r0, r1, #s                     \n");
+		// );
+
+		//
+		// TODO: maybe we want to let the programmer take the length of the sprite
+		//       for other instructions such as mov ?
+		//
+		// BOOST_CHECK_NO_THROW(
+		// 	details::try_codegen("sprite s [0xA]\n"
+		// 						 ".main:        \n"
+		// 						 "    mov r0, #s\n")
+		// );
 	}
 
 BOOST_AUTO_TEST_SUITE_END()
