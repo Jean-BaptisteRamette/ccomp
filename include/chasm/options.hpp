@@ -19,9 +19,9 @@ namespace chasm
 					("h,help", "Show help message")
 					("in", "chasm source file to assemble", cxxopts::value<std::string>())
 					("out", "The generated machine code output file path", cxxopts::value<std::string>()->default_value("out.c8c"))
-					("hex", "Hexdumps the generated machine code", cxxopts::value<unsigned int>()->implicit_value("4"))
-					("symbols", "Generate a file mapping symbols to their corresponding address", cxxopts::value<std::string>()->implicit_value("out.c8s"))
-					("relocate", "Address in which the machine code will be loaded", cxxopts::value<chasm::arch::addr>()->default_value("0"))
+					("hex", "Hexdumps the generated machine code, argument is the amount of opcodes per line", cxxopts::value<unsigned int>()->implicit_value("4"))
+					("symbols", "Generate a file with symbols location in memory/machine code", cxxopts::value<std::string>()->implicit_value("out.c8s"))
+					("relocate", "Address in which the binary is supposed to be loaded", cxxopts::value<chasm::arch::addr>()->default_value("0x200"))
 					("super", "Specify the target ISA to be the SUPER-CHIP and removes warning when using non CHIP-8 instructions");
 
 			parameters = opts.parse(argc, argv);

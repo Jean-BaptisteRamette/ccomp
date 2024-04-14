@@ -43,11 +43,13 @@ Usage:
       --in arg                  chasm source file to assemble
       --out arg                 The generated machine code output file path
                                 (default: out.c8c)
+      --hex [=arg(=4)]          Hexdumps the generated machine code,
+                                argument is the amount of opcodes per line
       --symbols [=arg(=out.c8s)]
-                                Generate a file mapping symbols to their
-                                corresponding address
-      --relocate arg            Address in which the machine code will be
-                                loaded (default: 0)
+                                Generate a file with symbols location in
+                                memory/machine code
+      --relocate arg            Address in which the binary is supposed to
+                                be loaded (default: 0x200)
       --super                   Specify the target ISA to be the SUPER-CHIP
                                 and removes warning when using non CHIP-8
                                 instructions
@@ -324,7 +326,7 @@ Contributions are absolutely welcome !
 They can come as bug-reports, bug-fixes, features, documentation or just ideas, that I will be pleased to integrate to chasm !
 
 ### 1. Bug-reports
-Please provide a minimal reproducible example of the bug, and explain it the best you can if you want it to be fixed quickly
+Please provide a minimal reproducible example of the bug, and explain it the best you can if you want it to be fixed quickly.
 
 ### 2. Pull-requests
 I am sure this project is suitable for beginners to write some of their first PRs and that
@@ -333,7 +335,7 @@ to fix, do not hesitate to contact me.
 
 Please, state clearly what you added, and follow the already existing code style.
 
-Finally more important PRs will not be merged if they do not come with unit-tests associated.
+Finally, more important PRs will not be merged if they do not come with unit-tests associated.
 
 
 ## License
