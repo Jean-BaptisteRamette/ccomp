@@ -27,11 +27,6 @@ namespace chasm::ast
 		[[nodiscard]] virtual statement_priority priority() const { return statement_priority::first; }
 
 		virtual void accept(base_visitor&) const = 0;
-
-		[[nodiscard]] virtual size_t source_line_beg() const = 0;
-		[[nodiscard]] virtual size_t source_line_end() const = 0;
-
-
 	};
 
 	using statement = std::unique_ptr<base_statement>;
@@ -48,9 +43,6 @@ namespace chasm::ast
 		[[nodiscard]] statement_priority priority() const override { return statement_priority::procedure; }
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
-
-		[[nodiscard]] size_t source_line_beg() const override { return name_beg.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override { return name_end.source_location.line; }
 
         const token name_beg;
 		const token name_end;
@@ -187,12 +179,9 @@ namespace chasm::ast
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
-		[[nodiscard]] size_t source_line_beg() const override {  return mnemonic.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override {  return mnemonic.source_location.line; }
-
     	const token mnemonic;
 
-		// chip-8 instructions 0 to 3 operands
+		// chip-8 instructions have 0 to 3 operands
 		const std::vector<instruction_operand> operands;
     };
 
@@ -205,9 +194,6 @@ namespace chasm::ast
         {}
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
-
-		[[nodiscard]] size_t source_line_beg() const override {  return identifier.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override {  return value.source_location.line; }
 
         const token identifier;
         const token value;
@@ -223,9 +209,6 @@ namespace chasm::ast
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
-		[[nodiscard]] size_t source_line_beg() const override { return identifier.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override { return identifier.source_location.line; }
-
 		const token identifier;
 		const arch::sprite sprite;
 	};
@@ -239,8 +222,7 @@ namespace chasm::ast
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
-		[[nodiscard]] size_t source_line_beg() const override {  return opcode.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override {  return opcode.source_location.line; }
+		[[nodiscard]] size_t source_line() const {  return opcode.source_location.line; }
 
         const token opcode;
     };
@@ -254,9 +236,6 @@ namespace chasm::ast
 		{}
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
-
-		[[nodiscard]] size_t source_line_beg() const override {  return identifier.source_location.line; }
-		[[nodiscard]] size_t source_line_end() const override {  return identifier.source_location.line; }
 
 		const token identifier;
 

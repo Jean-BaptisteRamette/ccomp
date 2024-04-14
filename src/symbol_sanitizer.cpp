@@ -99,9 +99,9 @@ namespace chasm
 	{
 		if (curr_scope_level != 0)
 			throw assembler_error(
-					"Sprite \"{}\" at line {} must have a global scope",
+					"Sprite \"{}\" at {} must have a global scope",
 					statement.identifier.to_string(),
-					statement.source_line_beg());
+					to_string(statement.identifier.source_location));
 
 		register_symbol(
 				statement.identifier.to_string(),
@@ -112,7 +112,7 @@ namespace chasm
 	void symbol_sanitizer::visit(const ast::raw_statement& statement)
 	{
 		if (curr_scope_level == 0)
-			throw assembler_error("Invalid scope level for raw statement at line {}", statement.source_line_beg());
+			throw assembler_error("Invalid scope level for raw statement at line {}", statement.source_line());
 
 		const auto& token = statement.opcode;
 
