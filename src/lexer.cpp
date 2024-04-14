@@ -236,17 +236,19 @@ namespace chasm
 		if (base != 10)
 			next_chr();
 
-        for (char c = next_chr(); ; c = next_chr())
-        {
+		for (char c = peek_chr(); ; c = peek_chr())
+		{
 			if (std::isalnum(c))
 			{
 				if (!base_has_digit(base, c))
 					throw lexer_exception::invalid_digit_for_base(c, base, cursor);
 
-				numeric_lexeme += c;
+				numeric_lexeme += next_chr();
 			}
 			else if (c == '\'')
 			{
+				next_chr();
+
 				if (!std::isalnum(peek_chr()))
 				{
 					istream.unget();
@@ -254,13 +256,8 @@ namespace chasm
 				}
 			}
 			else
-           	{
-           		if (c != '\0')
-           	        istream.unget();
-
 				break;
-           	}
-        }
+		}
 
 		arch::size_type constant_value {};
 		const auto [_, ec] = std::from_chars(

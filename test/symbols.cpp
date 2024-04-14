@@ -3,11 +3,13 @@
 #include <chasm/parser.hpp>
 #include <chasm/symbol_sanitizer.hpp>
 
+#include "options_fixture.hpp"
+
 
 using namespace chasm;
 
 
-BOOST_AUTO_TEST_SUITE(symbol_sanitizer)
+BOOST_FIXTURE_TEST_SUITE(symbol_sanitizer, options_fixture)
 
 	namespace details
 	{
