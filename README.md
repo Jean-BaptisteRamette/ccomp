@@ -68,7 +68,8 @@ Usage:
 9. [Special purpose register manipulation](#9-special-purpose-registers-manipulation)
 10. [Inline opcodes](#10-inline-opcodes)
 11. [I/O](#11-io)
-12. [Others](#12-others)
+12. [Sprites](#12-sprites)
+13. [Others](#13-others)
 
 ### 1. Comments
 Use the `;;` characters to write comments
@@ -261,7 +262,51 @@ ske rb    ;; skips the next instruction if the key stored in rb is pressed
 skne rc   ;; skips the next instruction if the key stored in rc is not pressed  
 ```  
 
-### 12. Others
+### 12. Sprites
+You can declare sprites using the `sprite` keyword:
+```asm
+sprite my_sprite [ 
+           0b0'0'0'1'1'0'0'0,
+           0b0'0'1'1'1'1'0'0,
+           0b0'1'1'1'1'1'1'0,
+           0b1'1'0'1'1'0'1'1,
+           0b1'1'1'1'1'1'1'1,
+           0b0'0'1'0'0'1'0'0,
+           0b0'1'0'1'1'0'1'0,
+           0b1'0'0'0'0'0'0'1,
+       ]
+```
+Sprites must be at most 15 lines high, meaning, 15 8-bits integers between the brackets.
+
+You can make AR (also known as I register) point to it
+```asm
+mov ar, #my_sprite
+```
+And draw them
+```asm
+proc DrawSprite
+    mov ar, #my_sprite
+    draw r0, r1, #my_sprite
+    ret
+endp DrawSprite
+
+proc DrawSprite4
+    mov ar, #my_sprite
+    draw r0, r1, 4
+    ret
+endp DrawSprite4
+
+.main:
+    ;; display full sprite at position (0, 4)
+    mov r0, 0
+    mov r1, 4
+    call $DrawSprite
+    
+    ;; display only the first 4 lines of the sprite
+    call $DrawSprite4
+```
+
+### 13. Others
 
 Random number generator 
 ```asm  
