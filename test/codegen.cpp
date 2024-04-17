@@ -5,31 +5,32 @@
 #include "options_fixture.hpp"
 
 
+#define BOOST_CHECK_EQUAL_RANGES(Rng1, Rng2) BOOST_CHECK_EQUAL_COLLECTIONS(Rng1.begin(), Rng1.end(), Rng2.begin(), Rng2.end())
 
-BOOST_FIXTURE_TEST_SUITE(machine_code_generation, options_fixture)
 
+namespace details
+{
 	using namespace chasm;
 
-	namespace details
+	std::vector<uint8_t>
+	try_codegen(std::string&& program)
 	{
-		std::vector<arch::opcode>
-		try_codegen(std::string&& program)
-		{
-			auto lex = lexer(std::move(program));
-			auto par = parser(lex.enumerate_tokens());
-			auto ast = par.make_tree();
+		auto lex = lexer(std::move(program));
+		auto par = parser(lex.enumerate_tokens());
+		auto ast = par.make_tree();
 
-			return ast.generate();
-		}
-
-		arch::opcode opcode(std::string&& instruction_str)
-		{
-			std::string program = ".main: " + instruction_str;
-			return try_codegen(std::move(program))[0];
-		}
+		return ast.generate();
 	}
 
-#define BOOST_CHECK_EQUAL_RANGES(Rng1, Rng2) BOOST_CHECK_EQUAL_COLLECTIONS(Rng1.begin(), Rng1.end(), Rng2.begin(), Rng2.end());
+	arch::opcode opcode(std::string&& instruction_str)
+	{
+		std::string program = ".main: " + instruction_str;
+		const auto bin = try_codegen(std::move(program));
+		return (bin[0] << 8) | bin[1];
+	}
+}
+
+BOOST_FIXTURE_TEST_SUITE(machine_code_generation, test_env::zero_relocate)
 
 	BOOST_AUTO_TEST_CASE(check_per_instruction_opcodes)
 	{
@@ -85,10 +86,10 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, options_fixture)
 											   "    raw(opcode)            \n");
 
 		const auto expected_code = {
-				0x0000,
-				0x0001,
-				0xFF'FF,
-				0xFF'FF
+				0x00, 0x00,
+				0x00, 0x01,
+				0xFF, 0xFF,
+				0xFF, 0xFF
 		};
 
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
@@ -141,44 +142,44 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, options_fixture)
 											   "    jmp @main     \n"); // 0x04
 
 		const auto expected_code = {
-				0x2006,
-				0x2024,
-				0x1000,
+				0x20, 0x06,
+				0x20, 0x24,
+				0x10, 0x00,
 
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
-				0x8003,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
+				0x80, 0x03,
 
-				0x2024,
-				0x00EE,
+				0x20, 0x24,
+				0x00, 0xEE,
 
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
-				0x8113,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
+				0x81, 0x13,
 
-				0x2006,
-				0x1042,
-				0x00EE
+				0x20, 0x06,
+				0x10, 0x42,
+				0x00, 0xEE
 		};
 
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
@@ -187,10 +188,84 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, options_fixture)
 	BOOST_AUTO_TEST_CASE(check_pseudo_instruction_swap)
 	{
 		const auto code = details::try_codegen(".main:\n swp r0, r1");
-		const auto expected_code = { 0x8013, 0x8103, 0x8013 };
+		const auto expected_code = {
+				0x80, 0x13,
+				0x81, 0x03,
+				0x80, 0x13
+		};
+
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
-#undef BOOST_RANGE_EQUAL
+	BOOST_AUTO_TEST_CASE(check_sprite_even_sized)
+	{
+		const auto code = details::try_codegen("sprite s [1, 2, 3, 4, 5, 6]\n"
+											   ".main:                     \n"
+											   "    draw r0, r0, #s        \n");
+
+		const auto expected_code = {
+				0xD0, 0x06,
+				0x01, 0x02,
+				0x03, 0x04,
+				0x05, 0x06
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
+	}
+
+	BOOST_AUTO_TEST_CASE(check_sprite_odd_sized)
+	{
+		const auto code = details::try_codegen("sprite s [1, 2, 3, 4, 5]\n"
+											   ".main:                  \n"
+											   "    draw r0, r0, #s     \n");
+
+		const auto expected_code = {
+				0xD0, 0x05,
+				0x01, 0x02,
+				0x03, 0x04,
+				0x05, 0x00
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
+	}
 
 BOOST_AUTO_TEST_SUITE_END()
+
+
+BOOST_AUTO_TEST_SUITE(sprite_padding)
+
+	BOOST_FIXTURE_TEST_CASE(padding_off, test_env::default_options)
+	{
+		const auto code = details::try_codegen("sprite s1 [1, 2, 3]  \n"
+											   "sprite s2 [1, 2, 3]  \n"
+											   "sprite s3 [1, 2, 3]  \n"
+											   ".main:               \n");
+
+		const auto expected_code = {
+				1, 2, 3,
+				1, 2, 3,
+				1, 2, 3
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
+	}
+
+	BOOST_FIXTURE_TEST_CASE(padding_on, test_env::padded_sprites)
+	{
+		const auto code = details::try_codegen("sprite s1 [1, 2, 3]  \n"
+											   "sprite s2 [1, 2, 3]  \n"
+											   "sprite s3 [1, 2, 3]  \n"
+											   ".main:               \n");
+
+		const auto expected_code = {
+				1, 2, 3, 0,
+				1, 2, 3, 0,
+				1, 2, 3, 0
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
+	}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+#undef BOOST_CHECK_EQUAL_RANGES

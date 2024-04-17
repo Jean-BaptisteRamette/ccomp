@@ -58,7 +58,7 @@ namespace chasm
 	}
 
 	[[nodiscard]]
-	uint16_t make_operands_mask(const ast::instruction_statement& instruction)
+	arch::operands_mask make_operands_mask(const ast::instruction_statement& instruction)
 	{
 		if (instruction.operands.size() > arch::MAX_OPERANDS)
 			throw assembler_error("Instruction \"{}\" at {} has {} operands "
@@ -66,7 +66,7 @@ namespace chasm
 								  instruction.operands.size(),
 								  arch::MAX_OPERANDS);
 
-		uint16_t mask = 0;
+		arch::operands_mask mask = 0;
 		uint16_t shift = 0;
 
 		for (const auto& operand : instruction.operands)
@@ -90,7 +90,7 @@ namespace chasm
 			throw generator_exception::invalid_operands_count(inst, { expected_count });
 	}
 
-	std::vector<arch::opcode> generator::generate(const ast::abstract_tree& ast)
+	std::vector<uint8_t> generator::generate(const ast::abstract_tree& ast)
 	{
 		for (const auto& branch : ast.branches())
 			branch->accept(*this);
@@ -105,10 +105,16 @@ namespace chasm
 		//
 		// Add sprites to the end of the code
 		//
-		for (auto& [name, sprite] : sprites)
+		for (const auto& [name, sprite] : sprites)
 		{
 			register_symbol_addr(name);
+
 			binary.append_range(std::span(sprite.data.begin(), sprite.row_count));
+
+			const bool misaligned = binary.size() % sizeof(arch::opcode) != 0;
+
+			if (misaligned && options::has_flag("pad-sprites"))
+				binary.push_back(0x00);
 		}
 
 		const auto base_addr = options::arg<arch::addr>("relocate");
@@ -127,11 +133,24 @@ namespace chasm
 									  relocated,
 									  location * sizeof(arch::opcode));
 
-			binary[location] |= static_cast<arch::addr>(relocated);
+			binary[location + 0] |= ((static_cast<arch::addr>(relocated) & 0x0F00) >> 8);
+			binary[location + 1] |= ((static_cast<arch::addr>(relocated) & 0x00FF));
 		}
 
 		if (options::has_flag("symbols"))
 			generate_symbols_file(options::arg<std::string>("symbols"), sym_addresses);
+	}
+
+	void generator::emit_opcode(arch::opcode opcode)
+	{
+		binary.push_back((opcode & 0xFF00) >> 8);
+		binary.push_back((opcode & 0x00FF));
+	}
+
+	void generator::emit_opcodes(const std::vector<arch::opcode>& opcodes)
+	{
+		for (auto opcode : opcodes)
+			emit_opcode(opcode);
 	}
 
 	void generator::visit(const ast::procedure_statement& procedure)
@@ -153,12 +172,12 @@ namespace chasm
 		if (mnemonic_encoders.contains(mnemonic))
 		{
 			auto encoder = mnemonic_encoders.at(mnemonic);
-			binary.push_back((this->*encoder)(instruction));
+			emit_opcode((this->*encoder)(instruction));
 		}
 		else if (pseudo_mnemonic_encoders.contains(mnemonic))
 		{
 			auto encoder = pseudo_mnemonic_encoders.at(mnemonic);
-			binary.append_range((this->*encoder)(instruction));
+			emit_opcodes((this->*encoder)(instruction));
 		}
 		else if (super_mnemonic_encoders.contains(mnemonic))
 		{
@@ -166,7 +185,7 @@ namespace chasm
 				warn_super_instruction(instruction);
 
 			auto encoder = super_mnemonic_encoders.at(mnemonic);
-			binary.push_back((this->*encoder)(instruction));
+			emit_opcode((this->*encoder)(instruction));
 		}
 	}
 
@@ -190,7 +209,7 @@ namespace chasm
 
 	void generator::visit(const ast::raw_statement& statement)
 	{
-		binary.push_back(operand2imm(statement.opcode, arch::fmt_imm16));
+		emit_opcode(operand2imm(statement.opcode, arch::fmt_imm16));
 	}
 
 	void generator::register_constant(std::string &&symbol, arch::imm value)
@@ -215,7 +234,7 @@ namespace chasm
 		if (sym_addresses.contains(symbol))
 			throw assembler_error("Generator found an already existing symbol \"{}\", this should have been caught by the sanitizer.", symbol);
 
-		sym_addresses[std::move(symbol)] = binary.size() * sizeof(arch::opcode);
+		sym_addresses[std::move(symbol)] = binary.size();
 	}
 
 	void generator::register_patch_location(std::string&& symbol)

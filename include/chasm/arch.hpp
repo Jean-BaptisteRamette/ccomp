@@ -12,6 +12,8 @@ namespace chasm::arch
 	using imm    = size_type;
 	using addr   = size_type;
 	using reg    = uint8_t;
+	using operands_mask = size_type;
+
 
 	enum imm_format
 	{
@@ -67,9 +69,9 @@ namespace chasm::arch
 		return v < (1 << width);
 	}
 
-	[[nodiscard]] constexpr uint16_t make_operands_mask(std::initializer_list<operand_type> operand_types)
+	[[nodiscard]] constexpr operands_mask make_operands_mask(std::initializer_list<operand_type> operand_types)
 	{
-		uint16_t mask = 0;
+		operands_mask mask = 0;
 		uint16_t shift = 0;
 
 		for (operand_type op : operand_types)
@@ -88,6 +90,7 @@ namespace chasm::arch
 
 	constexpr auto MAX_OPERANDS = 3;
 
+	constexpr auto MASK_NONE      = make_operands_mask({});
 	constexpr auto MASK_R8_R8     = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx });
 	constexpr auto MASK_R8_IMM    = make_operands_mask({ operand_type::reg_rx, operand_type::immediate });
 	constexpr auto MASK_R8        = make_operands_mask({ operand_type::reg_rx });

@@ -9,7 +9,7 @@ namespace chasm::ast
 		: statements(std::move(branches))
 	{}
 
-	std::vector<uint16_t> abstract_tree::generate()
+	std::vector<uint8_t> abstract_tree::generate()
 	{
 		sanitize();
 

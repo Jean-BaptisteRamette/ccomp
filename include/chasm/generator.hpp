@@ -21,7 +21,7 @@ namespace chasm
 		generator& operator=(generator&&) = delete;
 		~generator() = default;
 
-		[[nodiscard]] std::vector<arch::opcode> generate(const ast::abstract_tree&);
+		[[nodiscard]] std::vector<uint8_t> generate(const ast::abstract_tree&);
 
 		void visit(const ast::procedure_statement&) override;
 		void visit(const ast::instruction_statement&) override;
@@ -31,6 +31,9 @@ namespace chasm
 		void visit(const ast::label_statement&) override;
 
 	private:
+		void emit_opcode(arch::opcode opcode);
+		void emit_opcodes(const std::vector<arch::opcode>& opcodes);
+
 		void register_constant(std::string&& symbol, arch::imm value);
 		void register_sprite(std::string&& symbol, const arch::sprite& sprite);
 		void register_symbol_addr(std::string symbol);
@@ -86,7 +89,7 @@ namespace chasm
 			std::string sym;
 		};
 
-		std::vector<arch::opcode> binary;
+		std::vector<uint8_t> binary;
 		std::vector<address_patch> patches;
 		std::unordered_map<std::string, arch::addr> sym_addresses;
 		std::unordered_map<std::string, arch::imm> constants;

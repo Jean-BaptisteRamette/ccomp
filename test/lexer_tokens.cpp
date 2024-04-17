@@ -2,10 +2,9 @@
 #include <chasm/lexer.hpp>
 
 
-using namespace chasm;
-
-
 BOOST_AUTO_TEST_SUITE(lexer_tokens)
+
+	using namespace chasm;
 
 	BOOST_AUTO_TEST_CASE(check_token_types)
 	{

@@ -15,7 +15,7 @@ namespace chasm::ast
 	public:
         explicit abstract_tree(std::vector<ast::statement>&& branches);
 
-		[[nodiscard]] std::vector<uint16_t> generate();
+		[[nodiscard]] std::vector<uint8_t> generate();
 		[[nodiscard]] const std::vector<ast::statement>& branches() const;
 
 	private:

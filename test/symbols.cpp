@@ -6,10 +6,9 @@
 #include "options_fixture.hpp"
 
 
-using namespace chasm;
+BOOST_FIXTURE_TEST_SUITE(symbol_sanitizer, test_env::default_options)
 
-
-BOOST_FIXTURE_TEST_SUITE(symbol_sanitizer, options_fixture)
+	using namespace chasm;
 
 	namespace details
 	{

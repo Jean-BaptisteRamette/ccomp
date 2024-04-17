@@ -6,7 +6,7 @@
 #include "options_fixture.hpp"
 
 
-BOOST_FIXTURE_TEST_SUITE(instruction_operands, options_fixture)
+BOOST_FIXTURE_TEST_SUITE(instruction_operands, test_env::default_options)
 
 	using namespace chasm;
 
