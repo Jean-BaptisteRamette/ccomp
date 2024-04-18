@@ -59,7 +59,7 @@ namespace io
 
 			for (int j = 0; j < perline; ++j)
 				if (curr + j < binsize)
-					std::cout << std::format("{:04X} ", binary[curr + j]);
+					std::cout << std::format("{:02X} ", binary[curr + j]);
 
 			std::cout << '\n';
 		}
