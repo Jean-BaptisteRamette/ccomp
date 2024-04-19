@@ -72,6 +72,8 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, test_env::zero_relocate)
 		BOOST_CHECK_EQUAL(details::opcode("ske rd"), 0xED9E);
 		BOOST_CHECK_EQUAL(details::opcode("skne rd"), 0xEDA1);
 		BOOST_CHECK_EQUAL(details::opcode("draw rd, re, 0xF"), 0xDDEF);
+		BOOST_CHECK_EQUAL(details::opcode("ldf rf"), 0xFF29);
+		BOOST_CHECK_EQUAL(details::opcode("ldfs rf"), 0xFF30);
 
 		BOOST_CHECK_EQUAL(details::opcode("jmp [0xFFF]"), 0xBFFF);
 	}
@@ -223,7 +225,7 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, test_env::zero_relocate)
 				0xD0, 0x05,
 				0x01, 0x02,
 				0x03, 0x04,
-				0x05, 0x00
+				0x05
 		};
 
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);

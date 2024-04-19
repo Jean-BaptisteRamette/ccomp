@@ -61,6 +61,8 @@ BOOST_FIXTURE_TEST_SUITE(instruction_operands, test_env::default_options)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n ske"), generator_exception::invalid_operands_count);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n skne"), generator_exception::invalid_operands_count);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n cls 0"), generator_exception::invalid_operands_count);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n ldf r9, 1"), generator_exception::invalid_operands_count);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n ldfs 0, 2"), generator_exception::invalid_operands_count);
 
 		// > 3 operands
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, 1, 2"), assembler_error);
@@ -163,6 +165,8 @@ BOOST_FIXTURE_TEST_SUITE(instruction_operands, test_env::default_options)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n ske 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n skne 1"), generator_exception::invalid_operand_type);
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, r0"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n ldf 1"), generator_exception::invalid_operand_type);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n ldfs 1"), generator_exception::invalid_operand_type);
 	}
 
 	BOOST_AUTO_TEST_CASE(sprites)

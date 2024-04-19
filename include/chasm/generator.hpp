@@ -63,6 +63,7 @@ namespace chasm
 		[[nodiscard]] arch::opcode encode_se(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_sne(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_inc(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_ldf(const ast::instruction_statement&);
 
 		[[nodiscard]] arch::opcode encode_exit(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_scrd(const ast::instruction_statement&);
@@ -70,6 +71,7 @@ namespace chasm
 		[[nodiscard]] arch::opcode encode_scrr(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_high(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_low(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_ldfs(const ast::instruction_statement&);
 
 		[[nodiscard]] std::vector<arch::opcode> encode_swp(const ast::instruction_statement&);
 
@@ -124,7 +126,8 @@ namespace chasm
 				{ "call", &generator::encode_call },
 				{ "se", &generator::encode_se },
 				{ "sne", &generator::encode_sne },
-				{ "inc", &generator::encode_inc }
+				{ "inc", &generator::encode_inc },
+				{ "ldf", &generator::encode_ldf },
 		};
 
 		const std::unordered_map<std::string_view, encoder> super_mnemonic_encoders = {
@@ -134,6 +137,7 @@ namespace chasm
 				{ "scrr", &generator::encode_scrr },
 				{ "high", &generator::encode_high },
 				{ "low", &generator::encode_low },
+				{ "ldfs", &generator::encode_ldfs },
 		};
 
 

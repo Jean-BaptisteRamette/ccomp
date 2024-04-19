@@ -149,10 +149,11 @@ namespace chasm::arch
 	constexpr opcode _EXA1(reg rx) { return ENCODE(0xE, rx, 0xA1); }
 	constexpr opcode _FX07(reg rx) { return ENCODE(0xF, rx, 0x07); }
 	constexpr opcode _FX0A(reg rx) { return ENCODE(0xF, rx, 0x0A); }
-	constexpr opcode _FX29(reg rx) { return ENCODE(0xF, rx, 0x29); }
 	constexpr opcode _FX15(reg rx) { return ENCODE(0xF, rx, 0x15); }
 	constexpr opcode _FX18(reg rx) { return ENCODE(0xF, rx, 0x18); }
 	constexpr opcode _FX1E(reg rx) { return ENCODE(0xF, rx, 0x1E); }
+	constexpr opcode _FX29(reg rx) { return ENCODE(0xF, rx, 0x29); }
+	constexpr opcode _FX30(reg rx) { return ENCODE(0xF, rx, 0x30); }
 	constexpr opcode _FX33(reg rx) { return ENCODE(0xF, rx, 0x33); }
 	constexpr opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
 	constexpr opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }

@@ -425,7 +425,6 @@ namespace chasm
 			case arch::MASK_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
 			case arch::MASK_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
 			case arch::MASK_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
-			case arch::MASK_AR_R8: return arch::_FX29(operand2reg(mov.operands[1]));
 			case arch::MASK_AR_IMM: return arch::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
 
 			case arch::MASK_AR_ADDR:
@@ -635,6 +634,16 @@ namespace chasm
 		throw generator_exception::invalid_operand_type(inc);
 	}
 
+	arch::opcode generator::encode_ldf(const ast::instruction_statement& ldf)
+	{
+		ensure_operands_count(ldf, 1);
+
+		if (make_operands_mask(ldf) == arch::MASK_R8)
+			return arch::_FX29(operand2reg(ldf.operands[0]));
+
+		throw generator_exception::invalid_operand_type(ldf);
+	}
+
 	arch::opcode generator::encode_exit(const ast::instruction_statement& exit)
 	{
 		ensure_operands_count(exit, 0);
@@ -673,6 +682,16 @@ namespace chasm
 	{
 		ensure_operands_count(low, 0);
 		return 0x00FE;
+	}
+
+	arch::opcode generator::encode_ldfs(const ast::instruction_statement& ldfs)
+	{
+		ensure_operands_count(ldfs, 1);
+
+		if (make_operands_mask(ldfs) == arch::MASK_R8)
+			return arch::_FX30(operand2reg(ldfs.operands[0]));
+
+		throw generator_exception::invalid_operand_type(ldfs);
 	}
 
 	std::vector<arch::opcode> generator::encode_swp(const ast::instruction_statement& swp)

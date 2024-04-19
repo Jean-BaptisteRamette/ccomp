@@ -47,6 +47,7 @@ namespace chasm
             	"call",
 				"se",
 				"sne",
+				"ldf",
 
 				// SuperChip-48 instructions
 				"exit",
@@ -54,7 +55,8 @@ namespace chasm
 				"scrl",
 				"scrr",
 				"high",
-				"low"
+				"low",
+				"ldfs"
         };
 
 		const std::unordered_map<char, token_type> special_characters = {
