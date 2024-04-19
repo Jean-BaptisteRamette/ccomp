@@ -56,7 +56,9 @@ namespace chasm
 				"scrr",
 				"high",
 				"low",
-				"ldfs"
+				"ldfs",
+				"saverpl",
+				"loadrpl"
         };
 
 		const std::unordered_map<char, token_type> special_characters = {

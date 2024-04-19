@@ -694,6 +694,26 @@ namespace chasm
 		throw generator_exception::invalid_operand_type(ldfs);
 	}
 
+	arch::opcode generator::encode_saverpl(const ast::instruction_statement& saverpl)
+	{
+		ensure_operands_count(saverpl, 1);
+
+		if (make_operands_mask(saverpl) == arch::MASK_R8)
+			return arch::_FX75(operand2reg(saverpl.operands[0]));
+
+		throw generator_exception::invalid_operand_type(saverpl);
+	}
+
+	arch::opcode generator::encode_loadrpl(const ast::instruction_statement& loadrpl)
+	{
+		ensure_operands_count(loadrpl, 1);
+
+		if (make_operands_mask(loadrpl) == arch::MASK_R8)
+			return arch::_FX85(operand2reg(loadrpl.operands[0]));
+
+		throw generator_exception::invalid_operand_type(loadrpl);
+	}
+
 	std::vector<arch::opcode> generator::encode_swp(const ast::instruction_statement& swp)
 	{
 		ensure_operands_count(swp, 2);

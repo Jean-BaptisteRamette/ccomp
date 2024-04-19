@@ -157,6 +157,8 @@ namespace chasm::arch
 	constexpr opcode _FX33(reg rx) { return ENCODE(0xF, rx, 0x33); }
 	constexpr opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
 	constexpr opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }
+	constexpr opcode _FX75(reg rx) { return ENCODE(0xF, rx, 0x75); }
+	constexpr opcode _FX85(reg rx) { return ENCODE(0xF, rx, 0x85); }
 
 	constexpr opcode _1NNN(arch::imm imm12) { return ENCODE(0x1, imm12); }
 	constexpr opcode _2NNN(arch::imm imm12) { return ENCODE(0x2, imm12); }

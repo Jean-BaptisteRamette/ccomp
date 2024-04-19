@@ -74,6 +74,8 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, test_env::zero_relocate)
 		BOOST_CHECK_EQUAL(details::opcode("draw rd, re, 0xF"), 0xDDEF);
 		BOOST_CHECK_EQUAL(details::opcode("ldf rf"), 0xFF29);
 		BOOST_CHECK_EQUAL(details::opcode("ldfs rf"), 0xFF30);
+		BOOST_CHECK_EQUAL(details::opcode("saverpl r6"), 0xF675);
+		BOOST_CHECK_EQUAL(details::opcode("loadrpl r9"), 0xF985);
 
 		BOOST_CHECK_EQUAL(details::opcode("jmp [0xFFF]"), 0xBFFF);
 	}

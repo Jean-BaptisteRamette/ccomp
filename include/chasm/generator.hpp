@@ -72,6 +72,8 @@ namespace chasm
 		[[nodiscard]] arch::opcode encode_high(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_low(const ast::instruction_statement&);
 		[[nodiscard]] arch::opcode encode_ldfs(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_saverpl(const ast::instruction_statement&);
+		[[nodiscard]] arch::opcode encode_loadrpl(const ast::instruction_statement&);
 
 		[[nodiscard]] std::vector<arch::opcode> encode_swp(const ast::instruction_statement&);
 
@@ -138,6 +140,9 @@ namespace chasm
 				{ "high", &generator::encode_high },
 				{ "low", &generator::encode_low },
 				{ "ldfs", &generator::encode_ldfs },
+				{ "strf", &generator::encode_ldfs },
+				{ "saverpl", &generator::encode_saverpl },
+				{ "loadrpl", &generator::encode_loadrpl },
 		};
 
 
