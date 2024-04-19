@@ -2,6 +2,9 @@
 #define CHASM_ARCH_HPP
 
 
+#include <initializer_list>
+#include <unordered_map>
+#include <string_view>
 #include <array>
 
 
@@ -13,6 +16,86 @@ namespace chasm::arch
 	using addr   = size_type;
 	using reg    = uint8_t;
 	using operands_mask = size_type;
+
+
+	enum class instruction_id
+	{
+		ADD,
+		SUB,
+		SUBA,
+		INC,
+		OR,
+		AND,
+		XOR,
+		SHR,
+		SHL,
+		RDUMP,
+		RLOAD,
+		MOV,
+		SWP,
+		DRAW,
+		CLS,
+		RAND,
+		BCD,
+		WKEY,
+		SKE,
+		SKNE,
+		RET,
+		JMP,
+		CALL,
+		SE,
+		SNE,
+		LDF,
+		LDFS,
+		EXIT,
+		SCRD,
+		SCRL,
+		SCRR,
+		HIGH,
+		LOW,
+		SAVERPL,
+		LOADRPL,
+	};
+
+
+	inline std::unordered_map<std::string_view, instruction_id> mnemonics = {
+			{"add", instruction_id::ADD },
+			{"sub", instruction_id::SUB },
+			{"suba", instruction_id::SUBA },
+			{"inc", instruction_id::INC },
+			{"or", instruction_id::OR },
+			{"and", instruction_id::AND },
+			{"xor", instruction_id::XOR },
+			{"shr", instruction_id::SHR },
+			{"shl", instruction_id::SHL },
+			{"rdump", instruction_id::RDUMP },
+			{"rload", instruction_id::RLOAD },
+			{"mov", instruction_id::MOV },
+			{"swp", instruction_id::SWP },
+			{"draw", instruction_id::DRAW },
+			{"cls", instruction_id::CLS },
+			{"rand", instruction_id::RAND },
+			{"bcd", instruction_id::BCD },
+			{"wkey", instruction_id::WKEY },
+			{"ske", instruction_id::SKE },
+			{"skne", instruction_id::SKNE },
+			{"ret", instruction_id::RET },
+			{"jmp", instruction_id::JMP },
+			{"call", instruction_id::CALL },
+			{"se", instruction_id::SE },
+			{"sne", instruction_id::SNE },
+			{"ldf", instruction_id::LDF },
+			{"ldfs", instruction_id::LDFS },
+			{"exit", instruction_id::EXIT },
+			{"scrd", instruction_id::SCRD },
+			{"scrl", instruction_id::SCRL },
+			{"scrr", instruction_id::SCRR },
+			{"high", instruction_id::HIGH },
+			{"low", instruction_id::LOW },
+			{"saverpl", instruction_id::SAVERPL },
+			{"loadrpl", instruction_id::LOADRPL },
+			{"swp", instruction_id::SWP },
+	};
 
 
 	enum imm_format
@@ -81,11 +164,6 @@ namespace chasm::arch
 		}
 
 		return mask;
-	}
-
-	[[nodiscard]] constexpr uint8_t operands_count(uint16_t operand_mask)
-	{
-		return std::bit_width(operand_mask) / BITSHIFT_OP_MASK;
 	}
 
 	constexpr auto MAX_OPERANDS = 3;

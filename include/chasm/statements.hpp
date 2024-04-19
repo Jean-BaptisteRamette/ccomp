@@ -179,6 +179,8 @@ namespace chasm::ast
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
+		[[nodiscard]] arch::instruction_id to_arch_id() const { return arch::mnemonics.at(mnemonic.to_string()); }
+
     	const token mnemonic;
 
 		// chip-8 instructions have 0 to 3 operands

@@ -104,50 +104,49 @@ namespace chasm
 		typedef arch::opcode(generator::*encoder)(const ast::instruction_statement&);
 		typedef std::vector<arch::opcode>(generator::*pseudo_encoder)(const ast::instruction_statement&);
 
-		const std::unordered_map<std::string_view, encoder> mnemonic_encoders = {
-				{ "add", &generator::encode_add },
-				{ "sub", &generator::encode_sub },
-				{ "suba", &generator::encode_suba },
-				{ "or", &generator::encode_or },
-				{ "and", &generator::encode_and },
-				{ "xor", &generator::encode_xor },
-				{ "shr", &generator::encode_shr },
-				{ "shl", &generator::encode_shl },
-				{ "rdump", &generator::encode_rdump },
-				{ "rload", &generator::encode_rload },
-				{ "mov", &generator::encode_mov },
-				{ "draw", &generator::encode_draw },
-				{ "cls", &generator::encode_cls },
-				{ "rand", &generator::encode_rand },
-				{ "bcd", &generator::encode_bcd },
-				{ "wkey", &generator::encode_wkey },
-				{ "ske", &generator::encode_ske },
-				{ "skne", &generator::encode_skne },
-				{ "ret", &generator::encode_ret },
-				{ "jmp", &generator::encode_jmp },
-				{ "call", &generator::encode_call },
-				{ "se", &generator::encode_se },
-				{ "sne", &generator::encode_sne },
-				{ "inc", &generator::encode_inc },
-				{ "ldf", &generator::encode_ldf },
+		const std::unordered_map<arch::instruction_id, encoder> mnemonic_encoders = {
+				{ arch::instruction_id::ADD,   &generator::encode_add },
+				{ arch::instruction_id::SUB,   &generator::encode_sub },
+				{ arch::instruction_id::SUBA,  &generator::encode_suba },
+				{ arch::instruction_id::OR,    &generator::encode_or },
+				{ arch::instruction_id::AND,   &generator::encode_and },
+				{ arch::instruction_id::XOR,   &generator::encode_xor },
+				{ arch::instruction_id::SHR,   &generator::encode_shr },
+				{ arch::instruction_id::SHL,   &generator::encode_shl },
+				{ arch::instruction_id::RDUMP, &generator::encode_rdump },
+				{ arch::instruction_id::RLOAD, &generator::encode_rload },
+				{ arch::instruction_id::MOV,   &generator::encode_mov },
+				{ arch::instruction_id::DRAW,  &generator::encode_draw },
+				{ arch::instruction_id::CLS,   &generator::encode_cls },
+				{ arch::instruction_id::RAND,  &generator::encode_rand },
+				{ arch::instruction_id::BCD,   &generator::encode_bcd },
+				{ arch::instruction_id::WKEY,  &generator::encode_wkey },
+				{ arch::instruction_id::SKE,   &generator::encode_ske },
+				{ arch::instruction_id::SKNE,  &generator::encode_skne },
+				{ arch::instruction_id::RET,   &generator::encode_ret },
+				{ arch::instruction_id::JMP,   &generator::encode_jmp },
+				{ arch::instruction_id::CALL,  &generator::encode_call },
+				{ arch::instruction_id::SE,    &generator::encode_se },
+				{ arch::instruction_id::SNE,   &generator::encode_sne },
+				{ arch::instruction_id::INC,   &generator::encode_inc },
+				{ arch::instruction_id::LDF,   &generator::encode_ldf },
 		};
 
-		const std::unordered_map<std::string_view, encoder> super_mnemonic_encoders = {
-				{ "exit", &generator::encode_exit },
-				{ "scrd", &generator::encode_scrd },
-				{ "scrl", &generator::encode_scrl },
-				{ "scrr", &generator::encode_scrr },
-				{ "high", &generator::encode_high },
-				{ "low", &generator::encode_low },
-				{ "ldfs", &generator::encode_ldfs },
-				{ "strf", &generator::encode_ldfs },
-				{ "saverpl", &generator::encode_saverpl },
-				{ "loadrpl", &generator::encode_loadrpl },
+		const std::unordered_map<arch::instruction_id, encoder> super_mnemonic_encoders = {
+				{ arch::instruction_id::EXIT,    &generator::encode_exit },
+				{ arch::instruction_id::SCRD,    &generator::encode_scrd },
+				{ arch::instruction_id::SCRL,    &generator::encode_scrl },
+				{ arch::instruction_id::SCRR,    &generator::encode_scrr },
+				{ arch::instruction_id::HIGH,    &generator::encode_high },
+				{ arch::instruction_id::LOW,     &generator::encode_low },
+				{ arch::instruction_id::LDFS,    &generator::encode_ldfs },
+				{ arch::instruction_id::SAVERPL, &generator::encode_saverpl },
+				{ arch::instruction_id::LOADRPL, &generator::encode_loadrpl },
 		};
 
 
-		const std::unordered_map<std::string_view, pseudo_encoder> pseudo_mnemonic_encoders = {
-				{ "swp", &generator::encode_swp }
+		const std::unordered_map<arch::instruction_id, pseudo_encoder> pseudo_mnemonic_encoders = {
+				{arch::instruction_id::SWP, &generator::encode_swp }
 		};
 	};
 

@@ -80,6 +80,8 @@ namespace chasm::ds
 	 *
 	 */
 
+
+
 	const std::unordered_map<uint8_t, arch::operands_mask> nibble2operands = {
 			{ 0x0, arch::MASK_NONE },
 
@@ -104,8 +106,11 @@ namespace chasm::ds
 			{ 0xD, arch::MASK_R8_R8_IMM },
 	};
 
-	// TODO: Fix generator to return vector<uint8_t> because of sprites that can be odd sized
-	//
+	struct decoded_instruction
+	{
+
+	};
+
 	class disassembler
 	{
 	public:
@@ -117,6 +122,7 @@ namespace chasm::ds
 		disassembler& operator=(disassembler&) = delete;
 		disassembler& operator=(disassembler&&) = delete;
 
+		std::vector<decoded_instruction> instructions();
 
 	private:
 		std::vector<uint8_t> binary;

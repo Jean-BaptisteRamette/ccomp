@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 			}
 
 			auto disassembler = chasm::ds::disassembler(std::move(bytes));
-
+			auto instructions = disassembler.instructions();
     	}
 		else
 		{

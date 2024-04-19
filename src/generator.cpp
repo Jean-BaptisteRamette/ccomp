@@ -167,24 +167,24 @@ namespace chasm
 
 	void generator::visit(const ast::instruction_statement& instruction)
 	{
-		const auto mnemonic = instruction.mnemonic.to_string();
+		const auto inst_id = instruction.to_arch_id();
 
-		if (mnemonic_encoders.contains(mnemonic))
+		if (mnemonic_encoders.contains(inst_id))
 		{
-			auto encoder = mnemonic_encoders.at(mnemonic);
+			auto encoder = mnemonic_encoders.at(inst_id);
 			emit_opcode((this->*encoder)(instruction));
 		}
-		else if (pseudo_mnemonic_encoders.contains(mnemonic))
+		else if (pseudo_mnemonic_encoders.contains(inst_id))
 		{
-			auto encoder = pseudo_mnemonic_encoders.at(mnemonic);
+			auto encoder = pseudo_mnemonic_encoders.at(inst_id);
 			emit_opcodes((this->*encoder)(instruction));
 		}
-		else if (super_mnemonic_encoders.contains(mnemonic))
+		else if (super_mnemonic_encoders.contains(inst_id))
 		{
 			if (!options::has_flag("super"))
 				warn_super_instruction(instruction);
 
-			auto encoder = super_mnemonic_encoders.at(mnemonic);
+			auto encoder = super_mnemonic_encoders.at(inst_id);
 			emit_opcode((this->*encoder)(instruction));
 		}
 	}

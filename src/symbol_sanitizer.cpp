@@ -57,9 +57,11 @@ namespace chasm
 
 			if (operand_token.type == token_type::identifier && !symbol_defined(sym))
 			{
-				if (statement.mnemonic.to_string() == "jmp")
+				const auto inst_id = statement.to_arch_id();
+
+				if (inst_id == arch::instruction_id::JMP)
 					undefined_labels.insert(std::make_pair(std::move(sym), operand_token.source_location));
-				else if (statement.mnemonic.to_string() == "call")
+				else if (inst_id == arch::instruction_id::CALL)
 					undefined_procs.insert(std::make_pair(std::move(sym), operand_token.source_location));
 				else
 					throw sanitize_exception::undefined_symbols(sym, operand_token.source_location);

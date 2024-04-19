@@ -10,10 +10,10 @@ namespace chasm
 {
     namespace
     {
-		using lexeme_set = std::unordered_set<std::string_view>;
-		using lexeme_map = std::unordered_map<std::string_view, token_type>;
+		template<typename KeyType>
+		using lexeme_map = std::unordered_map<KeyType, token_type>;
 
-        const lexeme_map keywords = {
+        const lexeme_map<std::string_view> keywords = {
 				{ "define", token_type::keyword_define     },
 				{ "sprite", token_type::keyword_sprite     },
 				{ "raw",    token_type::keyword_raw        },
@@ -21,57 +21,17 @@ namespace chasm
 				{ "endp",   token_type::keyword_proc_end   }
 		};
 
-        const lexeme_set instructions = {
-            	"add",
-            	"sub",
-            	"suba",
-				"inc",
-            	"or",
-            	"and",
-            	"xor",
-            	"shr",
-            	"shl",
-            	"rdump",
-            	"rload",
-            	"mov",
-            	"swp",
-            	"draw",
-            	"cls",
-            	"rand",
-            	"bcd",
-            	"wkey",
-            	"ske",
-            	"skne",
-            	"ret",
-            	"jmp",
-            	"call",
-				"se",
-				"sne",
-				"ldf",
-
-				// SuperChip-48 instructions
-				"exit",
-				"scrd",
-				"scrl",
-				"scrr",
-				"high",
-				"low",
-				"ldfs",
-				"saverpl",
-				"loadrpl"
-        };
-
-		const std::unordered_map<char, token_type> special_characters = {
-				{ '[', token_type::bracket_open },
-				{ ']', token_type::bracket_close },
-				{ '(', token_type::parenthesis_open },
+		const lexeme_map<char> special_characters = {
+				{ '[', token_type::bracket_open      },
+				{ ']', token_type::bracket_close     },
+				{ '(', token_type::parenthesis_open  },
 				{ ')', token_type::parenthesis_close },
-				{ '.', token_type::dot_label },
-				{ '@', token_type::at_label },
-				{ '$', token_type::dollar_proc },
-				{ '#', token_type::hash_sprite },
-				{ ':', token_type::colon },
-				{ ',', token_type::comma }
+				{ '.', token_type::dot_label         },
+				{ '@', token_type::at_label          },
+				{ '$', token_type::dollar_proc       },
+				{ '#', token_type::hash_sprite       },
+				{ ':', token_type::colon             },
+				{ ',', token_type::comma             }
 		};
 
 		bool is_lexeme_reg(std::string_view lexeme)
@@ -93,7 +53,7 @@ namespace chasm
             if (is_lexeme_reg(lexeme))
                 return token_type::register_name;
 
-            if (instructions.contains(lexeme))
+            if (arch::mnemonics.contains(lexeme))
                 return token_type::instruction;
 
 			if (keywords.contains(lexeme))
