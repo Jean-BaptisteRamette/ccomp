@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-#include <chasm/assembler_error.hpp>
+#include <chasm/chasm_exception.hpp>
 #include <chasm/ast_visitor.hpp>
 #include <chasm/arch.hpp>
 #include <chasm/ast.hpp>
@@ -152,10 +152,10 @@ namespace chasm
 
 	namespace generator_exception
 	{
-		struct invalid_operand_type : assembler_error
+		struct invalid_operand_type : chasm_exception
 		{
 			explicit invalid_operand_type(const ast::instruction_statement& inst)
-				: assembler_error("Invalid operand type for instruction \"{}\" at {}.",
+				: chasm_exception("Invalid operand type for instruction \"{}\" at {}.",
 								  inst.mnemonic.to_string(),
 								  to_string(inst.mnemonic.source_location))
 			{}
@@ -177,11 +177,11 @@ namespace chasm
 			return '(' + joined + ')';
 		}
 
-		struct invalid_operands_count : assembler_error
+		struct invalid_operands_count : chasm_exception
 		{
 			explicit invalid_operands_count(const ast::instruction_statement& inst,
 											std::initializer_list<int> expected_counts)
-				: assembler_error("Invalid operands count for instruction \"{}\" at {}.\n"
+				: chasm_exception("Invalid operands count for instruction \"{}\" at {}.\n"
 								  "Expected operands count to be among {} but {} operands were provided",
 								  inst.mnemonic.to_string(),
 								  to_string(inst.mnemonic.source_location),
@@ -190,10 +190,10 @@ namespace chasm
 			{}
 		};
 
-		struct invalid_immediate_format : assembler_error
+		struct invalid_immediate_format : chasm_exception
 		{
 			invalid_immediate_format(arch::imm imm, arch::imm_format bit_format)
-				: assembler_error("Immediate value {} is too big for expected operand format of {} bits.",
+				: chasm_exception("Immediate value {} is too big for expected operand format of {} bits.",
 								  imm,
 								  static_cast<int>(bit_format))
 			{}

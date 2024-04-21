@@ -179,7 +179,11 @@ namespace chasm::ast
 
 		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
 
-		[[nodiscard]] arch::instruction_id to_arch_id() const { return arch::mnemonics.at(mnemonic.to_string()); }
+		[[nodiscard]] arch::instruction_id to_arch_id() const
+		{
+			const auto m = mnemonic.to_string();
+			return arch::to_instruction_id(m);
+		}
 
     	const token mnemonic;
 

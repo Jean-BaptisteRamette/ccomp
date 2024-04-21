@@ -9,7 +9,7 @@
 #include <vector>
 #include <format>
 
-#include <chasm/assembler_error.hpp>
+#include <chasm/chasm_exception.hpp>
 #include <chasm/source_location.hpp>
 #include <chasm/stream.hpp>
 #include <chasm/arch.hpp>
@@ -102,10 +102,10 @@ namespace chasm
 
     namespace lexer_exception
     {
-        struct invalid_digit_for_base : assembler_error
+        struct invalid_digit_for_base : chasm_exception
         {
             invalid_digit_for_base(char digit, int base, const source_location& source_loc)
-                : assembler_error(
+                : chasm_exception(
 						"Invalid digit \"{}\" for numeric base {} at {}.",
 						digit,
 						base,
@@ -113,20 +113,20 @@ namespace chasm
             {}
         };
 
-		struct numeric_constant_too_large : assembler_error
+		struct numeric_constant_too_large : chasm_exception
 		{
 			numeric_constant_too_large(std::string numeric_lexeme, const source_location& source_loc)
-				: assembler_error(
+				: chasm_exception(
 						"Numeric constant \"{}\" at {} is too large for a 16-bit value.",
 						numeric_lexeme,
 						chasm::to_string(source_loc))
 			{}
 		};
 
-        struct undefined_character_token : assembler_error
+        struct undefined_character_token : chasm_exception
         {
             explicit undefined_character_token(char c, const source_location& source_loc)
-                : assembler_error(
+                : chasm_exception(
 						"Character \"{}\" cannot match any token at {}.",
 						c,
 						chasm::to_string(source_loc))

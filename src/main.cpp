@@ -1,5 +1,6 @@
 #include <vector>
 
+#include <chasm/disassembly_view.hpp>
 #include <chasm/disassembler.hpp>
 #include <chasm/options.hpp>
 #include <chasm/parser.hpp>
@@ -111,7 +112,11 @@ int main(int argc, char** argv)
 			}
 
 			auto disassembler = chasm::ds::disassembler(std::move(bytes));
-			auto instructions = disassembler.instructions();
+			// auto disassembly  = chasm::ds::disassembly_view(disassembler);
+			// disassembly.print();
+
+			for (const auto& [addr, str] : disassembler.disassembly)
+				std::cout << std::format("0x:{:04X}: {}", addr, str) << std::endl;
     	}
 		else
 		{

@@ -2,39 +2,19 @@
 #define CHASM_DISASSEMBLER_HPP
 
 
-#include <unordered_map>
+#include <map>
+#include <set>
+#include <stack>
 #include <vector>
 #include <string>
 
+#include <chasm/chasm_exception.hpp>
 #include <chasm/arch.hpp>
 
 
 namespace chasm::ds
 {
 	/*!
-	 * Example output:
-	 *
-	 * proc sub_ADDRESS
-	 *     mov r1, 2
-	 *     jmp @loc_ADDRESS
-	 *
-	 * .loc_ADDRESS:
-	 *     ret
-	 * endp sub_ADDRESS
-	 *
-	 * .main:
-	 *     mov r0, 0
-	 *     mov r1, 1
-	 *     add r0, r1
-	 *     call $sub_ADDRESS
-	 *
-	 *     mov r2, 6
-	 *     mov ar, 0xABCD
-	 *     draw r2, r2, 7
-	 */
-
-	/*!
-	 *
 	 *  1NNN
 	 *  2NNN
 	 *  ANNN
@@ -74,42 +54,7 @@ namespace chasm::ds
 	 *
 	 *  00EE
 	 *  00E0
-	 *
-	 *  - First nibble can't be an operand
-	 *  - get the first nibble
-	 *
 	 */
-
-
-
-	const std::unordered_map<uint8_t, arch::operands_mask> nibble2operands = {
-			{ 0x0, arch::MASK_NONE },
-
-			{ 0x1, arch::MASK_ADDR },
-			{ 0x2, arch::MASK_ADDR },
-			{ 0xA, arch::MASK_ADDR },
-			{ 0xB, arch::MASK_ADDR },
-
-			{ 0x3, arch::MASK_R8_IMM },
-			{ 0x4, arch::MASK_R8_IMM },
-			{ 0x6, arch::MASK_R8_IMM },
-			{ 0x7, arch::MASK_R8_IMM },
-			{ 0xC, arch::MASK_R8_IMM },
-
-			{ 0x5, arch::MASK_R8_R8 },
-			{ 0x8, arch::MASK_R8_R8 },
-			{ 0x9, arch::MASK_R8_R8 },
-
-			{ 0xE, arch::MASK_R8 },
-			{ 0xF, arch::MASK_R8 },
-
-			{ 0xD, arch::MASK_R8_R8_IMM },
-	};
-
-	struct decoded_instruction
-	{
-
-	};
 
 	class disassembler
 	{
@@ -122,11 +67,75 @@ namespace chasm::ds
 		disassembler& operator=(disassembler&) = delete;
 		disassembler& operator=(disassembler&&) = delete;
 
-		std::vector<decoded_instruction> instructions();
+		// make this back to private when done testing
+		std::map<arch::addr, std::string> disassembly;
+
+	private:
+		void ds_path(arch::addr path_start = 0);
+		void push_ds_path(arch::addr path_start);
+		void ds_next();
+
+		void ds_cls();
+		void ds_ret();
+		void ds_scrr();
+		void ds_scrl();
+		void ds_exit();
+		void ds_low();
+		void ds_high();
+		void ds_scrd();
+		void ds_call(arch::addr subroutine_addr);
+		void ds_jmp(arch::addr location);
+		void ds_mov_ar_addr(arch::addr addr);
+		void ds_jmp_indirect(arch::addr offset);
+		void ds_se_r8_imm(arch::reg reg, arch::imm imm);
+		void ds_sne_r8_imm(arch::reg reg, arch::imm imm);
+		void ds_mov_r8_imm(arch::reg reg, arch::imm imm);
+		void ds_add_r8_imm(arch::reg reg, arch::imm imm);
+		void ds_rand_r8_imm(arch::reg reg, arch::imm imm);
+		void ds_se_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_mov_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_or_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_and_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_xor_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_add_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_sub_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_shl_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_suba_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_shr_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_sne_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_ske_r8(arch::reg reg);
+		void ds_mov_r8_dt(arch::reg);
+		void ds_mov_dt_r8(arch::reg);
+		void ds_mov_st_r8(arch::reg);
+		void ds_add_ar_r8(arch::reg);
+		void ds_ldf_r8(arch::reg);
+		void ds_ldfs_r8(arch::reg);
+		void ds_rdump_r8(arch::reg);
+		void ds_rload_r8(arch::reg);
+		void ds_saverpl_r8(arch::reg);
+		void ds_loadrpl_r8(arch::reg);
+		void ds_draw_r8_r8_imm(arch::reg reg1, arch::reg reg2, arch::imm imm);
 
 	private:
 		std::vector<uint8_t> binary;
+		std::stack<arch::addr> paths;
+
+		arch::addr memaddr {};
+		bool current_path_ended {};
 	};
+
+	namespace disassembly_exception
+	{
+		struct decoding_error : chasm_exception
+		{
+			explicit decoding_error(arch::opcode invalid, arch::addr where)
+				: chasm_exception(
+					"Invalid opcode 0x{:04X} at address 0x{:04X} was found while decoding code path",
+					invalid,
+					where)
+			{}
+		};
+	}
 }
 
 

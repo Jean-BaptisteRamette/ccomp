@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <unordered_map>
 #include <string_view>
+#include <algorithm>
 #include <array>
 
 
@@ -18,84 +19,101 @@ namespace chasm::arch
 	using operands_mask = size_type;
 
 
-	enum class instruction_id
+	enum instruction_id
 	{
 		ADD,
-		SUB,
-		SUBA,
-		INC,
-		OR,
 		AND,
-		XOR,
-		SHR,
-		SHL,
-		RDUMP,
-		RLOAD,
-		MOV,
-		SWP,
-		DRAW,
-		CLS,
-		RAND,
 		BCD,
-		WKEY,
-		SKE,
-		SKNE,
-		RET,
-		JMP,
 		CALL,
-		SE,
-		SNE,
+		CLS,
+		DRAW,
+		EXIT,
+		HIGH,
+		INC,
+		JMP,
 		LDF,
 		LDFS,
-		EXIT,
+		LOADRPL,
+		LOW,
+		MOV,
+		OR,
+		RAND,
+		RDUMP,
+		RET,
+		RLOAD,
+		SAVERPL,
 		SCRD,
 		SCRL,
 		SCRR,
-		HIGH,
-		LOW,
-		SAVERPL,
-		LOADRPL,
+		SE,
+		SHL,
+		SHR,
+		SKE,
+		SKNE,
+		SNE,
+		SUB,
+		SUBA,
+		SWP,
+		WKEY,
+		XOR,
+
+		count
 	};
 
-
-	inline std::unordered_map<std::string_view, instruction_id> mnemonics = {
-			{"add", instruction_id::ADD },
-			{"sub", instruction_id::SUB },
-			{"suba", instruction_id::SUBA },
-			{"inc", instruction_id::INC },
-			{"or", instruction_id::OR },
-			{"and", instruction_id::AND },
-			{"xor", instruction_id::XOR },
-			{"shr", instruction_id::SHR },
-			{"shl", instruction_id::SHL },
-			{"rdump", instruction_id::RDUMP },
-			{"rload", instruction_id::RLOAD },
-			{"mov", instruction_id::MOV },
-			{"swp", instruction_id::SWP },
-			{"draw", instruction_id::DRAW },
-			{"cls", instruction_id::CLS },
-			{"rand", instruction_id::RAND },
-			{"bcd", instruction_id::BCD },
-			{"wkey", instruction_id::WKEY },
-			{"ske", instruction_id::SKE },
-			{"skne", instruction_id::SKNE },
-			{"ret", instruction_id::RET },
-			{"jmp", instruction_id::JMP },
-			{"call", instruction_id::CALL },
-			{"se", instruction_id::SE },
-			{"sne", instruction_id::SNE },
-			{"ldf", instruction_id::LDF },
-			{"ldfs", instruction_id::LDFS },
-			{"exit", instruction_id::EXIT },
-			{"scrd", instruction_id::SCRD },
-			{"scrl", instruction_id::SCRL },
-			{"scrr", instruction_id::SCRR },
-			{"high", instruction_id::HIGH },
-			{"low", instruction_id::LOW },
-			{"saverpl", instruction_id::SAVERPL },
-			{"loadrpl", instruction_id::LOADRPL },
-			{"swp", instruction_id::SWP },
+	constexpr std::array<std::string_view, instruction_id::count> mnemonics = {
+			"add",
+			"and",
+			"bcd",
+			"call",
+			"cls",
+			"draw",
+			"exit",
+			"high",
+			"inc",
+			"jmp",
+			"ldf",
+			"ldfs",
+			"loadrpl",
+			"low",
+			"mov",
+			"or",
+			"rand",
+			"rdump",
+			"ret",
+			"rload",
+			"saverpl",
+			"scrd",
+			"scrl",
+			"scrr",
+			"se",
+			"shl",
+			"shr",
+			"ske",
+			"skne",
+			"sne",
+			"sub",
+			"suba",
+			"swp",
+			"wkey",
+			"xor"
 	};
+
+	static_assert(std::ranges::is_sorted(mnemonics));
+
+	constexpr instruction_id to_instruction_id(const std::string_view& mnemonic)
+	{
+		auto it = std::ranges::lower_bound(mnemonics, mnemonic);
+
+		if (it == std::end(mnemonics) || *it != mnemonic)
+			return instruction_id::count;
+
+		return static_cast<instruction_id>(std::distance(mnemonics.begin(), it));
+	}
+
+	constexpr bool has_mnemonic(const std::string_view& instruction)
+	{
+		return std::ranges::binary_search(mnemonics, instruction);
+	}
 
 
 	enum imm_format
@@ -190,6 +208,9 @@ namespace chasm::arch
 	constexpr auto MASK_R8_R8_ADDR = make_operands_mask({ operand_type::reg_rx, operand_type::reg_rx, operand_type::address });
 
 
+	namespace enc
+	{
+
 #define ENCODE_dXYN(id, rx, ry, N) ((id << 12u) | (rx << 8u) | (ry << 4u) | N)
 #define ENCODE_dXNN(id, rx, NN)    ((id << 12u) | (rx << 8u) | NN)
 #define ENCODE_dNNN(id, NNN)       ((id << 12u) | NNN)
@@ -198,52 +219,50 @@ namespace chasm::arch
 #define GET_OVERLOAD(_1, _2, _3, _4, OVERLOAD, ...) OVERLOAD
 #define ENCODE(...) EXPAND(GET_OVERLOAD(__VA_ARGS__, ENCODE_dXYN, ENCODE_dXNN, ENCODE_dNNN)(__VA_ARGS__))
 
-	constexpr opcode _00CN(imm imm4) { return ENCODE(0, 0xC, imm4); }
+		constexpr opcode _00CN(imm imm4) { return ENCODE(0, 0xC, imm4); }
+		constexpr opcode _5XY0(reg rx, reg ry) { return ENCODE(0x5, rx, ry, 0x0); }
+		constexpr opcode _8XY0(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0); }
+		constexpr opcode _8XY1(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x1); }
+		constexpr opcode _8XY2(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x2); }
+		constexpr opcode _8XY3(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x3); }
+		constexpr opcode _8XY4(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x4); }
+		constexpr opcode _8XY5(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x5); }
+		constexpr opcode _8XY7(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x7); }
+		constexpr opcode _9XY0(reg rx, reg ry) { return ENCODE(0x9, rx, ry, 0x0); }
+		constexpr opcode _8XY6(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x06); }
+		constexpr opcode _8XYE(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0E); }
 
-	constexpr opcode _5XY0(reg rx, reg ry) { return ENCODE(0x5, rx, ry, 0x0); }
-	constexpr opcode _8XY0(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0); }
-	constexpr opcode _8XY1(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x1); }
-	constexpr opcode _8XY2(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x2); }
-	constexpr opcode _8XY3(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x3); }
-	constexpr opcode _8XY4(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x4); }
-	constexpr opcode _8XY5(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x5); }
-	constexpr opcode _8XY7(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x7); }
-	constexpr opcode _9XY0(reg rx, reg ry) { return ENCODE(0x9, rx, ry, 0x0); }
+		constexpr opcode _8X06(reg rx) { return ENCODE(0x8, rx, 0x06); }
+		constexpr opcode _8X0E(reg rx) { return ENCODE(0x8, rx, 0x0E); }
 
-	constexpr opcode _8XY6(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x06); }
-	constexpr opcode _8XYE(reg rx, reg ry) { return ENCODE(0x8, rx, ry, 0x0E); }
-
-	constexpr opcode _8X06(reg rx) { return ENCODE(0x8, rx, 0x06); }
-	constexpr opcode _8X0E(reg rx) { return ENCODE(0x8, rx, 0x0E); }
-
-	constexpr opcode _3XNN(reg rx, imm imm8) { return ENCODE(0x3, rx, imm8); }
-	constexpr opcode _4XNN(reg rx, imm imm8) { return ENCODE(0x4, rx, imm8); }
-	constexpr opcode _6XNN(reg rx, imm imm8) { return ENCODE(0x6, rx, imm8); }
-	constexpr opcode _7XNN(reg rx, imm imm8) { return ENCODE(0x7, rx, imm8); }
-	constexpr opcode _CXNN(reg rx, imm imm8) { return ENCODE(0xC, rx, imm8); }
+		constexpr opcode _3XNN(reg rx, imm imm8) { return ENCODE(0x3, rx, imm8); }
+		constexpr opcode _4XNN(reg rx, imm imm8) { return ENCODE(0x4, rx, imm8); }
+		constexpr opcode _6XNN(reg rx, imm imm8) { return ENCODE(0x6, rx, imm8); }
+		constexpr opcode _7XNN(reg rx, imm imm8) { return ENCODE(0x7, rx, imm8); }
+		constexpr opcode _CXNN(reg rx, imm imm8) { return ENCODE(0xC, rx, imm8); }
 
 
-	constexpr opcode _EX9E(reg rx) { return ENCODE(0xE, rx, 0x9E); }
-	constexpr opcode _EXA1(reg rx) { return ENCODE(0xE, rx, 0xA1); }
-	constexpr opcode _FX07(reg rx) { return ENCODE(0xF, rx, 0x07); }
-	constexpr opcode _FX0A(reg rx) { return ENCODE(0xF, rx, 0x0A); }
-	constexpr opcode _FX15(reg rx) { return ENCODE(0xF, rx, 0x15); }
-	constexpr opcode _FX18(reg rx) { return ENCODE(0xF, rx, 0x18); }
-	constexpr opcode _FX1E(reg rx) { return ENCODE(0xF, rx, 0x1E); }
-	constexpr opcode _FX29(reg rx) { return ENCODE(0xF, rx, 0x29); }
-	constexpr opcode _FX30(reg rx) { return ENCODE(0xF, rx, 0x30); }
-	constexpr opcode _FX33(reg rx) { return ENCODE(0xF, rx, 0x33); }
-	constexpr opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
-	constexpr opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }
-	constexpr opcode _FX75(reg rx) { return ENCODE(0xF, rx, 0x75); }
-	constexpr opcode _FX85(reg rx) { return ENCODE(0xF, rx, 0x85); }
+		constexpr opcode _EX9E(reg rx) { return ENCODE(0xE, rx, 0x9E); }
+		constexpr opcode _EXA1(reg rx) { return ENCODE(0xE, rx, 0xA1); }
+		constexpr opcode _FX07(reg rx) { return ENCODE(0xF, rx, 0x07); }
+		constexpr opcode _FX0A(reg rx) { return ENCODE(0xF, rx, 0x0A); }
+		constexpr opcode _FX15(reg rx) { return ENCODE(0xF, rx, 0x15); }
+		constexpr opcode _FX18(reg rx) { return ENCODE(0xF, rx, 0x18); }
+		constexpr opcode _FX1E(reg rx) { return ENCODE(0xF, rx, 0x1E); }
+		constexpr opcode _FX29(reg rx) { return ENCODE(0xF, rx, 0x29); }
+		constexpr opcode _FX30(reg rx) { return ENCODE(0xF, rx, 0x30); }
+		constexpr opcode _FX33(reg rx) { return ENCODE(0xF, rx, 0x33); }
+		constexpr opcode _FX55(reg rx) { return ENCODE(0xF, rx, 0x55); }
+		constexpr opcode _FX65(reg rx) { return ENCODE(0xF, rx, 0x65); }
+		constexpr opcode _FX75(reg rx) { return ENCODE(0xF, rx, 0x75); }
+		constexpr opcode _FX85(reg rx) { return ENCODE(0xF, rx, 0x85); }
 
-	constexpr opcode _1NNN(arch::imm imm12) { return ENCODE(0x1, imm12); }
-	constexpr opcode _2NNN(arch::imm imm12) { return ENCODE(0x2, imm12); }
-	constexpr opcode _BNNN(arch::imm imm12) { return ENCODE(0xB, imm12); }
-	constexpr opcode _ANNN(arch::imm imm12) { return ENCODE(0xA, imm12); }
-
-	constexpr opcode _DXYN(reg rx, reg ry, imm imm4) { return ENCODE(0xD, rx, ry, imm4); }
+		constexpr opcode _1NNN(arch::imm imm12) { return ENCODE(0x1, imm12); }
+		constexpr opcode _2NNN(arch::imm imm12) { return ENCODE(0x2, imm12); }
+		constexpr opcode _BNNN(arch::imm imm12) { return ENCODE(0xB, imm12); }
+		constexpr opcode _ANNN(arch::imm imm12) { return ENCODE(0xA, imm12); }
+		constexpr opcode _DXYN(reg rx, reg ry, imm imm4) { return ENCODE(0xD, rx, ry, imm4); }
+	}
 }
 
 #endif //CHASM_ARCH_HPP

@@ -14,7 +14,7 @@ namespace chasm
 	token parser::advance()
 	{
 		if (no_more_tokens())
-			throw assembler_error("Expected more tokens before end of file.");
+			throw chasm_exception("Expected more tokens before end of file.");
 
 		const token t = *token_it;
 		++token_it;
@@ -96,14 +96,14 @@ namespace chasm
 			const auto value = token.to_integer();
 
 			if (sprite.row_count >= arch::MAX_SPRITE_ROWS)
-				throw assembler_error("Sprite \"{}\" has too much pixels ({} > {})",
+				throw chasm_exception("Sprite \"{}\" has too much pixels ({} > {})",
 									  identifier.to_string(),
 									  sprite.row_count,
 									  arch::MAX_SPRITE_ROWS);
 
 
 			if (!arch::imm_matches_format(value, arch::fmt_imm8))
-				throw assembler_error("Sprite digits must be less than 255");
+				throw chasm_exception("Sprite digits must be less than 255");
 
 			sprite.data[sprite.row_count] = value;
 			++sprite.row_count;
@@ -154,7 +154,7 @@ namespace chasm
 		auto parse_inner_statement = [&]() -> ast::statement
 		{
 			if (no_more_tokens())
-				throw assembler_error("Found unexpected EOF before function end while parsing procedure.");
+				throw chasm_exception("Found unexpected EOF before function end while parsing procedure.");
 
 			switch (token_it->type)
 			{
@@ -165,7 +165,7 @@ namespace chasm
 				case token_type::dot_label:        return parse_label();
 
 				case token_type::keyword_proc_start:
-					throw assembler_error("Cannot define a procedure inside another.");
+					throw chasm_exception("Cannot define a procedure inside another.");
 
 				default:
 					throw parser_exception::unexpected_error(*token_it);

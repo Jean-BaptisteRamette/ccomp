@@ -8,7 +8,7 @@
 #include <vector>
 #include <format>
 
-#include <chasm/assembler_error.hpp>
+#include <chasm/chasm_exception.hpp>
 #include <chasm/lexer.hpp>
 #include <chasm/ast.hpp>
 
@@ -17,10 +17,10 @@ namespace chasm
 {
 	namespace parser_exception
 	{
-		struct unmatching_procedure_names : assembler_error
+		struct unmatching_procedure_names : chasm_exception
 		{
 			unmatching_procedure_names(const token& proc_name_beg, const token& proc_name_end)
-				: assembler_error(
+				: chasm_exception(
 					R"(Different procedure names at lines {} and {} ("{}" != "{}").)",
 					proc_name_beg.source_location.line,
 					proc_name_end.source_location.line,
@@ -29,10 +29,10 @@ namespace chasm
 			{}
 		};
 
-		struct expected_others_error : assembler_error
+		struct expected_others_error : chasm_exception
 		{
 			expected_others_error(const token& unexpected_, std::initializer_list<token_type> expected_types_)
-				: assembler_error(
+				: chasm_exception(
 					"Parser got token \"{}\" but expected a token of type {} while parsing at {}.",
 					unexpected_.to_string(),
 					chasm::to_string(expected_types_),
@@ -40,10 +40,10 @@ namespace chasm
 			{}
 		};
 
-		struct unexpected_error : assembler_error
+		struct unexpected_error : chasm_exception
 		{
 			explicit unexpected_error(const token& unexpected_)
-				: assembler_error(
+				: chasm_exception(
 					"Unexpected token {} while parsing at {}.",
 					unexpected_.to_string(),
 					chasm::to_string(unexpected_.source_location))

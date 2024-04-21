@@ -100,7 +100,7 @@ namespace chasm
 	void symbol_sanitizer::visit(const ast::sprite_statement& statement)
 	{
 		if (curr_scope_level != 0)
-			throw assembler_error(
+			throw chasm_exception(
 					"Sprite \"{}\" at {} must have a global scope",
 					statement.identifier.to_string(),
 					to_string(statement.identifier.source_location));
@@ -114,7 +114,7 @@ namespace chasm
 	void symbol_sanitizer::visit(const ast::raw_statement& statement)
 	{
 		if (curr_scope_level == 0)
-			throw assembler_error("Invalid scope level for raw statement at line {}", statement.source_line());
+			throw chasm_exception("Invalid scope level for raw statement at line {}", statement.source_line());
 
 		const auto& token = statement.opcode;
 
@@ -125,7 +125,7 @@ namespace chasm
 	void symbol_sanitizer::register_symbol(std::string&& symbol, const source_location& sym_loc)
 	{
 		if (curr_scope_level >= scopes.size())
-			throw assembler_error(
+			throw chasm_exception(
 						"Invalid scope level for symbol \"{}\".",
 						symbol);
 
@@ -158,6 +158,6 @@ namespace chasm
 			throw sanitize_exception::undefined_symbols(undefined_procs);
 
 		if (!scope_has_symbol(0, "main"))
-			throw assembler_error("Entry-point label \".main\" was not defined.");
+			throw chasm_exception("Entry-point label \".main\" was not defined.");
 	}
 }

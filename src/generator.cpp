@@ -61,7 +61,7 @@ namespace chasm
 	arch::operands_mask make_operands_mask(const ast::instruction_statement& instruction)
 	{
 		if (instruction.operands.size() > arch::MAX_OPERANDS)
-			throw assembler_error("Instruction \"{}\" at {} has {} operands "
+			throw chasm_exception("Instruction \"{}\" at {} has {} operands "
 								  "but CHIP-8 instructions can have up to {} operands.",
 								  instruction.operands.size(),
 								  arch::MAX_OPERANDS);
@@ -127,7 +127,7 @@ namespace chasm
 			const uintptr_t relocated = base_addr + sym_addresses[sym];
 
 			if (relocated > std::numeric_limits<arch::addr>::max())
-				throw assembler_error("Symbol \"{}\" relocated to address {:x} which is out of the chip8's memory range.\n"
+				throw chasm_exception("Symbol \"{}\" relocated to address {:x} which is out of the chip8's memory range.\n"
 									  "Assembler cannot generate address patch at {:x}",
 									  sym,
 									  relocated,
@@ -224,7 +224,7 @@ namespace chasm
 	void generator::register_sprite(std::string&& symbol, const arch::sprite& sprite)
 	{
 		if (sprites.contains(symbol))
-			throw assembler_error("Generator found an already defined sprite \"{}\", this should have been caught by the sanitizer.", symbol);
+			throw chasm_exception("Generator found an already defined sprite \"{}\", this should have been caught by the sanitizer.", symbol);
 
 		sprites[std::move(symbol)] = sprite;
 	}
@@ -232,7 +232,7 @@ namespace chasm
 	void generator::register_symbol_addr(std::string symbol)
 	{
 		if (sym_addresses.contains(symbol))
-			throw assembler_error("Generator found an already existing symbol \"{}\", this should have been caught by the sanitizer.", symbol);
+			throw chasm_exception("Generator found an already existing symbol \"{}\", this should have been caught by the sanitizer.", symbol);
 
 		sym_addresses[std::move(symbol)] = binary.size();
 	}
@@ -279,17 +279,17 @@ namespace chasm
 		switch (make_operands_mask(add))
 		{
 			case arch::MASK_R8_R8:
-				return arch::_8XY4(
+				return arch::enc::_8XY4(
 						operand2reg(add.operands[0]),
 						operand2reg(add.operands[1]));
 
 			case arch::MASK_R8_IMM:
-				return arch::_7XNN(
+				return arch::enc::_7XNN(
 						operand2reg(add.operands[0]),
 						operand2imm(add.operands[1]));
 
 			case arch::MASK_AR_R8:
-				return arch::_FX1E(operand2reg(add.operands[1]));
+				return arch::enc::_FX1E(operand2reg(add.operands[1]));
 
 			default:
 				throw generator_exception::invalid_operand_type(add);
@@ -301,7 +301,7 @@ namespace chasm
 		ensure_operands_count(sub, 2);
 
 		if (make_operands_mask(sub) == arch::MASK_R8_R8)
-			return arch::_8XY5(
+			return arch::enc::_8XY5(
 					operand2reg(sub.operands[0]),
 					operand2reg(sub.operands[1]));
 
@@ -313,7 +313,7 @@ namespace chasm
 		ensure_operands_count(suba, 2);
 
 		if (make_operands_mask(suba) == arch::MASK_R8_R8)
-			return arch::_8XY7(
+			return arch::enc::_8XY7(
 					operand2reg(suba.operands[0]),
 					operand2reg(suba.operands[1]));
 
@@ -325,7 +325,7 @@ namespace chasm
 		ensure_operands_count(or_, 2);
 
 		if (make_operands_mask(or_) == arch::MASK_R8_R8)
-			return arch::_8XY1(
+			return arch::enc::_8XY1(
 					operand2reg(or_.operands[0]),
 					operand2reg(or_.operands[1]));
 
@@ -337,7 +337,7 @@ namespace chasm
 		ensure_operands_count(and_, 2);
 
 		if (make_operands_mask(and_) == arch::MASK_R8_R8)
-			return arch::_8XY2(
+			return arch::enc::_8XY2(
 					operand2reg(and_.operands[0]),
 					operand2reg(and_.operands[1]));
 
@@ -349,7 +349,7 @@ namespace chasm
 		ensure_operands_count(xor_, 2);
 
 		if (make_operands_mask(xor_) == arch::MASK_R8_R8)
-			return arch::_8XY3(
+			return arch::enc::_8XY3(
 					operand2reg(xor_.operands[0]),
 					operand2reg(xor_.operands[1]));
 
@@ -363,10 +363,10 @@ namespace chasm
 		switch (make_operands_mask(shr))
 		{
 			case arch::MASK_R8:
-				return arch::_8X06(operand2reg(shr.operands[0]));
+				return arch::enc::_8X06(operand2reg(shr.operands[0]));
 
 			case arch::MASK_R8_R8:
-				return arch::_8XY6(
+				return arch::enc::_8XY6(
 						operand2reg(shr.operands[0]),
 						operand2reg(shr.operands[1]));
 
@@ -382,10 +382,10 @@ namespace chasm
 		switch (make_operands_mask(shl))
 		{
 			case arch::MASK_R8:
-				return arch::_8X0E(operand2reg(shl.operands[0]));
+				return arch::enc::_8X0E(operand2reg(shl.operands[0]));
 
 			case arch::MASK_R8_R8:
-				return arch::_8XYE(
+				return arch::enc::_8XYE(
 						operand2reg(shl.operands[0]),
 						operand2reg(shl.operands[1]));
 
@@ -399,7 +399,7 @@ namespace chasm
 		ensure_operands_count(rdump, 1);
 
 		if (make_operands_mask(rdump) == arch::MASK_R8)
-			return arch::_FX55(operand2reg(rdump.operands[0]));
+			return arch::enc::_FX55(operand2reg(rdump.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rdump);
 	}
@@ -409,7 +409,7 @@ namespace chasm
 		ensure_operands_count(rload, 1);
 
 		if (make_operands_mask(rload) == arch::MASK_R8)
-			return arch::_FX65(operand2reg(rload.operands[0]));
+			return arch::enc::_FX65(operand2reg(rload.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rload);
 	}
@@ -420,17 +420,17 @@ namespace chasm
 
 		switch (make_operands_mask(mov))
 		{
-			case arch::MASK_R8_R8: return arch::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
-			case arch::MASK_R8_IMM: return arch::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
-			case arch::MASK_R8_DT: return arch::_FX07(operand2reg(mov.operands[0]));
-			case arch::MASK_DT_R8: return arch::_FX15(operand2reg(mov.operands[1]));
-			case arch::MASK_ST_R8: return arch::_FX18(operand2reg(mov.operands[1]));
-			case arch::MASK_AR_IMM: return arch::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
+			case arch::MASK_R8_R8: return arch::enc::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
+			case arch::MASK_R8_IMM: return arch::enc::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
+			case arch::MASK_R8_DT: return arch::enc::_FX07(operand2reg(mov.operands[0]));
+			case arch::MASK_DT_R8: return arch::enc::_FX15(operand2reg(mov.operands[1]));
+			case arch::MASK_ST_R8: return arch::enc::_FX18(operand2reg(mov.operands[1]));
+			case arch::MASK_AR_IMM: return arch::enc::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
 
 			case arch::MASK_AR_ADDR:
 			{
 				register_patch_location(mov.operands[1].operand.to_string());
-				return arch::_ANNN(0);
+				return arch::enc::_ANNN(0);
 			}
 
 			default:
@@ -453,7 +453,7 @@ namespace chasm
 				if (imm4 == 0 && !options::has_flag("super"))
 					warn_super_instruction(draw);
 
-				return arch::_DXYN(regX, regY, imm4);
+				return arch::enc::_DXYN(regX, regY, imm4);
 			}
 			case arch::MASK_R8_R8_ADDR:
 			{
@@ -465,7 +465,7 @@ namespace chasm
 				const auto& third = draw.operands[2];
 
 				if (third.is_sprite())
-					return arch::_DXYN(regX, regY, operand2imm(third, arch::fmt_imm4));
+					return arch::enc::_DXYN(regX, regY, operand2imm(third, arch::fmt_imm4));
 			}
 		}
 
@@ -483,7 +483,7 @@ namespace chasm
 		ensure_operands_count(rand, 2);
 
 		if (make_operands_mask(rand) == arch::MASK_R8_IMM)
-			return arch::_CXNN(
+			return arch::enc::_CXNN(
 					operand2reg(rand.operands[0]),
 					operand2imm(rand.operands[1]));
 
@@ -495,7 +495,7 @@ namespace chasm
 		ensure_operands_count(bcd, 1);
 
 		if (make_operands_mask(bcd) == arch::MASK_R8)
-			return arch::_FX33(operand2reg(bcd.operands[0]));
+			return arch::enc::_FX33(operand2reg(bcd.operands[0]));
 
 		throw generator_exception::invalid_operand_type(bcd);
 	}
@@ -505,7 +505,7 @@ namespace chasm
 		ensure_operands_count(wkey, 1);
 
 		if (make_operands_mask(wkey) == arch::MASK_R8)
-			return arch::_FX0A(operand2reg(wkey.operands[0]));
+			return arch::enc::_FX0A(operand2reg(wkey.operands[0]));
 
 		throw generator_exception::invalid_operand_type(wkey);
 	}
@@ -515,7 +515,7 @@ namespace chasm
 		ensure_operands_count(ske, 1);
 
 		if (make_operands_mask(ske) == arch::MASK_R8)
-			return arch::_EX9E(operand2reg(ske.operands[0]));
+			return arch::enc::_EX9E(operand2reg(ske.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ske);
 	}
@@ -525,7 +525,7 @@ namespace chasm
 		ensure_operands_count(skne, 1);
 
 		if (make_operands_mask(skne) == arch::MASK_R8)
-			return arch::_EXA1(operand2reg(skne.operands[0]));
+			return arch::enc::_EXA1(operand2reg(skne.operands[0]));
 
 		throw generator_exception::invalid_operand_type(skne);
 	}
@@ -548,12 +548,12 @@ namespace chasm
 					// jmp @label
 					register_patch_location(current_proc_name + "." + jmp.operands[0].operand.to_string());
 
-					return arch::_1NNN(0);
+					return arch::enc::_1NNN(0);
 				}
 
 			// jmp [offset]
 			case arch::MASK_ADDR_REL:
-				return arch::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
+				return arch::enc::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
 
 			default:
 				throw generator_exception::invalid_operand_type(jmp);
@@ -572,7 +572,7 @@ namespace chasm
 					// call $function
 					register_patch_location(call.operands[0].operand.to_string());
 
-					return arch::_2NNN(0);
+					return arch::enc::_2NNN(0);
 				}
 
 			default:
@@ -589,12 +589,12 @@ namespace chasm
 		switch (make_operands_mask(se))
 		{
 			case arch::MASK_R8_R8:
-				return arch::_5XY0(
+				return arch::enc::_5XY0(
 						operand2reg(se.operands[0]),
 						operand2reg(se.operands[1]));
 
 			case arch::MASK_R8_IMM:
-				return arch::_3XNN(
+				return arch::enc::_3XNN(
 						operand2reg(se.operands[0]),
 						operand2imm(se.operands[1]));
 
@@ -610,12 +610,12 @@ namespace chasm
 		switch (make_operands_mask(sne))
 		{
 			case arch::MASK_R8_R8:
-				return arch::_9XY0(
+				return arch::enc::_9XY0(
 						operand2reg(sne.operands[0]),
 						operand2reg(sne.operands[1]));
 
 			case arch::MASK_R8_IMM:
-				return arch::_4XNN(
+				return arch::enc::_4XNN(
 						operand2reg(sne.operands[0]),
 						operand2imm(sne.operands[1]));
 
@@ -629,7 +629,7 @@ namespace chasm
 		ensure_operands_count(inc, 1);
 
 		if (make_operands_mask(inc) == arch::MASK_R8)
-			return arch::_7XNN(operand2reg(inc.operands[0]), 1);
+			return arch::enc::_7XNN(operand2reg(inc.operands[0]), 1);
 
 		throw generator_exception::invalid_operand_type(inc);
 	}
@@ -639,7 +639,7 @@ namespace chasm
 		ensure_operands_count(ldf, 1);
 
 		if (make_operands_mask(ldf) == arch::MASK_R8)
-			return arch::_FX29(operand2reg(ldf.operands[0]));
+			return arch::enc::_FX29(operand2reg(ldf.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ldf);
 	}
@@ -655,7 +655,7 @@ namespace chasm
 		ensure_operands_count(scrd, 1);
 
 		if (make_operands_mask(scrd) == arch::MASK_IMM)
-			return arch::_00CN(operand2imm(scrd.operands[0], arch::fmt_imm4));
+			return arch::enc::_00CN(operand2imm(scrd.operands[0], arch::fmt_imm4));
 
 		throw generator_exception::invalid_operand_type(scrd);
 	}
@@ -689,7 +689,7 @@ namespace chasm
 		ensure_operands_count(ldfs, 1);
 
 		if (make_operands_mask(ldfs) == arch::MASK_R8)
-			return arch::_FX30(operand2reg(ldfs.operands[0]));
+			return arch::enc::_FX30(operand2reg(ldfs.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ldfs);
 	}
@@ -699,7 +699,7 @@ namespace chasm
 		ensure_operands_count(saverpl, 1);
 
 		if (make_operands_mask(saverpl) == arch::MASK_R8)
-			return arch::_FX75(operand2reg(saverpl.operands[0]));
+			return arch::enc::_FX75(operand2reg(saverpl.operands[0]));
 
 		throw generator_exception::invalid_operand_type(saverpl);
 	}
@@ -709,7 +709,7 @@ namespace chasm
 		ensure_operands_count(loadrpl, 1);
 
 		if (make_operands_mask(loadrpl) == arch::MASK_R8)
-			return arch::_FX85(operand2reg(loadrpl.operands[0]));
+			return arch::enc::_FX85(operand2reg(loadrpl.operands[0]));
 
 		throw generator_exception::invalid_operand_type(loadrpl);
 	}
@@ -730,9 +730,9 @@ namespace chasm
 			const auto rX = operand2reg(swp.operands[0]);
 			const auto rY = operand2reg(swp.operands[1]);
 
-			opcodes.push_back(arch::_8XY3(rX, rY));
-			opcodes.push_back(arch::_8XY3(rY, rX));
-			opcodes.push_back(arch::_8XY3(rX, rY));
+			opcodes.push_back(arch::enc::_8XY3(rX, rY));
+			opcodes.push_back(arch::enc::_8XY3(rY, rX));
+			opcodes.push_back(arch::enc::_8XY3(rX, rY));
 
 			return opcodes;
 		}

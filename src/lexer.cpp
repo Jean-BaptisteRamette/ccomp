@@ -53,7 +53,7 @@ namespace chasm
             if (is_lexeme_reg(lexeme))
                 return token_type::register_name;
 
-            if (arch::mnemonics.contains(lexeme))
+            if (arch::has_mnemonic(lexeme))
                 return token_type::instruction;
 
 			if (keywords.contains(lexeme))

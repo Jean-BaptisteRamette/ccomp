@@ -67,9 +67,9 @@ BOOST_FIXTURE_TEST_SUITE(instruction_operands, test_env::default_options)
 		BOOST_CHECK_THROW(details::try_codegen(".main:\n loadrpl r3, 10"), generator_exception::invalid_operands_count);
 
 		// > 3 operands
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, 1, 2"), assembler_error);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shr 1, 2, 3, 4"), assembler_error);
-		BOOST_CHECK_THROW(details::try_codegen(".main:\n shl 1, 2, 3, 4"), assembler_error);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n draw r0, r0, 1, 2"), chasm_exception);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n shr 1, 2, 3, 4"), chasm_exception);
+		BOOST_CHECK_THROW(details::try_codegen(".main:\n shl 1, 2, 3, 4"), chasm_exception);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_address_operands)

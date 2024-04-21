@@ -145,17 +145,17 @@ BOOST_FIXTURE_TEST_SUITE(symbol_sanitizer, test_env::default_options)
 	BOOST_AUTO_TEST_CASE(check_main_label_defined_at_scope0)
 	{
 		BOOST_CHECK_THROW(
-			details::try_assemble(".not_main:"),
-			assembler_error
+		details::try_assemble(".not_main:"),
+		chasm_exception
 		);
 	}
 
 	BOOST_AUTO_TEST_CASE(check_raw_not_scope0)
 	{
 		BOOST_CHECK_THROW(
-			details::try_assemble("raw(0xDEAD)  \n"
+		details::try_assemble("raw(0xDEAD)  \n"
 						          ".main:       \n"),
-			assembler_error
+		chasm_exception
 		);
 	}
 
@@ -277,9 +277,9 @@ BOOST_FIXTURE_TEST_SUITE(symbol_sanitizer, test_env::default_options)
 	BOOST_AUTO_TEST_CASE(check_sprite_is_global)
 	{
 		BOOST_CHECK_THROW(
-			details::try_assemble(".main:                \n"
+		details::try_assemble(".main:                \n"
 			                      "    sprite s [0xA]    \n"),
-			assembler_error
+		chasm_exception
 		);
 	}
 

@@ -19,6 +19,7 @@ namespace chasm
 					("h,help", "Show help message")
 					("in", "chasm source file to assemble", cxxopts::value<std::string>())
 					("out", "The generated machine code output file path", cxxopts::value<std::string>()->default_value("out.c8c"))
+					("dis", "Disassemble the given assembled file", cxxopts::value<std::string>())
 					("pad-sprites", "Pad odd sized sprites")
 					("hex", "Hexdumps the generated machine code, argument is the amount of opcodes per line", cxxopts::value<unsigned int>()->implicit_value("4"))
 					("symbols", "Generate a file with symbols location in memory/machine code", cxxopts::value<std::string>()->implicit_value("out.c8s"))

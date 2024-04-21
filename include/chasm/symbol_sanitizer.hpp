@@ -8,7 +8,7 @@
 #include <string>
 #include <array>
 
-#include <chasm/assembler_error.hpp>
+#include <chasm/chasm_exception.hpp>
 #include <chasm/source_location.hpp>
 #include <chasm/ast_visitor.hpp>
 #include <chasm/ast.hpp>
@@ -71,26 +71,26 @@ namespace chasm
 			return joined;
 		}
 
-		struct undefined_symbols : assembler_error
+		struct undefined_symbols : chasm_exception
 		{
 			explicit undefined_symbols(const std::string& symbol, const source_location& where)
-				: assembler_error(
+				: chasm_exception(
 						"Sanitizer found an undefined symbol: \"{}\" at {}.",
 						symbol,
 						chasm::to_string(where))
 			{}
 
 			explicit undefined_symbols(const symbol_set& symbols)
-				: assembler_error(
+				: chasm_exception(
 					"Sanitizer found the following undefined symbols:\n{}",
 					symbols_to_string(symbols))
 			{}
 		};
 
-		struct already_defined_symbol : assembler_error
+		struct already_defined_symbol : chasm_exception
 		{
 			already_defined_symbol(const std::string& symbol, const source_location& where)
-				: assembler_error(
+				: chasm_exception(
 					"Sanitizer found an already defined symbol \"{}\" at {}.",
 					symbol,
 					chasm::to_string(where))
