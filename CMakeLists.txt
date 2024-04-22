@@ -9,7 +9,9 @@ set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(CCOMP_SOURCES
         ${INC_DIR}/${PROJECT_NAME}/*.hpp
-        ${SRC_DIR}/*.cpp)
+        ${INC_DIR}/${PROJECT_NAME}/ds/*.hpp
+        ${SRC_DIR}/*.cpp
+        ${SRC_DIR}/ds/*.cpp)
 
 file(GLOB SRC_FILES ${CCOMP_SOURCES})
 

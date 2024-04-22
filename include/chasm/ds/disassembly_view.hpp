@@ -2,7 +2,7 @@
 #define CHASM_DISASSEMBLY_VIEW_HPP
 
 
-#include <chasm/disassembler.hpp>
+#include "chasm/ds/disassembler.hpp"
 
 
 namespace chasm::ds
@@ -20,6 +20,9 @@ namespace chasm::ds
 		~disassembly_view() = default;
 
 		void print() const;
+
+	private:
+		std::vector<path> paths;
 	};
 }
 

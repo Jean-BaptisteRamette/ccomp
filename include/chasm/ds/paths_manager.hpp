@@ -1,0 +1,44 @@
+#ifndef CHASM_PATHS_MANAGER_HPP
+#define CHASM_PATHS_MANAGER_HPP
+
+#include <deque>
+#include <chasm/ds/paths.hpp>
+
+
+namespace chasm::ds
+{
+	class paths_manager
+	{
+	public:
+		explicit paths_manager(arch::addr entry_point);
+		~paths_manager() = default;
+
+		[[nodiscard]] std::vector<path> paths() const;
+
+		void add_processed(path&& p);
+
+		/// Adds code path if not processed yet
+		///
+		void try_add_path(arch::addr path_addr);
+
+		/// Checks for un-analyzed code paths
+		///
+		/// \return
+		[[nodiscard]] bool has_pending() const;
+
+		[[nodiscard]] arch::addr next_unprocessed();
+
+	private:
+		/// Checks if the given path has already been analyzed:
+		///
+		/// \return
+		[[nodiscard]] bool was_processed(arch::addr path_addr) const;
+
+	private:
+		std::vector<path> processed;
+		std::deque<arch::addr> pending;
+	};
+}
+
+
+#endif //CHASM_PATHS_MANAGER_HPP

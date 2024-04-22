@@ -1,50 +1,46 @@
-#include <chasm/disassembler.hpp>
+#include <chasm/ds/disassembler.hpp>
+#include <chasm/ds/paths.hpp>
 #include <chasm/arch.hpp>
 
 
 namespace chasm::ds
 {
 	disassembler::disassembler(std::vector<uint8_t> from_bytes)
-		: binary(std::move(from_bytes))
+		: binary(std::move(from_bytes)),
+		  pm(0),
+		  current_path(nullptr)
 	{
-		ds_path();
-
-		while (!paths.empty())
+		while (pm.has_pending())
 		{
-			const arch::addr new_path_start = paths.top();
-			paths.pop();
+			auto p = path(pm.next_unprocessed());
 
-			ds_path(new_path_start);
+			ds_path(p);
+
+			pm.add_processed(std::move(p));
 		}
 	}
 
-	void disassembler::ds_path(arch::addr path_start)
+	std::vector<path> disassembler::code_paths() const
 	{
-		current_path_ended = false;
-
-		memaddr = path_start;
-
-		while (!current_path_ended)
-		{
-			ds_next();
-			memaddr += sizeof(arch::opcode);
-		}
+		return pm.paths();
 	}
 
-	void disassembler::push_ds_path(arch::addr path_start)
+	void disassembler::ds_path(path& p)
 	{
-		paths.push(path_start);
+		current_path = &p;
+
+		while (!current_path->ended())
+			ds_next_instruction();
 	}
 
-	void disassembler::ds_next()
+	void disassembler::ds_next_instruction()
 	{
-		const arch::addr at = memaddr;
+		const arch::addr at = current_path->addr_end();
 
 		if (at + 1 >= binary.size() || at>= binary.size())
 			throw chasm_exception("Unexpected end of bytes while decoding instruction during disassembly at address 0x{:04X}", at);
 
 		const auto opcode = static_cast<arch::opcode>(binary[at] << 8 | binary[at + 1]);
-
 
 		const auto n1 = static_cast<uint8_t>((opcode & 0xF000) >> 12);
 		const auto n2 = static_cast<uint8_t>((opcode & 0x0F00) >> 8);
@@ -76,6 +72,8 @@ namespace chasm::ds
 						}
 					}
 				}
+
+				break;
 			}
 
 			case 0x1: ds_jmp(addr); return;
@@ -96,6 +94,8 @@ namespace chasm::ds
 					return;
 				}
 
+				break;
+
 			case 0x8:
 				switch (n4)
 				{
@@ -111,6 +111,8 @@ namespace chasm::ds
 
 					default: break;
 				}
+
+				break;
 
 			case 0x9:
 				if (n4 == 0)
@@ -143,6 +145,8 @@ namespace chasm::ds
 					default: break;
 				}
 
+				break;
+
 			case 0xD: ds_draw_r8_r8_imm(n2, n3, n4); return;
 
 			default:
@@ -151,211 +155,223 @@ namespace chasm::ds
 
 		throw disassembly_exception::decoding_error(opcode, at);
 	}
+	
+	void disassembler::emit(arch::instruction_id id)
+	{
+		current_path->add_instruction(id);
+	}
 
 	void disassembler::ds_cls()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::CLS];
+		emit(arch::instruction_id::CLS);
 	}
 
 	void disassembler::ds_ret()
 	{
-		current_path_ended = true;
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::RET];
+		emit(arch::instruction_id::RET);
+
+		current_path->mark_end();
 	}
 
 	void disassembler::ds_scrr()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SCRR];
+		emit(arch::instruction_id::SCRR);
 	}
 
 	void disassembler::ds_scrl()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SCRL];
+		emit(arch::instruction_id::SCRL);
 	}
 
 	void disassembler::ds_exit()
 	{
-		current_path_ended = true;
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::EXIT];
+		emit(arch::instruction_id::EXIT);
+
+		current_path->mark_end();
 	}
 
 	void disassembler::ds_low()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::LOW];
+		emit(arch::instruction_id::LOW);
 	}
 
 	void disassembler::ds_high()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::HIGH];
+		emit(arch::instruction_id::HIGH);
 	}
 
 	void disassembler::ds_scrd()
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SCRD];
+		emit(arch::instruction_id::SCRD);
 	}
 
 	void disassembler::ds_call(arch::addr subroutine_addr)
 	{
-		push_ds_path(subroutine_addr);
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::CALL];
+		emit(arch::instruction_id::CALL);
+
+		pm.try_add_path(subroutine_addr);
 	}
 
 	void disassembler::ds_jmp(arch::addr location)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::JMP];
+		emit(arch::instruction_id::JMP);
 
-		current_path_ended = true;
-		push_ds_path(location);
+		current_path->mark_end();
+		pm.try_add_path(location);
 	}
 
 	void disassembler::ds_mov_ar_addr(arch::addr addr)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_jmp_indirect(arch::addr offset)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::JMP];
-		current_path_ended = true;
+		emit(arch::instruction_id::JMP);
+
+		current_path->mark_end();
 	}
 
 	void disassembler::ds_se_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SE];
+		emit(arch::instruction_id::SE);
 	}
 
 	void disassembler::ds_sne_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SNE];
+		emit(arch::instruction_id::SNE);
 	}
 
 	void disassembler::ds_mov_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_add_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::ADD];
+		if (imm == 1)
+			emit(arch::instruction_id::INC);
+		else
+			emit(arch::instruction_id::ADD);
 	}
 
 	void disassembler::ds_rand_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::RAND];
+		emit(arch::instruction_id::RAND);
 	}
 
 	void disassembler::ds_se_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SE];
+		emit(arch::instruction_id::SE);
 	}
 
 	void disassembler::ds_mov_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_or_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::OR];
+		emit(arch::instruction_id::OR);
 	}
 
 	void disassembler::ds_and_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::AND];
+		emit(arch::instruction_id::AND);
 	}
 
 	void disassembler::ds_xor_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::XOR];
+		emit(arch::instruction_id::XOR);
 	}
 
 	void disassembler::ds_add_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::ADD];
+		emit(arch::instruction_id::ADD);
 	}
 
 	void disassembler::ds_sub_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SUB];
+		emit(arch::instruction_id::SUB);
 	}
 
 	void disassembler::ds_shl_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SHL];
+		emit(arch::instruction_id::SHL);
 	}
 
 	void disassembler::ds_suba_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SUBA];
+		emit(arch::instruction_id::SUBA);
 	}
 
 	void disassembler::ds_shr_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SHR];
+		emit(arch::instruction_id::SHR);
 	}
 
 	void disassembler::ds_sne_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SNE];
+		emit(arch::instruction_id::SNE);
 	}
 
 	void disassembler::ds_ske_r8(arch::reg reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SKE];
+		emit(arch::instruction_id::SKE);
 	}
 
 	void disassembler::ds_mov_r8_dt(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_mov_dt_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_mov_st_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::MOV];
+		emit(arch::instruction_id::MOV);
 	}
 
 	void disassembler::ds_add_ar_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::ADD];
+		emit(arch::instruction_id::ADD);
 	}
 
 	void disassembler::ds_ldf_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::LDF];
+		emit(arch::instruction_id::LDF);
 	}
 
 	void disassembler::ds_ldfs_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::LDFS];
+		emit(arch::instruction_id::LDFS);
 	}
 
 	void disassembler::ds_rdump_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::RDUMP];
+		emit(arch::instruction_id::RDUMP);
 	}
 
 	void disassembler::ds_rload_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::RLOAD];
+		emit(arch::instruction_id::RLOAD);
 	}
 
 	void disassembler::ds_saverpl_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::SAVERPL];
+		emit(arch::instruction_id::SAVERPL);
 	}
 
 	void disassembler::ds_loadrpl_r8(arch::reg)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::LOADRPL];
+		emit(arch::instruction_id::LOADRPL);
 	}
 
 	void disassembler::ds_draw_r8_r8_imm(arch::reg reg1, arch::reg reg2, arch::imm imm)
 	{
-		disassembly[memaddr] = arch::mnemonics[arch::instruction_id::DRAW];
+		emit(arch::instruction_id::DRAW);
 	}
 }

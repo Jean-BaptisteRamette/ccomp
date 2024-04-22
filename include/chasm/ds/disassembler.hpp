@@ -8,54 +8,13 @@
 #include <vector>
 #include <string>
 
+#include <chasm/ds/paths_manager.hpp>
 #include <chasm/chasm_exception.hpp>
 #include <chasm/arch.hpp>
 
 
 namespace chasm::ds
 {
-	/*!
-	 *  1NNN
-	 *  2NNN
-	 *  ANNN
-	 *  BNNN
-	 *
-	 *  3XNN
-	 *  4XNN
-	 *  6XNN
-	 *  7XNN
-	 *  CXNN
-	 *
-	 *  5XY0
-	 *  8XY0
-	 *  8XY1
-	 *  8XY2
-	 *  8XY3
-	 *  8XY4
-	 *  8XY5
-	 *  8XY6
-	 *  8XY7
-	 *  8XYE
-	 *  9XY0
-	 *
-	 *  EX9E
-	 *  EXA1
-	 *  FX07
-	 *  FX0A
-	 *  FX15
-	 *  FX18
-	 *  FX1E
-	 *  FX29
-	 *  FX33
-	 *  FX55
-	 *  FX65
-	 *
-	 *  DXYN
-	 *
-	 *  00EE
-	 *  00E0
-	 */
-
 	class disassembler
 	{
 	public:
@@ -67,13 +26,16 @@ namespace chasm::ds
 		disassembler& operator=(disassembler&) = delete;
 		disassembler& operator=(disassembler&&) = delete;
 
-		// make this back to private when done testing
-		std::map<arch::addr, std::string> disassembly;
+		/// Get the disassembled code paths
+		///
+		/// \return
+		[[nodiscard]] std::vector<path> code_paths() const;
+
 
 	private:
-		void ds_path(arch::addr path_start = 0);
-		void push_ds_path(arch::addr path_start);
-		void ds_next();
+		void ds_path(path&);
+		void ds_next_instruction();
+		void emit(arch::instruction_id);
 
 		void ds_cls();
 		void ds_ret();
@@ -118,10 +80,8 @@ namespace chasm::ds
 
 	private:
 		std::vector<uint8_t> binary;
-		std::stack<arch::addr> paths;
-
-		arch::addr memaddr {};
-		bool current_path_ended {};
+		paths_manager pm;
+		path* current_path;
 	};
 
 	namespace disassembly_exception
