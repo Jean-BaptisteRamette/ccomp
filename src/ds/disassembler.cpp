@@ -7,21 +7,19 @@
 namespace chasm::ds
 {
 	disassembler::disassembler(std::vector<uint8_t> from_bytes)
-		: binary(std::move(from_bytes))
+		: binary(std::move(from_bytes)),
+		  pm(),
+		  current_path(nullptr),
+		  code_base(options::arg<arch::addr>("relocate"))
 	{
-		const auto base = options::arg<arch::addr>("relocate");
-		pm.try_add_path(base);
+		//
+		// Add initial code path at entry point
+		//
+		pm.try_add_path(code_base);
 
 		while (pm.has_pending())
 		{
-			///
-			/// The paths manager only manipulates "in-memory" addresses, most of the time offset=0x200
-			/// whereas the disassembler works with "disk" addresses, so offset 0x200 maps to address (file offset) 0 on disk
-			///
-			arch::addr next_path_addr = pm.next_unprocessed();
-			next_path_addr -= base;
-
-			auto p = path(next_path_addr);
+			auto p = path(pm.next_unprocessed());
 
 			ds_path(p);
 
@@ -44,7 +42,11 @@ namespace chasm::ds
 
 	void disassembler::ds_next_instruction()
 	{
-		const arch::addr at = current_path->addr_end();
+		///
+		/// The paths manager only manipulates "in-memory" addresses, most of the time offset=0x200
+		/// whereas the disassembler works with "disk" addresses, so offset 0x200 maps to address (file offset) 0 on disk
+		///
+		const arch::addr at = current_path->addr_end() - code_base;
 
 		if (at + 1 >= binary.size() || at>= binary.size())
 			throw chasm_exception("Unexpected end of bytes while decoding instruction during disassembly at address 0x{:04X}", at);
