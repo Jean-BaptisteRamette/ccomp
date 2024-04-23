@@ -3,11 +3,6 @@
 
 namespace chasm::ds
 {
-	paths_manager::paths_manager(arch::addr entry_point)
-	{
-		pending.push_back(entry_point);
-	}
-
 	std::vector<path> paths_manager::paths() const
 	{
 		return processed;
@@ -34,7 +29,7 @@ namespace chasm::ds
 
 	bool paths_manager::has_pending() const
 	{
-		return pending.empty();
+		return !pending.empty();
 	}
 
 	arch::addr paths_manager::next_unprocessed()

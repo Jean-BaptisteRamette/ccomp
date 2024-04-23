@@ -56,7 +56,7 @@ namespace io
 
 		for (chasm::arch::addr curr = 0; curr < binsize; curr += perline)
 		{
-			std::cout << std::format("0x{:04X}: ", offset + (curr * sizeof(chasm::arch::opcode)));
+			std::cout << std::format("0x{:04X}: ", offset + curr);
 
 			for (int j = 0; j < perline; ++j)
 				if (curr + j < binsize)

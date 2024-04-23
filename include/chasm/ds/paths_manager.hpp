@@ -10,7 +10,7 @@ namespace chasm::ds
 	class paths_manager
 	{
 	public:
-		explicit paths_manager(arch::addr entry_point);
+		paths_manager() = default;
 		~paths_manager() = default;
 
 		[[nodiscard]] std::vector<path> paths() const;

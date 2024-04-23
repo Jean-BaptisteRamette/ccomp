@@ -81,7 +81,7 @@ namespace chasm::ds
 	private:
 		std::vector<uint8_t> binary;
 		paths_manager pm;
-		path* current_path;
+		path* current_path {};
 	};
 
 	namespace disassembly_exception

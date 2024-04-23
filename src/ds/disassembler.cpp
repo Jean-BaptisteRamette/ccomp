@@ -1,18 +1,27 @@
 #include <chasm/ds/disassembler.hpp>
 #include <chasm/ds/paths.hpp>
+#include <chasm/options.hpp>
 #include <chasm/arch.hpp>
 
 
 namespace chasm::ds
 {
 	disassembler::disassembler(std::vector<uint8_t> from_bytes)
-		: binary(std::move(from_bytes)),
-		  pm(0),
-		  current_path(nullptr)
+		: binary(std::move(from_bytes))
 	{
+		const auto base = options::arg<arch::addr>("relocate");
+		pm.try_add_path(base);
+
 		while (pm.has_pending())
 		{
-			auto p = path(pm.next_unprocessed());
+			///
+			/// The paths manager only manipulates "in-memory" addresses, most of the time offset=0x200
+			/// whereas the disassembler works with "disk" addresses, so offset 0x200 maps to address (file offset) 0 on disk
+			///
+			arch::addr next_path_addr = pm.next_unprocessed();
+			next_path_addr -= base;
+
+			auto p = path(next_path_addr);
 
 			ds_path(p);
 
