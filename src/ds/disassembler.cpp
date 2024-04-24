@@ -228,7 +228,9 @@ namespace chasm::ds
 		emit(arch::instruction_id::JMP);
 
 		current_path->mark_end();
-		pm.try_add_path(location);
+
+		if (location != current_path->addr_start())
+			pm.try_add_path(location);
 	}
 
 	void disassembler::ds_mov_ar_addr(arch::addr addr)
