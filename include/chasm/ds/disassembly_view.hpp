@@ -19,7 +19,7 @@ namespace chasm::ds
 
 		~disassembly_view() = default;
 
-		void print() const;
+		[[nodiscard]] std::string to_string() const;
 
 	private:
 		std::vector<path> paths;

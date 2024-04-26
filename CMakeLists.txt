@@ -7,13 +7,13 @@ include(cmake/CompilerWarnings.cmake)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(CCOMP_SOURCES
+set(CHASM_SOURCES
         ${INC_DIR}/${PROJECT_NAME}/*.hpp
         ${INC_DIR}/${PROJECT_NAME}/ds/*.hpp
         ${SRC_DIR}/*.cpp
         ${SRC_DIR}/ds/*.cpp)
 
-file(GLOB SRC_FILES ${CCOMP_SOURCES})
+file(GLOB SRC_FILES ${CHASM_SOURCES})
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 set_project_warnings(${PROJECT_NAME})

@@ -10,7 +10,10 @@ namespace chasm::ds
 
 	void paths_manager::try_add_path(arch::addr path_start)
 	{
-		if (!was_processed(path_start))
+		//
+		// Only register code path that have never been analyzed yet
+		//
+		if (!is_pending(path_start) && !was_processed(path_start) && path_start != current)
 			pending.push_back(path_start);
 	}
 
@@ -27,14 +30,23 @@ namespace chasm::ds
 		});
 	}
 
+	bool paths_manager::is_pending(arch::addr path_addr) const
+	{
+		return std::ranges::any_of(pending, [&](arch::addr other)
+		{
+			return other == path_addr;
+		});
+	}
+
 	bool paths_manager::has_pending() const
 	{
 		return !pending.empty();
 	}
 
-	arch::addr paths_manager::next_unprocessed()
+	arch::addr paths_manager::next_pending()
 	{
 		const auto r = pending.front();
+		current = r;
 
 		pending.pop_front();
 

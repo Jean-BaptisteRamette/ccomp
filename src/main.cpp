@@ -1,7 +1,7 @@
 #include <vector>
 
-#include "chasm/ds/disassembly_view.hpp"
-#include "chasm/ds/disassembler.hpp"
+#include <chasm/ds/disassembly_view.hpp>
+#include <chasm/ds/disassembler.hpp>
 #include <chasm/options.hpp>
 #include <chasm/parser.hpp>
 #include <chasm/lexer.hpp>
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 			auto disassembler = chasm::ds::disassembler(std::move(bytes));
 			auto disassembly  = chasm::ds::disassembly_view(disassembler);
 
-			disassembly.print();
+			std::cout << disassembly.to_string() << std::endl;
     	}
 		else
 		{

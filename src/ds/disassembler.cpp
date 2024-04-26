@@ -19,7 +19,7 @@ namespace chasm::ds
 
 		while (pm.has_pending())
 		{
-			auto p = path(pm.next_unprocessed());
+			auto p = path(pm.next_pending());
 
 			ds_path(p);
 
@@ -227,9 +227,25 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::JMP);
 
+		// TODO: check previous instruction for conditional branch type
+		//
+		//
 		current_path->mark_end();
 
-		if (location != current_path->addr_start())
+		// In the following scenario:
+		// 		.main:
+		// 		   mov r0, 0
+		// 		.label:
+		//         mov r0, 0
+		// 		   jmp @label
+		//
+		// we don't want to queue ".label" path for analysis as it was already analyzed by the main path
+		// however, if the alignement is not the same, that means it was not analyzed yet, so queue it
+		//
+		const bool in_range = location >= current_path->addr_start() && location < current_path->addr_end();
+		const bool same_alignement = arch::is_aligned(location) == arch::is_aligned(current_path->addr_start());
+
+		if (!in_range || !same_alignement)
 			pm.try_add_path(location);
 	}
 

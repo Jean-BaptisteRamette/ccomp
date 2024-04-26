@@ -115,6 +115,11 @@ namespace chasm::arch
 		return std::ranges::binary_search(mnemonics, instruction);
 	}
 
+	constexpr bool is_aligned(addr p)
+	{
+		return (p & 1) == 0;
+	}
+
 
 	enum imm_format
 	{

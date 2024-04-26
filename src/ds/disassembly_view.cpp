@@ -8,14 +8,19 @@ namespace chasm::ds
 		: paths(ds_instance.code_paths())
 	{}
 
-	void disassembly_view::print() const
+	std::string disassembly_view::to_string() const
 	{
+		std::string o;
+		o.reserve(1024);
+
 		for (const auto& p : paths)
 		{
-			std::cout << std::format(".loc_{:X}:   # Code path: 0x{:04X} - 0x{:04X}", p.addr_start(), p.addr_start(), p.addr_end()) << std::endl;
+			o += std::format(".loc_{:X}:   ;; Code path: 0x{:04X} - 0x{:04X}\n", p.addr_start(), p.addr_start(), p.addr_end());
 
 			for (size_t i = 0; i < p.instructions_count(); ++i)
-				std::cout << std::format("\t{}", p.symbolic(i))  << std::endl;
+				o += std::format("    {}\n", p.symbolic(i));
 		}
+
+		return o;
 	}
 }

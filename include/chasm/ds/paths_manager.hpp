@@ -26,17 +26,19 @@ namespace chasm::ds
 		/// \return
 		[[nodiscard]] bool has_pending() const;
 
-		[[nodiscard]] arch::addr next_unprocessed();
+		[[nodiscard]] arch::addr next_pending();
 
 	private:
 		/// Checks if the given path has already been analyzed:
 		///
 		/// \return
 		[[nodiscard]] bool was_processed(arch::addr path_addr) const;
+		[[nodiscard]] bool is_pending(arch::addr path_addr) const;
 
 	private:
 		std::vector<path> processed;
 		std::deque<arch::addr> pending;
+		arch::addr current = UINT16_MAX;
 	};
 }
 
