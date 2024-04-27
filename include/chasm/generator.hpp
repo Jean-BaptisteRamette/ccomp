@@ -5,6 +5,7 @@
 
 #include <chasm/chasm_exception.hpp>
 #include <chasm/ast_visitor.hpp>
+#include <chasm/config.hpp>
 #include <chasm/arch.hpp>
 #include <chasm/ast.hpp>
 
@@ -26,11 +27,13 @@ namespace chasm
 		void visit(const ast::procedure_statement&) override;
 		void visit(const ast::instruction_statement&) override;
 		void visit(const ast::define_statement&) override;
+		void visit(const ast::config_statement&) override;
 		void visit(const ast::sprite_statement&) override;
 		void visit(const ast::raw_statement&) override;
 		void visit(const ast::label_statement&) override;
 
 	private:
+		void emit_byte(uint8_t b);
 		void emit_opcode(arch::opcode opcode);
 		void emit_opcodes(const std::vector<arch::opcode>& opcodes);
 
@@ -98,6 +101,7 @@ namespace chasm
 		std::unordered_map<std::string, arch::addr> sym_addresses;
 		std::unordered_map<std::string, arch::imm> constants;
 		std::unordered_map<std::string, arch::sprite> sprites;
+		config cfg;
 
 		std::string current_proc_name;
 

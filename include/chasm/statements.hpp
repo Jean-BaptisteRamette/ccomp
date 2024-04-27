@@ -219,6 +219,20 @@ namespace chasm::ast
 		const arch::sprite sprite;
 	};
 
+	struct config_statement : base_statement
+	{
+		config_statement(token identifier_, token value_)
+			: base_statement(),
+			  identifier(std::move(identifier_)),
+			  value(std::move(value_))
+		{}
+
+		void accept(base_visitor& visitor) const override { return visitor.visit(*this); }
+
+		const token identifier;
+		const token value;
+	};
+
     struct raw_statement : base_statement
     {
 		explicit raw_statement(token opcode_)

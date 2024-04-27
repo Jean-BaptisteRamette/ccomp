@@ -15,6 +15,8 @@ namespace chasm
 
         const lexeme_map<std::string_view> keywords = {
 				{ "define", token_type::keyword_define     },
+				{ "config", token_type::keyword_config     },
+				{ "default", token_type::keyword_default   },
 				{ "sprite", token_type::keyword_sprite     },
 				{ "raw",    token_type::keyword_raw        },
 				{ "proc",   token_type::keyword_proc_start },
@@ -31,7 +33,8 @@ namespace chasm
 				{ '$', token_type::dollar_proc       },
 				{ '#', token_type::hash_sprite       },
 				{ ':', token_type::colon             },
-				{ ',', token_type::comma             }
+				{ ',', token_type::comma             },
+				{ '=', token_type::equal             }
 		};
 
 		bool is_lexeme_reg(std::string_view lexeme)

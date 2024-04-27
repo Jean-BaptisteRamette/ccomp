@@ -141,10 +141,15 @@ namespace chasm
 			generate_symbols_file(options::arg<std::string>("symbols"), sym_addresses);
 	}
 
+	void generator::emit_byte(uint8_t b)
+	{
+		binary.push_back(b);
+	}
+
 	void generator::emit_opcode(arch::opcode opcode)
 	{
-		binary.push_back((opcode & 0xFF00) >> 8);
-		binary.push_back((opcode & 0x00FF));
+		emit_byte((opcode & 0xFF00) >> 8);
+		emit_byte((opcode & 0x00FF));
 	}
 
 	void generator::emit_opcodes(const std::vector<arch::opcode>& opcodes)
@@ -194,6 +199,16 @@ namespace chasm
 		register_constant(define.identifier.to_string(), define.value.to_integer());
 	}
 
+	void generator::visit(const ast::config_statement& statement)
+	{
+		const auto id = statement.identifier.to_string();
+
+		if (statement.value.type == token_type::keyword_default)
+			cfg.reset(id);
+		else
+			cfg.set(id, statement.value.to_integer());
+	}
+
 	void generator::visit(const ast::sprite_statement& sprite_statement)
 	{
 		register_sprite(sprite_statement.identifier.to_string(), sprite_statement.sprite);
@@ -209,7 +224,14 @@ namespace chasm
 
 	void generator::visit(const ast::raw_statement& statement)
 	{
-		emit_opcode(operand2imm(statement.opcode, arch::fmt_imm16));
+		const auto aligned = cfg.get_as<bool>(config_vars::RAW_ALIGNED);
+
+		const arch::imm v = operand2imm(statement.opcode, arch::fmt_imm16);
+
+		if (aligned || v > std::numeric_limits<uint8_t>::max())
+			emit_opcode(v);
+		else
+			emit_byte(v);
 	}
 
 	void generator::register_constant(std::string &&symbol, arch::imm value)

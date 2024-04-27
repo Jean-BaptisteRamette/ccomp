@@ -45,6 +45,7 @@ namespace chasm
 		switch (token_it->type)
 		{
 			case token_type::keyword_define:     return parse_define();
+			case token_type::keyword_config:     return parse_config();
 			case token_type::keyword_sprite:     return parse_sprite();
 			case token_type::keyword_raw:        return parse_raw();
 			case token_type::dot_label:          return parse_label();
@@ -73,12 +74,28 @@ namespace chasm
 		expect(token_type::keyword_define);
 
 		auto identifier = expect(token_type::identifier);
-		auto value = expect(token_type::numerical);
+		auto value = expect(token_type::numerical, token_type::keyword_default);
 
 		return std::make_unique<ast::define_statement>(
-						std::move(identifier),
-						std::move(value)
-					);
+					std::move(identifier),
+					std::move(value)
+				);
+	}
+
+	ast::statement parser::parse_config()
+	{
+		expect(token_type::keyword_config);
+
+		auto identifier = expect(token_type::identifier);
+
+		expect(token_type::equal);
+
+		auto value = expect(token_type::numerical, token_type::keyword_default);
+
+		return std::make_unique<ast::config_statement>(
+					std::move(identifier),
+					std::move(value)
+				);
 	}
 
 	ast::statement parser::parse_sprite()
@@ -113,9 +130,9 @@ namespace chasm
 		expect(token_type::bracket_close);
 
 		return std::make_unique<ast::sprite_statement>(
-						std::move(identifier),
-						sprite
-					);
+					std::move(identifier),
+					sprite
+				);
 	}
 
 	std::vector<ast::instruction_operand> parser::parse_operands()
@@ -160,6 +177,7 @@ namespace chasm
 			{
 				case token_type::keyword_proc_end: return {};
 				case token_type::keyword_define:   return parse_define();
+				case token_type::keyword_config:   return parse_config();
 				case token_type::keyword_raw:      return parse_raw();
 				case token_type::instruction:      return parse_instruction();
 				case token_type::dot_label:        return parse_label();
@@ -207,6 +225,7 @@ namespace chasm
 					return {};
 
 				case token_type::keyword_define: return parse_define();
+				case token_type::keyword_config: return parse_config();
 				case token_type::keyword_raw:    return parse_raw();
 				case token_type::instruction:    return parse_instruction();
 

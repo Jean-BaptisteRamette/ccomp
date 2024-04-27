@@ -109,6 +109,7 @@ namespace chasm
         [[nodiscard]] ast::statement parse_primary_statement();
         [[nodiscard]] ast::statement parse_raw();
         [[nodiscard]] ast::statement parse_define();
+		[[nodiscard]] ast::statement parse_config();
 		[[nodiscard]] ast::statement parse_sprite();
         [[nodiscard]] ast::statement parse_instruction();
         [[nodiscard]] ast::statement parse_procedure();

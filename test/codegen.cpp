@@ -99,6 +99,33 @@ BOOST_FIXTURE_TEST_SUITE(machine_code_generation, test_env::zero_relocate)
 		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
 	}
 
+	BOOST_AUTO_TEST_CASE(check_raw_statements_align_config)
+	{
+		const auto code = details::try_codegen(".main:                            \n"
+											   "    define b1 0xFF                \n"
+											   "    define b2 0xFF'FF             \n"
+											   "                                  \n"
+											   "	config RAW_ALIGNED = 0        \n"
+											   "    raw(b1)                       \n"
+											   "    raw(b2)                       \n"
+											   "                                  \n"
+											   "	config RAW_ALIGNED = default  \n"
+											   "    raw(b1)                       \n"
+											   "    raw(b2)                       \n");
+
+		const auto expected_code = {
+				// unaligned
+				0xFF,
+				0xFF, 0xFF,
+
+				// aligned
+				0x00, 0xFF,
+				0xFF, 0xFF
+		};
+
+		BOOST_CHECK_EQUAL_RANGES(code, expected_code);
+	}
+
 	BOOST_AUTO_TEST_CASE(check_address)
 	{
 		const auto code = details::try_codegen("proc a            \n"   // 0x06

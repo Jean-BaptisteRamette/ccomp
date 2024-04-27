@@ -24,11 +24,13 @@ namespace chasm
 		numerical,           // [0-9-a-f-A-F]
         byte_ascii,          // 'A' (quotes included)
         keyword_define,      // define x ...
+		keyword_config,      // config x = numerical
+		keyword_default,      // config x = default
 		keyword_sprite,      // sprite name [.., .., ..]
 		keyword_raw,         // raw(...)
-		keyword_proc_start,  // proc ...
-		keyword_proc_end,    // endp
-        identifier,          // constants defined with the "define" keywords and label names
+		keyword_proc_start,  // proc name
+		keyword_proc_end,    // endp name
+        identifier,          // constants defined with the "define" keywords, label/proc names and config names
         instruction,         // call, ret, jmp, cls...
 		register_name,       // special and general purpose registers
 		bracket_open,
@@ -40,7 +42,8 @@ namespace chasm
 		at_label,
 		dollar_proc,
 		hash_sprite,
-		comma
+		comma,
+		equal
     };
 
 	struct token
