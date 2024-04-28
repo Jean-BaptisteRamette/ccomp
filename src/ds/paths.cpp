@@ -7,11 +7,6 @@ namespace chasm::ds
 		: start_addr(start)
 	{}
 
-	void path::add_instruction(arch::instruction_id id)
-	{
-		disassembly.emplace_back(arch::mnemonics[id]);
-	}
-
 	arch::addr path::addr_start() const
 	{
 		return start_addr;

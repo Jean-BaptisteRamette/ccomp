@@ -58,7 +58,7 @@ namespace chasm
 	}
 
 	[[nodiscard]]
-	arch::operands_mask make_operands_mask(const ast::instruction_statement& instruction)
+	uint16_t make_operands_mask(const ast::instruction_statement& instruction)
 	{
 		if (instruction.operands.size() > arch::MAX_OPERANDS)
 			throw chasm_exception("Instruction \"{}\" at {} has {} operands "
@@ -66,7 +66,7 @@ namespace chasm
 								  instruction.operands.size(),
 								  arch::MAX_OPERANDS);
 
-		arch::operands_mask mask = 0;
+		uint16_t mask = 0;
 		uint16_t shift = 0;
 
 		for (const auto& operand : instruction.operands)
@@ -300,17 +300,17 @@ namespace chasm
 
 		switch (make_operands_mask(add))
 		{
-			case arch::MASK_R8_R8:
+			case arch::operands_mask::MASK_R8_R8:
 				return arch::enc::_8XY4(
 						operand2reg(add.operands[0]),
 						operand2reg(add.operands[1]));
 
-			case arch::MASK_R8_IMM:
+			case arch::operands_mask::MASK_R8_IMM:
 				return arch::enc::_7XNN(
 						operand2reg(add.operands[0]),
 						operand2imm(add.operands[1]));
 
-			case arch::MASK_AR_R8:
+			case arch::operands_mask::MASK_AR_R8:
 				return arch::enc::_FX1E(operand2reg(add.operands[1]));
 
 			default:
@@ -322,7 +322,7 @@ namespace chasm
 	{
 		ensure_operands_count(sub, 2);
 
-		if (make_operands_mask(sub) == arch::MASK_R8_R8)
+		if (make_operands_mask(sub) == arch::operands_mask::MASK_R8_R8)
 			return arch::enc::_8XY5(
 					operand2reg(sub.operands[0]),
 					operand2reg(sub.operands[1]));
@@ -334,7 +334,7 @@ namespace chasm
 	{
 		ensure_operands_count(suba, 2);
 
-		if (make_operands_mask(suba) == arch::MASK_R8_R8)
+		if (make_operands_mask(suba) == arch::operands_mask::MASK_R8_R8)
 			return arch::enc::_8XY7(
 					operand2reg(suba.operands[0]),
 					operand2reg(suba.operands[1]));
@@ -346,7 +346,7 @@ namespace chasm
 	{
 		ensure_operands_count(or_, 2);
 
-		if (make_operands_mask(or_) == arch::MASK_R8_R8)
+		if (make_operands_mask(or_) == arch::operands_mask::MASK_R8_R8)
 			return arch::enc::_8XY1(
 					operand2reg(or_.operands[0]),
 					operand2reg(or_.operands[1]));
@@ -358,7 +358,7 @@ namespace chasm
 	{
 		ensure_operands_count(and_, 2);
 
-		if (make_operands_mask(and_) == arch::MASK_R8_R8)
+		if (make_operands_mask(and_) == arch::operands_mask::MASK_R8_R8)
 			return arch::enc::_8XY2(
 					operand2reg(and_.operands[0]),
 					operand2reg(and_.operands[1]));
@@ -370,7 +370,7 @@ namespace chasm
 	{
 		ensure_operands_count(xor_, 2);
 
-		if (make_operands_mask(xor_) == arch::MASK_R8_R8)
+		if (make_operands_mask(xor_) == arch::operands_mask::MASK_R8_R8)
 			return arch::enc::_8XY3(
 					operand2reg(xor_.operands[0]),
 					operand2reg(xor_.operands[1]));
@@ -384,10 +384,10 @@ namespace chasm
 
 		switch (make_operands_mask(shr))
 		{
-			case arch::MASK_R8:
+			case arch::operands_mask::MASK_R8:
 				return arch::enc::_8X06(operand2reg(shr.operands[0]));
 
-			case arch::MASK_R8_R8:
+			case arch::operands_mask::MASK_R8_R8:
 				return arch::enc::_8XY6(
 						operand2reg(shr.operands[0]),
 						operand2reg(shr.operands[1]));
@@ -403,10 +403,10 @@ namespace chasm
 
 		switch (make_operands_mask(shl))
 		{
-			case arch::MASK_R8:
+			case arch::operands_mask::MASK_R8:
 				return arch::enc::_8X0E(operand2reg(shl.operands[0]));
 
-			case arch::MASK_R8_R8:
+			case arch::operands_mask::MASK_R8_R8:
 				return arch::enc::_8XYE(
 						operand2reg(shl.operands[0]),
 						operand2reg(shl.operands[1]));
@@ -420,7 +420,7 @@ namespace chasm
 	{
 		ensure_operands_count(rdump, 1);
 
-		if (make_operands_mask(rdump) == arch::MASK_R8)
+		if (make_operands_mask(rdump) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX55(operand2reg(rdump.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rdump);
@@ -430,7 +430,7 @@ namespace chasm
 	{
 		ensure_operands_count(rload, 1);
 
-		if (make_operands_mask(rload) == arch::MASK_R8)
+		if (make_operands_mask(rload) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX65(operand2reg(rload.operands[0]));
 
 		throw generator_exception::invalid_operand_type(rload);
@@ -442,14 +442,14 @@ namespace chasm
 
 		switch (make_operands_mask(mov))
 		{
-			case arch::MASK_R8_R8: return arch::enc::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
-			case arch::MASK_R8_IMM: return arch::enc::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
-			case arch::MASK_R8_DT: return arch::enc::_FX07(operand2reg(mov.operands[0]));
-			case arch::MASK_DT_R8: return arch::enc::_FX15(operand2reg(mov.operands[1]));
-			case arch::MASK_ST_R8: return arch::enc::_FX18(operand2reg(mov.operands[1]));
-			case arch::MASK_AR_IMM: return arch::enc::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
+			case arch::operands_mask::MASK_R8_R8: return arch::enc::_8XY0(operand2reg(mov.operands[0]), operand2reg(mov.operands[1]));
+			case arch::operands_mask::MASK_R8_IMM: return arch::enc::_6XNN(operand2reg(mov.operands[0]), operand2imm(mov.operands[1]));
+			case arch::operands_mask::MASK_R8_DT: return arch::enc::_FX07(operand2reg(mov.operands[0]));
+			case arch::operands_mask::MASK_DT_R8: return arch::enc::_FX15(operand2reg(mov.operands[1]));
+			case arch::operands_mask::MASK_ST_R8: return arch::enc::_FX18(operand2reg(mov.operands[1]));
+			case arch::operands_mask::MASK_AR_IMM: return arch::enc::_ANNN(operand2imm(mov.operands[1], arch::fmt_imm12));
 
-			case arch::MASK_AR_ADDR:
+			case arch::operands_mask::MASK_AR_ADDR:
 			{
 				register_patch_location(mov.operands[1].operand.to_string());
 				return arch::enc::_ANNN(0);
@@ -466,7 +466,7 @@ namespace chasm
 
 		switch (make_operands_mask(draw))
 		{
-			case arch::MASK_R8_R8_IMM:
+			case arch::operands_mask::MASK_R8_R8_IMM:
 			{
 				const auto regX = operand2reg(draw.operands[0]);
 				const auto regY = operand2reg(draw.operands[1]);
@@ -477,7 +477,7 @@ namespace chasm
 
 				return arch::enc::_DXYN(regX, regY, imm4);
 			}
-			case arch::MASK_R8_R8_ADDR:
+			case arch::operands_mask::MASK_R8_R8_ADDR:
 			{
 				//
 				// draw r0, r1, #s  == draw r0, r1, sizeof(s)
@@ -504,7 +504,7 @@ namespace chasm
 	{
 		ensure_operands_count(rand, 2);
 
-		if (make_operands_mask(rand) == arch::MASK_R8_IMM)
+		if (make_operands_mask(rand) == arch::operands_mask::MASK_R8_IMM)
 			return arch::enc::_CXNN(
 					operand2reg(rand.operands[0]),
 					operand2imm(rand.operands[1]));
@@ -516,7 +516,7 @@ namespace chasm
 	{
 		ensure_operands_count(bcd, 1);
 
-		if (make_operands_mask(bcd) == arch::MASK_R8)
+		if (make_operands_mask(bcd) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX33(operand2reg(bcd.operands[0]));
 
 		throw generator_exception::invalid_operand_type(bcd);
@@ -526,7 +526,7 @@ namespace chasm
 	{
 		ensure_operands_count(wkey, 1);
 
-		if (make_operands_mask(wkey) == arch::MASK_R8)
+		if (make_operands_mask(wkey) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX0A(operand2reg(wkey.operands[0]));
 
 		throw generator_exception::invalid_operand_type(wkey);
@@ -536,7 +536,7 @@ namespace chasm
 	{
 		ensure_operands_count(ske, 1);
 
-		if (make_operands_mask(ske) == arch::MASK_R8)
+		if (make_operands_mask(ske) == arch::operands_mask::MASK_R8)
 			return arch::enc::_EX9E(operand2reg(ske.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ske);
@@ -546,7 +546,7 @@ namespace chasm
 	{
 		ensure_operands_count(skne, 1);
 
-		if (make_operands_mask(skne) == arch::MASK_R8)
+		if (make_operands_mask(skne) == arch::operands_mask::MASK_R8)
 			return arch::enc::_EXA1(operand2reg(skne.operands[0]));
 
 		throw generator_exception::invalid_operand_type(skne);
@@ -564,7 +564,7 @@ namespace chasm
 
 		switch (make_operands_mask(jmp))
 		{
-			case arch::MASK_ADDR:
+			case arch::operands_mask::MASK_ADDR:
 				if (jmp.operands[0].is_label())
 				{
 					// jmp @label
@@ -574,7 +574,7 @@ namespace chasm
 				}
 
 			// jmp [offset]
-			case arch::MASK_ADDR_REL:
+			case arch::operands_mask::MASK_ADDR_REL:
 				return arch::enc::_BNNN(operand2imm(jmp.operands[0], arch::fmt_imm12));
 
 			default:
@@ -588,7 +588,7 @@ namespace chasm
 
 		switch (make_operands_mask(call))
 		{
-			case arch::MASK_ADDR:
+			case arch::operands_mask::MASK_ADDR:
 				if (call.operands[0].is_procedure())
 				{
 					// call $function
@@ -610,12 +610,12 @@ namespace chasm
 
 		switch (make_operands_mask(se))
 		{
-			case arch::MASK_R8_R8:
+			case arch::operands_mask::MASK_R8_R8:
 				return arch::enc::_5XY0(
 						operand2reg(se.operands[0]),
 						operand2reg(se.operands[1]));
 
-			case arch::MASK_R8_IMM:
+			case arch::operands_mask::MASK_R8_IMM:
 				return arch::enc::_3XNN(
 						operand2reg(se.operands[0]),
 						operand2imm(se.operands[1]));
@@ -631,12 +631,12 @@ namespace chasm
 
 		switch (make_operands_mask(sne))
 		{
-			case arch::MASK_R8_R8:
+			case arch::operands_mask::MASK_R8_R8:
 				return arch::enc::_9XY0(
 						operand2reg(sne.operands[0]),
 						operand2reg(sne.operands[1]));
 
-			case arch::MASK_R8_IMM:
+			case arch::operands_mask::MASK_R8_IMM:
 				return arch::enc::_4XNN(
 						operand2reg(sne.operands[0]),
 						operand2imm(sne.operands[1]));
@@ -650,7 +650,7 @@ namespace chasm
 	{
 		ensure_operands_count(inc, 1);
 
-		if (make_operands_mask(inc) == arch::MASK_R8)
+		if (make_operands_mask(inc) == arch::operands_mask::MASK_R8)
 			return arch::enc::_7XNN(operand2reg(inc.operands[0]), 1);
 
 		throw generator_exception::invalid_operand_type(inc);
@@ -660,7 +660,7 @@ namespace chasm
 	{
 		ensure_operands_count(ldf, 1);
 
-		if (make_operands_mask(ldf) == arch::MASK_R8)
+		if (make_operands_mask(ldf) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX29(operand2reg(ldf.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ldf);
@@ -676,7 +676,7 @@ namespace chasm
 	{
 		ensure_operands_count(scrd, 1);
 
-		if (make_operands_mask(scrd) == arch::MASK_IMM)
+		if (make_operands_mask(scrd) == arch::operands_mask::MASK_IMM)
 			return arch::enc::_00CN(operand2imm(scrd.operands[0], arch::fmt_imm4));
 
 		throw generator_exception::invalid_operand_type(scrd);
@@ -710,7 +710,7 @@ namespace chasm
 	{
 		ensure_operands_count(ldfs, 1);
 
-		if (make_operands_mask(ldfs) == arch::MASK_R8)
+		if (make_operands_mask(ldfs) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX30(operand2reg(ldfs.operands[0]));
 
 		throw generator_exception::invalid_operand_type(ldfs);
@@ -720,7 +720,7 @@ namespace chasm
 	{
 		ensure_operands_count(saverpl, 1);
 
-		if (make_operands_mask(saverpl) == arch::MASK_R8)
+		if (make_operands_mask(saverpl) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX75(operand2reg(saverpl.operands[0]));
 
 		throw generator_exception::invalid_operand_type(saverpl);
@@ -730,7 +730,7 @@ namespace chasm
 	{
 		ensure_operands_count(loadrpl, 1);
 
-		if (make_operands_mask(loadrpl) == arch::MASK_R8)
+		if (make_operands_mask(loadrpl) == arch::operands_mask::MASK_R8)
 			return arch::enc::_FX85(operand2reg(loadrpl.operands[0]));
 
 		throw generator_exception::invalid_operand_type(loadrpl);
@@ -740,7 +740,7 @@ namespace chasm
 	{
 		ensure_operands_count(swp, 2);
 
-		if (make_operands_mask(swp) == arch::MASK_R8_R8)
+		if (make_operands_mask(swp) == arch::operands_mask::MASK_R8_R8)
 		{
 			std::vector<arch::opcode> opcodes;
 

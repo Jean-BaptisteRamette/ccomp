@@ -76,22 +76,5 @@ BOOST_FIXTURE_TEST_SUITE(paths_checker, test_env::zero_relocate)
 		BOOST_CHECK_EQUAL(paths.size(), 1);
 	}
 
-	//BOOST_AUTO_TEST_CASE(test_in_range_label_not_same_alignement)
-	// {
-	//  // TODO: raw() should optionally produce 16 or 8 bit code
-	//
-	// 	const auto paths = details::make_paths(
-	// 			".main:              \n"
-	// 			"	cls              \n"
-	// 			"	cls              \n"
-	// 			"                    \n"
-	// 			".taken_first_without_jump:\n"
-	// 			"	cls              \n"
-	// 			"   jmp @taken_first_without_jump\n");
-
-	// 	BOOST_CHECK_EQUAL(paths.size(), 1);
-	// }
-
-
 
 BOOST_AUTO_TEST_SUITE_END()

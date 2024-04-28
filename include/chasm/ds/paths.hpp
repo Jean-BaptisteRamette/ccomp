@@ -5,20 +5,26 @@
 #include <map>
 
 #include <chasm/arch.hpp>
+#include <chasm/ds/formatter.hpp>
 
 
 namespace chasm::ds
 {
-	// TODO: Paths should be able to have references to each others to see control flow
-	//
-	//
 	class path
 	{
 	public:
 		explicit path(arch::addr start);
 		~path() = default;
 
-		void add_instruction(arch::instruction_id);
+
+		template<std::integral ...Args>
+		void add_instruction(arch::instruction_id id, arch::operands_mask mask, Args...args)
+		{
+			disassembly.emplace_back(
+						ds::formatter::format(id, mask, args...)
+					);
+		}
+
 		void mark_end();
 
 		[[nodiscard]] arch::addr addr_start() const;

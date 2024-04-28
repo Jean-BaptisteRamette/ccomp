@@ -35,7 +35,12 @@ namespace chasm::ds
 	private:
 		void ds_path(path&);
 		void ds_next_instruction();
-		void emit(arch::instruction_id);
+
+		template<std::integral ...Args>
+		void emit(arch::instruction_id id, arch::operands_mask mask, Args... args)
+		{
+			current_path->add_instruction(id, mask, args...);
+		}
 
 		void ds_cls();
 		void ds_ret();

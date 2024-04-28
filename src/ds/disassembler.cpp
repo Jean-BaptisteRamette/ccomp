@@ -166,66 +166,61 @@ namespace chasm::ds
 
 		throw disassembly_exception::decoding_error(opcode, at);
 	}
-	
-	void disassembler::emit(arch::instruction_id id)
-	{
-		current_path->add_instruction(id);
-	}
 
 	void disassembler::ds_cls()
 	{
-		emit(arch::instruction_id::CLS);
+		emit(arch::instruction_id::CLS, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_ret()
 	{
-		emit(arch::instruction_id::RET);
+		emit(arch::instruction_id::RET, arch::operands_mask::MASK_NONE);
 
 		current_path->mark_end();
 	}
 
 	void disassembler::ds_scrr()
 	{
-		emit(arch::instruction_id::SCRR);
+		emit(arch::instruction_id::SCRR, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_scrl()
 	{
-		emit(arch::instruction_id::SCRL);
+		emit(arch::instruction_id::SCRL, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_exit()
 	{
-		emit(arch::instruction_id::EXIT);
+		emit(arch::instruction_id::EXIT, arch::operands_mask::MASK_NONE);
 
 		current_path->mark_end();
 	}
 
 	void disassembler::ds_low()
 	{
-		emit(arch::instruction_id::LOW);
+		emit(arch::instruction_id::LOW, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_high()
 	{
-		emit(arch::instruction_id::HIGH);
+		emit(arch::instruction_id::HIGH, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_scrd()
 	{
-		emit(arch::instruction_id::SCRD);
+		emit(arch::instruction_id::SCRD, arch::operands_mask::MASK_NONE);
 	}
 
 	void disassembler::ds_call(arch::addr subroutine_addr)
 	{
-		emit(arch::instruction_id::CALL);
+		emit(arch::instruction_id::CALL, arch::operands_mask::MASK_ADDR, subroutine_addr);
 
 		pm.try_add_path(subroutine_addr);
 	}
 
 	void disassembler::ds_jmp(arch::addr location)
 	{
-		emit(arch::instruction_id::JMP);
+		emit(arch::instruction_id::JMP, arch::operands_mask::MASK_ADDR, location);
 
 		// TODO: check previous instruction for conditional branch type
 		//
@@ -242,7 +237,7 @@ namespace chasm::ds
 		// we don't want to queue ".label" path for analysis as it was already analyzed by the main path
 		// however, if the alignement is not the same, that means it was not analyzed yet, so queue it
 		//
-		const bool in_range = location >= current_path->addr_start() && location < current_path->addr_end();
+		const bool in_range = location > current_path->addr_start() && location < current_path->addr_end();
 		const bool same_alignement = arch::is_aligned(location) == arch::is_aligned(current_path->addr_start());
 
 		if (!in_range || !same_alignement)
@@ -251,156 +246,156 @@ namespace chasm::ds
 
 	void disassembler::ds_mov_ar_addr(arch::addr addr)
 	{
-		emit(arch::instruction_id::MOV);
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_AR_ADDR, addr);
 	}
 
 	void disassembler::ds_jmp_indirect(arch::addr offset)
 	{
-		emit(arch::instruction_id::JMP);
+		emit(arch::instruction_id::JMP, arch::operands_mask::MASK_ADDR_REL, offset);
 
 		current_path->mark_end();
 	}
 
 	void disassembler::ds_se_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		emit(arch::instruction_id::SE);
+		emit(arch::instruction_id::SE, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
 
 	void disassembler::ds_sne_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		emit(arch::instruction_id::SNE);
+		emit(arch::instruction_id::SNE, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
 
 	void disassembler::ds_mov_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		emit(arch::instruction_id::MOV);
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
 
 	void disassembler::ds_add_r8_imm(arch::reg reg, arch::imm imm)
 	{
 		if (imm == 1)
-			emit(arch::instruction_id::INC);
+			emit(arch::instruction_id::INC, arch::operands_mask::MASK_R8_IMM, reg, imm);
 		else
-			emit(arch::instruction_id::ADD);
+			emit(arch::instruction_id::ADD, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
 
 	void disassembler::ds_rand_r8_imm(arch::reg reg, arch::imm imm)
 	{
-		emit(arch::instruction_id::RAND);
+		emit(arch::instruction_id::RAND, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
 
 	void disassembler::ds_se_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SE);
+		emit(arch::instruction_id::SE, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_mov_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::MOV);
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_or_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::OR);
+		emit(arch::instruction_id::OR, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_and_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::AND);
+		emit(arch::instruction_id::AND, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_xor_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::XOR);
+		emit(arch::instruction_id::XOR, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_add_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::ADD);
+		emit(arch::instruction_id::ADD, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_sub_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SUB);
+		emit(arch::instruction_id::SUB, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_shl_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SHL);
+		emit(arch::instruction_id::SHL, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_suba_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SUBA);
+		emit(arch::instruction_id::SUBA, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_shr_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SHR);
+		emit(arch::instruction_id::SHR, arch::operands_mask::MASK_R8_R8, reg1, reg2);
 	}
 
 	void disassembler::ds_sne_r8_r8(arch::reg reg1, arch::reg reg2)
 	{
-		emit(arch::instruction_id::SNE);
+		emit(arch::instruction_id::SNE, arch::operands_mask::MASK_R8_R8, reg1, reg2);
+	}
+
+	void disassembler::ds_mov_r8_dt(arch::reg reg)
+	{
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_R8_DT, reg);
+	}
+
+	void disassembler::ds_mov_dt_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_DT_R8, reg);
+	}
+
+	void disassembler::ds_mov_st_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::MOV, arch::operands_mask::MASK_ST_R8, reg);
+	}
+
+	void disassembler::ds_add_ar_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::ADD, arch::operands_mask::MASK_AR_R8, reg);
+	}
+
+	void disassembler::ds_ldf_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::LDF, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_ldfs_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::LDFS, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_rdump_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::RDUMP, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_rload_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::RLOAD, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_saverpl_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::SAVERPL, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_loadrpl_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::LOADRPL, arch::operands_mask::MASK_R8, reg);
 	}
 
 	void disassembler::ds_ske_r8(arch::reg reg)
 	{
-		emit(arch::instruction_id::SKE);
-	}
-
-	void disassembler::ds_mov_r8_dt(arch::reg)
-	{
-		emit(arch::instruction_id::MOV);
-	}
-
-	void disassembler::ds_mov_dt_r8(arch::reg)
-	{
-		emit(arch::instruction_id::MOV);
-	}
-
-	void disassembler::ds_mov_st_r8(arch::reg)
-	{
-		emit(arch::instruction_id::MOV);
-	}
-
-	void disassembler::ds_add_ar_r8(arch::reg)
-	{
-		emit(arch::instruction_id::ADD);
-	}
-
-	void disassembler::ds_ldf_r8(arch::reg)
-	{
-		emit(arch::instruction_id::LDF);
-	}
-
-	void disassembler::ds_ldfs_r8(arch::reg)
-	{
-		emit(arch::instruction_id::LDFS);
-	}
-
-	void disassembler::ds_rdump_r8(arch::reg)
-	{
-		emit(arch::instruction_id::RDUMP);
-	}
-
-	void disassembler::ds_rload_r8(arch::reg)
-	{
-		emit(arch::instruction_id::RLOAD);
-	}
-
-	void disassembler::ds_saverpl_r8(arch::reg)
-	{
-		emit(arch::instruction_id::SAVERPL);
-	}
-
-	void disassembler::ds_loadrpl_r8(arch::reg)
-	{
-		emit(arch::instruction_id::LOADRPL);
+		emit(arch::instruction_id::SKE, arch::operands_mask::MASK_R8, reg);
 	}
 
 	void disassembler::ds_draw_r8_r8_imm(arch::reg reg1, arch::reg reg2, arch::imm imm)
 	{
-		emit(arch::instruction_id::DRAW);
+		emit(arch::instruction_id::DRAW, arch::operands_mask::MASK_R8_R8_IMM, reg1, reg2, imm);
 	}
 }
