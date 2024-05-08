@@ -1,0 +1,39 @@
+
+proc f1
+    inc r0
+
+.do:
+    se r0, 0
+    jmp @do
+
+.end:
+    ret
+endp f1
+
+proc f2
+    call $f3
+    ret
+endp f2
+
+proc f3
+    se r0, 0
+    jmp @first_ret
+    jmp @second_ret
+
+.first_ret:
+    ret
+
+.second_ret:
+    ret
+endp f3
+
+
+.main:
+    xor r0, r0
+
+    call $f3
+
+    jmp @end
+
+.end:
+    exit

@@ -17,7 +17,7 @@ namespace chasm::ds
 
 	analysis_path& disassembler::current_path()
 	{
-		return flow.current_path();
+		return flow.analyzed_path();
 	}
 
 	disassembly_graph disassembler::get_graph()
@@ -224,25 +224,9 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::JMP, arch::operands_mask::MASK_ADDR, location);
 
-		const bool in_range = location > current_path().addr_start() && location < current_path().addr_end();
-		const bool same_alignement = arch::is_aligned(location) == arch::is_aligned(current_path().addr_start());
-
-		// In the following scenario:
-		// 		.main:
-		// 		   mov r0, 0
-		// 		.label:
-		//         mov r0, 0
-		// 		   jmp @label
-		//
-		// we don't want to queue ".label" path for analysis as it was already analyzed by the main path
-		// however, if the alignement is not the same, that means it was not analyzed yet, so queue it
-		//
-
 		current_path().mark_end();
 
-		// in_range is false because se instruction creates a new path
-		// TODO: flow should be responsible for knowing if the location is in range
-		if (flow.was_visited(location)|| (in_range && same_alignement))
+		if (flow.was_visited(location))
 			return;
 
 		flow.path_push(location);

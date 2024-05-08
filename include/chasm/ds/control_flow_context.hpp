@@ -32,6 +32,7 @@ namespace chasm::ds
 
 		[[nodiscard]] procedure to_procedure();
 		[[nodiscard]] analysis_path& current_path();
+		[[nodiscard]] const std::vector<analysis_path>& analyzed_paths() const;
 		void add_path(arch::addr);
 
 	private:
@@ -45,7 +46,7 @@ namespace chasm::ds
 		control_flow_context() = default;
 		~control_flow_context() = default;
 
-		[[nodiscard]] analysis_path& current_path();
+		[[nodiscard]] analysis_path& analyzed_path();
 		[[nodiscard]] analysis_procedure& analyzed_procedure();
 
 		void path_push(arch::addr path_entrypoint);
@@ -54,12 +55,17 @@ namespace chasm::ds
 		void callstack_push(arch::addr proc_entrypoint);
 		void callstack_pop();
 
-		[[nodiscard]] bool was_visited(arch::addr path_entrypoint) const;
+		[[nodiscard]] bool was_visited(arch::addr address) const;
 		[[nodiscard]] bool inside_procedure() const;
 
 	private:
 		std::stack<analysis_procedure> callstack;
-		std::stack<analysis_path> paths;
+
+		//
+		// needs to be traversed, so we use a vector
+		// even though it is used as a stack
+		//
+		std::vector<analysis_path> paths;
 
 		std::unordered_set<arch::addr> visited_entrypoints;
 	};
