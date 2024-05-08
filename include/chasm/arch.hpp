@@ -109,6 +109,12 @@ namespace chasm::arch
 		return static_cast<instruction_id>(std::distance(mnemonics.begin(), it));
 	}
 
+	constexpr bool is_conditional(arch::instruction_id id)
+	{
+		return id == instruction_id::SE  || id == instruction_id::SNE ||
+		       id == instruction_id::SKE || id == instruction_id::SKNE;
+	}
+
 	constexpr bool has_mnemonic(const std::string_view& instruction)
 	{
 		return std::ranges::binary_search(mnemonics, instruction);

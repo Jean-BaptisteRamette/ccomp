@@ -2,13 +2,11 @@
 #define CHASM_DISASSEMBLER_HPP
 
 
-#include <map>
-#include <set>
-#include <stack>
 #include <vector>
-#include <string>
+#include <memory>
 
-#include <chasm/ds/paths_manager.hpp>
+#include <chasm/ds/disassembly_graph.hpp>
+#include <chasm/ds/control_flow_context.hpp>
 #include <chasm/chasm_exception.hpp>
 #include <chasm/arch.hpp>
 
@@ -18,7 +16,7 @@ namespace chasm::ds
 	class disassembler
 	{
 	public:
-		explicit disassembler(std::vector<uint8_t> from_bytes);
+		disassembler(std::vector<uint8_t> from_bytes, arch::addr from_addr);
 		~disassembler() = default;
 
 		disassembler(disassembler&) = delete;
@@ -26,20 +24,18 @@ namespace chasm::ds
 		disassembler& operator=(disassembler&) = delete;
 		disassembler& operator=(disassembler&&) = delete;
 
-		/// Get the disassembled code paths
-		///
-		/// \return
-		[[nodiscard]] std::vector<path> code_paths() const;
+		[[nodiscard]] disassembly_graph get_graph();
 
 
 	private:
-		void ds_path(path&);
+		[[nodiscard]] analysis_path& current_path();
+		void ds_path();
 		void ds_next_instruction();
 
 		template<std::integral ...Args>
 		void emit(arch::instruction_id id, arch::operands_mask mask, Args... args)
 		{
-			current_path->add_instruction(id, mask, args...);
+			current_path().add_instruction(id, mask, args...);
 		}
 
 		void ds_cls();
@@ -59,7 +55,6 @@ namespace chasm::ds
 		void ds_mov_r8_imm(arch::reg reg, arch::imm imm);
 		void ds_add_r8_imm(arch::reg reg, arch::imm imm);
 		void ds_rand_r8_imm(arch::reg reg, arch::imm imm);
-		void ds_se_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_mov_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_or_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_and_r8_r8(arch::reg reg1, arch::reg reg2);
@@ -69,8 +64,10 @@ namespace chasm::ds
 		void ds_shl_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_suba_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_shr_r8_r8(arch::reg reg1, arch::reg reg2);
+		void ds_se_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_sne_r8_r8(arch::reg reg1, arch::reg reg2);
 		void ds_ske_r8(arch::reg reg);
+		void ds_skne_r8(arch::reg reg);
 		void ds_mov_r8_dt(arch::reg);
 		void ds_mov_dt_r8(arch::reg);
 		void ds_mov_st_r8(arch::reg);
@@ -85,9 +82,8 @@ namespace chasm::ds
 
 	private:
 		std::vector<uint8_t> binary;
-		paths_manager pm;
-		path* current_path;
-		arch::addr code_base;
+		control_flow_context flow;
+		disassembly_graph ds_graph;
 	};
 
 	namespace disassembly_exception

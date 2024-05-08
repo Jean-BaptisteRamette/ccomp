@@ -1,6 +1,6 @@
 #include <vector>
 
-#include <chasm/ds/disassembly_view.hpp>
+#include <chasm/ds/disassembly_interface.hpp>
 #include <chasm/ds/disassembler.hpp>
 #include <chasm/options.hpp>
 #include <chasm/parser.hpp>
@@ -111,10 +111,9 @@ int main(int argc, char** argv)
 				return EXIT_SUCCESS;
 			}
 
-			auto disassembler = chasm::ds::disassembler(std::move(bytes));
-			auto disassembly  = chasm::ds::disassembly_view(disassembler);
-
-			std::cout << disassembly.to_string() << std::endl;
+			auto disassembler = chasm::ds::disassembler(std::move(bytes), chasm::options::arg<chasm::arch::addr>("relocate"));
+			auto interface = chasm::ds::disassembly_interface(disassembler.get_graph());
+			interface.run();
     	}
 		else
 		{

@@ -33,8 +33,15 @@ namespace chasm
 		std::vector<std::pair<std::string, arch::addr>> elems(mapping.begin(), mapping.end());
 		std::sort(elems.begin(), elems.end(), sort_pred);
 
+		const auto mapped_base = options::arg<arch::addr>("relocate");
+
 		for (const auto& [symbol, addr] : elems)
-			os << std::format("{:#06x} --> {}", addr, symbol) << std::endl;
+		{
+			const arch::addr addr_file = addr;
+			const arch::addr addr_mem  = addr + mapped_base;
+
+			os << std::format("{:#06x} {:#06x} --> {}", addr_file, addr_mem, symbol) << std::endl;
+		}
 
 		log::info("{} symbols mapping written to \"{}\".", mapping.size(), path.string());
 	}

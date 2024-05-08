@@ -17,16 +17,6 @@ namespace chasm::ds
 		return start_addr + instructions_count() * sizeof(arch::opcode);
 	}
 
-	void path::mark_end()
-	{
-		ended_ = true;
-	}
-
-	bool path::ended() const
-	{
-		return ended_;
-	}
-
 	size_t path::instructions_count() const
 	{
 		return disassembly.size();
@@ -35,5 +25,34 @@ namespace chasm::ds
 	std::string path::symbolic(size_t instruction_index) const
 	{
 		return disassembly[instruction_index];
+	}
+
+	bool path::operator<(const path &other) const
+	{
+		return addr_start() < other.addr_start();
+	}
+
+	std::set<path> procedure::get_paths() const
+	{
+		return ordered_paths;
+	}
+
+	void procedure::insert_path(path p)
+	{
+		ordered_paths.insert(std::move(p));
+	}
+
+	procedure::procedure(arch::addr ep)
+		: ep(ep)
+	{}
+
+	arch::addr procedure::entrypoint() const
+	{
+		return ep;
+	}
+
+	bool procedure::operator<(const procedure &other) const
+	{
+		return entrypoint() < other.entrypoint();
 	}
 }

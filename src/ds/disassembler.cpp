@@ -6,37 +6,28 @@
 
 namespace chasm::ds
 {
-	disassembler::disassembler(std::vector<uint8_t> from_bytes)
-		: binary(std::move(from_bytes)),
-		  pm(),
-		  current_path(nullptr),
-		  code_base(options::arg<arch::addr>("relocate"))
+	disassembler::disassembler(std::vector<uint8_t> from_bytes, arch::addr from_addr)
+		: binary(std::move(from_bytes))
 	{
-		//
-		// Add initial code path at entry point
-		//
-		pm.try_add_path(code_base);
-
-		while (pm.has_pending())
-		{
-			auto p = path(pm.next_pending());
-
-			ds_path(p);
-
-			pm.add_processed(std::move(p));
-		}
+		flow.path_push(from_addr);
+		ds_path();
+		ds_graph.insert_path(current_path());
+		flow.path_pop();
 	}
 
-	std::vector<path> disassembler::code_paths() const
+	analysis_path& disassembler::current_path()
 	{
-		return pm.paths();
+		return flow.current_path();
 	}
 
-	void disassembler::ds_path(path& p)
+	disassembly_graph disassembler::get_graph()
 	{
-		current_path = &p;
+		return ds_graph;
+	}
 
-		while (!current_path->ended())
+	void disassembler::ds_path()
+	{
+		while (!current_path().ended())
 			ds_next_instruction();
 	}
 
@@ -46,12 +37,12 @@ namespace chasm::ds
 		/// The paths manager only manipulates "in-memory" addresses, most of the time offset=0x200
 		/// whereas the disassembler works with "disk" addresses, so offset 0x200 maps to address (file offset) 0 on disk
 		///
-		const arch::addr at = current_path->addr_end() - code_base;
+		const arch::addr ip = current_path().addr_end() - options::arg<arch::addr>("relocate");
 
-		if (at + 1 >= binary.size() || at>= binary.size())
-			throw chasm_exception("Unexpected end of bytes while decoding instruction during disassembly at address 0x{:04X}", at);
+		if (ip + 1 >= binary.size() || ip >= binary.size())
+			throw chasm_exception("Unexpected end of bytes while decoding instruction during disassembly at address 0x{:04X}", ip);
 
-		const auto opcode = static_cast<arch::opcode>(binary[at] << 8 | binary[at + 1]);
+		const auto opcode = static_cast<arch::opcode>(binary[ip] << 8 | binary[ip + 1]);
 
 		const auto n1 = static_cast<uint8_t>((opcode & 0xF000) >> 12);
 		const auto n2 = static_cast<uint8_t>((opcode & 0x0F00) >> 8);
@@ -138,6 +129,11 @@ namespace chasm::ds
 					ds_ske_r8(n2);
 					return;
 				}
+				else if (imm8 == 0xA1)
+				{
+					ds_skne_r8(n2);
+					return;
+				}
 
 			case 0xF:
 				switch (imm8)
@@ -164,7 +160,7 @@ namespace chasm::ds
 				break;
 		}
 
-		throw disassembly_exception::decoding_error(opcode, at);
+		throw disassembly_exception::decoding_error(opcode, ip);
 	}
 
 	void disassembler::ds_cls()
@@ -176,7 +172,7 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::RET, arch::operands_mask::MASK_NONE);
 
-		current_path->mark_end();
+		current_path().mark_end();
 	}
 
 	void disassembler::ds_scrr()
@@ -193,7 +189,7 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::EXIT, arch::operands_mask::MASK_NONE);
 
-		current_path->mark_end();
+		current_path().mark_end();
 	}
 
 	void disassembler::ds_low()
@@ -215,17 +211,21 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::CALL, arch::operands_mask::MASK_ADDR, subroutine_addr);
 
-		pm.try_add_path(subroutine_addr);
+		if (flow.was_visited(subroutine_addr))
+			return;
+
+		flow.callstack_push(subroutine_addr);
+		ds_path();
+		ds_graph.insert_proc(flow.analyzed_procedure().to_procedure());
+		flow.callstack_pop();
 	}
 
 	void disassembler::ds_jmp(arch::addr location)
 	{
 		emit(arch::instruction_id::JMP, arch::operands_mask::MASK_ADDR, location);
 
-		// TODO: check previous instruction for conditional branch type
-		//
-		//
-		current_path->mark_end();
+		const bool in_range = location > current_path().addr_start() && location < current_path().addr_end();
+		const bool same_alignement = arch::is_aligned(location) == arch::is_aligned(current_path().addr_start());
 
 		// In the following scenario:
 		// 		.main:
@@ -237,11 +237,21 @@ namespace chasm::ds
 		// we don't want to queue ".label" path for analysis as it was already analyzed by the main path
 		// however, if the alignement is not the same, that means it was not analyzed yet, so queue it
 		//
-		const bool in_range = location > current_path->addr_start() && location < current_path->addr_end();
-		const bool same_alignement = arch::is_aligned(location) == arch::is_aligned(current_path->addr_start());
 
-		if (!in_range || !same_alignement)
-			pm.try_add_path(location);
+		current_path().mark_end();
+
+		// in_range is false because se instruction creates a new path
+		// TODO: flow should be responsible for knowing if the location is in range
+		if (flow.was_visited(location)|| (in_range && same_alignement))
+			return;
+
+		flow.path_push(location);
+		ds_path();
+
+		if (!flow.inside_procedure())
+			ds_graph.insert_path(current_path());
+
+		flow.path_pop();
 	}
 
 	void disassembler::ds_mov_ar_addr(arch::addr addr)
@@ -253,12 +263,31 @@ namespace chasm::ds
 	{
 		emit(arch::instruction_id::JMP, arch::operands_mask::MASK_ADDR_REL, offset);
 
-		current_path->mark_end();
+		current_path().mark_end();
 	}
 
 	void disassembler::ds_se_r8_imm(arch::reg reg, arch::imm imm)
 	{
 		emit(arch::instruction_id::SE, arch::operands_mask::MASK_R8_IMM, reg, imm);
+
+		const arch::addr next1 = current_path().addr_end();
+		const arch::addr next2 = current_path().addr_end() + sizeof(arch::opcode);
+
+		flow.path_push(next1);
+		ds_path();
+
+		if (!flow.inside_procedure())
+			ds_graph.insert_path(current_path());
+
+		flow.path_pop();
+
+		flow.path_push(next2);
+		ds_path();
+
+		if (!flow.inside_procedure())
+			ds_graph.insert_path(current_path());
+
+		flow.path_pop();
 	}
 
 	void disassembler::ds_sne_r8_imm(arch::reg reg, arch::imm imm)
@@ -274,7 +303,7 @@ namespace chasm::ds
 	void disassembler::ds_add_r8_imm(arch::reg reg, arch::imm imm)
 	{
 		if (imm == 1)
-			emit(arch::instruction_id::INC, arch::operands_mask::MASK_R8_IMM, reg, imm);
+			emit(arch::instruction_id::INC, arch::operands_mask::MASK_R8, reg);
 		else
 			emit(arch::instruction_id::ADD, arch::operands_mask::MASK_R8_IMM, reg, imm);
 	}
@@ -392,6 +421,11 @@ namespace chasm::ds
 	void disassembler::ds_ske_r8(arch::reg reg)
 	{
 		emit(arch::instruction_id::SKE, arch::operands_mask::MASK_R8, reg);
+	}
+
+	void disassembler::ds_skne_r8(arch::reg reg)
+	{
+		emit(arch::instruction_id::SKNE, arch::operands_mask::MASK_R8, reg);
 	}
 
 	void disassembler::ds_draw_r8_r8_imm(arch::reg reg1, arch::reg reg2, arch::imm imm)
