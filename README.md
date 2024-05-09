@@ -1,18 +1,20 @@
 # chasm
-### _Custom assembly language for the chip-8 and SuperChip-48 virtual machines_
+### _Assembler and disassembler for the Chip-8 and SuperChip-48 architecture_
 
 This project is an assembler generating code according to the CHIP-8 ISA.
 It allows programmer to write code easily, and can be used as a way to test their emulators.
 
+It also bundles a featured disassembler, allowing you to convert any ROM to a readable chasm program that can be reassembled.
+
 ## Summary
-- [I. Features](#i---features)
-- [II. What does it look like ?](#ii---example-program)
+- [I. Assembler features](#i---assembler-features)
+- [II. Disassembler features](#ii---disassembler-features)
 - [III. Command line options](#iii---command-line-options)
 - [IV. Language specifications](#iv---language-specifications)
 - [V. Instruction reference](#v---mnemonics-and-opcodes-mapping)
 - [VI. Contributing](#vi---contributing)
 
-## I - Features
+## I - Assembler features
 
 - Nice and intuitive syntax for easy writing
 - Full ISA support
@@ -23,15 +25,18 @@ It allows programmer to write code easily, and can be used as a way to test thei
 - Syntactic sugar and pseudo-instructions
 - Inline opcodes support for unsafe code
 - Bitshift instructions support both single/two operand(s)
+- Alterable binary-generation through config
 - Easily modifiable syntax through source code
 
 
-## II - Example program
+## II - Disassembler features
 
-```asm
-.main:
-    ;; TODO
-```
+- Control-Flow accurate disassembly
+- Procedure reconstruction
+- No code path duplication
+
+This is still a WIP, I plan to add much more
+
 
 ## III - Command line options
 
@@ -43,6 +48,8 @@ Usage:
       --in arg                  chasm source file to assemble
       --out arg                 The generated machine code output file path
                                 (default: out.c8c)
+      --dis arg                 Enter the disassembly interface for the given binary
+      --pad-sprites             Pad odd sized sprites
       --hex [=arg(=4)]          Hexdumps the generated machine code,
                                 argument is the amount of opcodes per line
       --symbols [=arg(=out.c8s)]
@@ -56,7 +63,7 @@ Usage:
 ```
 
 ## IV - Language Specifications
-
+0. [What does it look like ?](#0-example-program)
 1. [Comments](#1-comments)
 2. [Numeric literals](#2-numeric-literals)
 3. [Registers](#3-registers)
@@ -69,7 +76,16 @@ Usage:
 10. [Inline opcodes](#10-inline-opcodes)
 11. [I/O](#11-io)
 12. [Sprites](#12-sprites)
-13. [Others](#13-others)
+13. [Configs](#13-configs)
+14. [Others](#14-others)
+
+### 0. Example program
+
+```asm
+.main:
+    ;; TODO
+```
+
 
 ### 1. Comments
 Use the `;;` characters to write comments
@@ -247,6 +263,22 @@ chasm allows the programmer to put inline raw opcodes in the source file using t
 
 This is particularly useful if you want to generate code that is not allowed by the assembler
 
+Use the `RAW_ALIGNED` config to alter `raw` behavior
+
+```asm
+.main:                          
+    define b1 0xFF
+    define b2 0xFF'FF
+                                
+    config RAW_ALIGNED = 0         ;; generates bytecode: FF FF FF
+    raw(b1)                        ;;     0xFF
+    raw(b2)                        ;;     0xFF'FF
+                                
+    config RAW_ALIGNED = default   ;; generates bytecode: FF 00 FF FF
+    raw(b1)                        ;;     0xFF'00
+    raw(b2)                        ;;     0xFF'FF
+```
+
 ### 11. I/O
 
 Drawing
@@ -306,7 +338,15 @@ endp DrawSprite4
     call $DrawSprite4
 ```
 
-### 13. Others
+### 13. Configs
+Configs are directives used to alter the behaviour of the assembler.
+```asm
+config CONFIG_NAME = 0         ;; sets CONFIG_NAME to 0
+config CONFIG_NAME = default   ;; resets CONFIG_NAME to its original value
+```
+ATM, the only supported config is `RAW_ALIGNED`.
+
+### 14. Others
 
 Random number generator 
 ```asm  
